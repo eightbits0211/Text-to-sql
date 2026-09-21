@@ -90,9 +90,35 @@ before ending every work session.
 - Fixed an identifier-selection bug where “names of singers” selected
   `Singer_ID`; the baseline now selects `Name`. Added a regression test and
   verified the CLI returns all six singer names.
+- Formalized the template baseline contract and supported/unsupported grammar
+  in [`docs/template-baseline-design.md`](docs/template-baseline-design.md).
+- Added template capability declarations and regression coverage.
+- Ran a 250-example-per-dataset official development evaluation:
+  WikiSQL execution accuracy 0.1560 and Spider execution accuracy 0.0720,
+  both with invalid-SQL rate 0.0000.
+- Added reproducible run-manifest generation to
+  `scripts/run_part2_smoke.py`; artifacts are stored outside Git under
+  `/Users/roshini/datasets/text-to-sql/artifacts-template-250/`.
+- Improved the template baseline with multi-column projections, `DISTINCT`,
+  multiple aggregates, ordering/limits, question-order preservation, common
+  aliases, and safer unsupported `OR` handling.
+- Re-ran the same 250-example slices after correcting a count heuristic:
+  WikiSQL execution accuracy is 0.1560 and Spider is 0.0920, improving the
+  prior Spider result of 0.0720 without changing evaluation interfaces.
+- Full validation now passes 29 tests with Ruff clean.
+- Confirmed that the first-250 dev rows are grouped rather than demonstrably
+  shuffled: WikiSQL's first 250 cover 62 tables and Spider's first 250 cover
+  only four databases. Full-dev evaluation was therefore approved and started
+  with the new `--full-dev` runner option.
 - Clarified the modeling decision in the technology stack: the deterministic
   template/grammar parser is the selected Part 2 classical baseline; an LSTM
-  remains an allowed alternative but is not being implemented currently.
+  is now approved as an additive secondary baseline, not a replacement.
+- Completed LSTM Phase A1 design checkpoint in
+  [`docs/lstm-baseline-design.md`](docs/lstm-baseline-design.md). The design
+  specifies a bidirectional packed-sequence encoder, attention decoder,
+  training-only vocabulary, pointer-generator copy mechanism for unseen schema
+  identifiers, CPU smoke training, Colab-ready configuration, and unchanged
+  shared evaluation interfaces.
 - Clarified that Hugging Face Transformers is reserved for the planned Part 3
   modern model and has not yet been installed or trained.
 - Updated the progress-log rule to record every meaningful checkpoint, decision,
@@ -120,13 +146,35 @@ before ending every work session.
 - The GitHub repository was initially empty, so GitHub currently treats
   `spec/agent-governance-rules` as its default branch. A proper default branch
   and PR base should be established before merging feature work.
-- The deterministic baseline remains limited on broader official data:
-  25-example smoke execution accuracy is 0.0800 on both WikiSQL and Spider.
-- Larger evaluation, run manifests, scripted demos, and report-ready error
-  analysis remain outstanding.
+- The deterministic baseline remains limited on broader official data,
+  especially Spider joins and compositional queries; the 250-example results
+  are evidence, not final benchmark claims.
+- Full-dev evaluation is currently running locally on CPU. HPC GPU submission
+  remains paused due to partition configuration, and the deterministic
+  SQLite-heavy evaluation is not GPU-accelerated.
+- Full-dev evaluation completed: WikiSQL retained 8,415/8,421 with execution
+  accuracy 0.0723; Spider retained 1,034/1,034 with execution accuracy
+  0.0580. Full breakdowns and manifest are under
+  `/Users/roshini/datasets/text-to-sql/artifacts-template-full-dev/`.
+- Rechecked HPC connectivity non-destructively. SSH succeeded; remote host is
+  `hpc01.sharanga.local`, user is `csisnlp_20`, home is
+  `/home/csisnlp_20`. Slurm 25.05.3 is available. `nvidia-smi` is not
+  available on the login node, and `uv` is not on its PATH. GPU partition,
+  compute-node visibility, and remote project paths remain unconfirmed.
+- Audited and substantially expanded the LSTM pointer-generator specification.
+  The design now defines the per-example extended vocabulary, generation/copy
+  mixture equation, target mapping precedence, teacher-forced NLL, padding
+  masks, duplicate-source accumulation, exact copied-token reconstruction,
+  explicit unknown-token failures, and isolated copy-mechanism test gates.
+- Scripted demos, full report-ready error analysis, and clean reproduction
+  remain outstanding.
 - HPC GPU job submission is currently paused; CPU-only work can continue.
+  Connectivity is healthy, but scheduler resource details and GPU partition
+  readiness must be confirmed before submitting jobs.
 - PR creation is now approval-gated; no automatic PRs for ordinary checkpoints.
-- No modern model or novelty implementation exists yet.
+- No LSTM implementation, transformer model, or novelty implementation exists
+  yet. The A1 design is approved and preprocessing is the next implementation
+  checkpoint.
 - HPC remote project path and scheduler details are not confirmed.
 - The modern-model dependency set is intentionally not installed yet; it will
   be added only after the Part 2 baseline and compute requirements are clearer.
@@ -135,17 +183,19 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Run a larger bounded official-data evaluation and preserve a run manifest.
-2. Inspect breakdowns and select representative baseline successes/failures.
-3. Add scripted easy/filter/failure demo examples and rehearse the CLI.
-4. Draft report sections and evidence required by Part 2.
-5. Confirm the HPC remote project path and scheduler before creating a local
-   project sync/job workflow.
-6. Continue CPU-only work while GPU submission is paused.
-7. Do not open another PR until the user requests it or approves a notified
-   major-checkpoint PR recommendation.
-8. Before the next session ends, update this file and provide a context-history
-   summary.
+1. Implement model-side tokenization and training-only vocabulary/copy-target
+   handling for the additive LSTM.
+2. Add vocabulary and copy-mechanism tests.
+3. Add the bounded CPU smoke training loop and checkpoint reload test.
+4. Run comparable LSTM WikiSQL/Spider smoke evaluations through the existing
+   metrics and reports.
+5. Inspect baseline breakdowns and select representative successes/failures.
+6. Add scripted easy/filter/failure demo examples and rehearse the CLI.
+7. Draft report sections and evidence required by Part 2.
+8. Confirm the HPC remote project path and scheduler before any job workflow.
+9. Continue CPU-only work while GPU submission is paused.
+10. Do not open another PR until the user requests it or approves a notified
+    major-checkpoint PR recommendation.
 
 ## Session metadata
 
@@ -154,4 +204,4 @@ before ending every work session.
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-authority-review` |
 | Overall estimate | 76% |
-| Next review point | After larger evaluation and report-ready error analysis |
+| Next review point | LSTM preprocessing checkpoint |
