@@ -67,7 +67,16 @@ before ending every work session.
   artifact-directory resolution, and explicit missing-path validation.
 - Added dataset acquisition/layout instructions and a bounded WikiSQL/Spider
   smoke runner that writes prediction and evaluation artifacts.
-- Full test suite now passes with 16 tests and Ruff clean.
+- Downloaded and extracted the official WikiSQL and Yale Spider releases
+  outside the repository; recorded source URLs and archive SHA-256 hashes in
+  `/Users/roshini/datasets/text-to-sql/dataset-manifest.json`.
+- Ran the bounded official-data smoke evaluation with 5 WikiSQL and 5 Spider
+  development examples; both retained 5 examples with 0 exclusions. The
+  template baseline achieved 0.0000 WikiSQL and 0.4000 Spider execution
+  accuracy.
+- Updated execution comparison to ignore SQL result-column label case while
+  retaining order-sensitive row comparison, with a regression test.
+- Full test suite now passes with 18 tests and Ruff clean.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
 - Updated governance so PRs are raised only when explicitly requested or after
@@ -90,8 +99,10 @@ before ending every work session.
 - The GitHub repository was initially empty, so GitHub currently treats
   `spec/agent-governance-rules` as its default branch. A proper default branch
   and PR base should be established before merging feature work.
-- Real WikiSQL and Spider benchmark datasets are not yet acquired/configured;
-  the new smoke runner is therefore not yet a benchmark result.
+- WikiSQL smoke execution is still zero for the deterministic template
+  baseline, so question parsing and condition rendering need improvement.
+- Spider smoke execution is 0.4000; remaining failures are mostly projection,
+  ordering, aggregation, and table/column selection limitations.
 - HPC GPU job submission is currently paused; CPU-only work can continue.
 - PR creation is now approval-gated; no automatic PRs for ordinary checkpoints.
 - No modern model or novelty implementation exists yet.
@@ -103,10 +114,12 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Review the baseline, evaluation-report, and smoke-configuration checkpoint;
+1. Review the baseline, evaluation-report, official-data smoke checkpoint;
    PR creation is approval-gated and no PR is currently open.
-2. Configure permitted WikiSQL and Spider data using `data/README.md`.
-3. Run `uv run python scripts/run_part2_smoke.py` and save artifacts.
+2. Inspect the saved official-data prediction/report artifacts and categorize
+   WikiSQL failures.
+3. Improve WikiSQL schema matching, condition extraction, and projection
+   parsing with targeted tests.
 4. Confirm the HPC remote project path and scheduler before creating a local
    project sync/job workflow.
 5. Continue CPU-only work while GPU submission is paused.
@@ -121,5 +134,5 @@ before ending every work session.
 |---|---|
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-classical-baseline` |
-| Overall estimate | 63% |
-| Next review point | After approved datasets produce the first smoke artifacts |
+| Overall estimate | 70% |
+| Next review point | After WikiSQL parser improvements and smoke rerun |

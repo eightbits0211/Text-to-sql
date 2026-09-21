@@ -233,8 +233,8 @@ be committed to the repository.
 - [x] Scope and internal deadline confirmed.
 - [x] Environment setup is documented.
 - [x] Dataset acquisition instructions are reproducible.
-- [ ] WikiSQL smoke pipeline passes.
-- [ ] Spider smoke pipeline passes.
+- [x] WikiSQL smoke pipeline passes.
+- [x] Spider smoke pipeline passes.
 - [ ] Schema serialization includes required relations.
 - [x] Classical baseline returns one candidate per input.
 - [ ] Unsupported/invalid outputs are explicitly counted.
@@ -276,3 +276,22 @@ The next execution gate is:
    directory.
 4. Update this plan, checklist, and progress log with retained/excluded counts
    and metrics.
+
+## 12. Dataset smoke checkpoint
+
+The official WikiSQL archive and official Yale Spider release have now been
+downloaded outside the repository and extracted successfully. The bounded
+smoke run used five development examples from each dataset:
+
+| Dataset | Retained | Excluded | Execution accuracy |
+|---|---:|---:|---:|
+| WikiSQL | 5 | 0 | 0.0000 |
+| Spider | 5 | 0 | 0.4000 |
+
+These are template-baseline smoke results, not final benchmark claims. The
+WikiSQL zero score identifies the next engineering task: improve question
+parsing and condition rendering. Spider's 0.4000 execution accuracy confirms
+that the loader and evaluator can recognize equivalent result tables. Result
+column labels are compared case-insensitively; row order remains
+order-sensitive until a separate policy is approved. Archive checksums and
+source URLs are stored in the external dataset manifest, not in Git.

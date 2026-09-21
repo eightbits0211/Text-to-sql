@@ -49,6 +49,15 @@ def test_template_baseline_selects_table_and_count() -> None:
     )
 
 
+def test_template_baseline_matches_plural_table_name() -> None:
+    baseline = TemplateBaseline()
+
+    assert baseline.predict("How many singers are there?", DatabaseSchema(
+        "concert",
+        (TableSpec("singer", (ColumnSpec("id", "INTEGER"),)), TableSpec("concert", (ColumnSpec("id", "INTEGER"),))),
+    )) == 'SELECT COUNT(*) FROM "singer"'
+
+
 def test_template_baseline_evaluates_and_writes_jsonl(tmp_path: Path) -> None:
     database_path = tmp_path / "shop.sqlite"
     connection = sqlite3.connect(database_path)

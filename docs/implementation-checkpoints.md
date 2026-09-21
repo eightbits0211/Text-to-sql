@@ -57,7 +57,7 @@ Last checklist update: 2026-09-21
 - [x] 3.7 Compute counts and exclusion statistics.
 - [x] 3.8 Emit normalized records.
 - [x] 3.9 Add unit tests for valid and invalid records.
-- [ ] 3.10 Run WikiSQL smoke command and save evidence.
+- [x] 3.10 Run WikiSQL smoke command and save evidence.
 
 ## Phase 4 — Spider pipeline
 
@@ -78,7 +78,7 @@ Last checklist update: 2026-09-21
 - [x] 5.2 Define SQL whitespace/case normalization.
 - [ ] 5.3 Define identifier and literal handling policy.
 - [x] 5.4 Define safe read-only SQLite execution settings.
-- [ ] 5.5 Define result-table ordering/comparison policy.
+- [x] 5.5 Define result-table ordering/comparison policy.
 - [x] 5.6 Define structured SQL failure categories.
 - [x] 5.7 Test valid, invalid, empty, and schema-error SQL.
 
@@ -93,8 +93,8 @@ Last checklist update: 2026-09-21
 - [x] 6.7 Implement model adapter interface.
 - [x] 6.8 Add baseline unit tests.
 - [x] 6.9 Run WikiSQL training/fitting or initialization.
-- [ ] 6.10 Run WikiSQL dev evaluation.
-- [ ] 6.11 Run Spider smoke evaluation.
+- [x] 6.10 Run WikiSQL dev evaluation.
+- [x] 6.11 Run Spider smoke evaluation.
 - [x] 6.12 Save predictions and run manifest.
 
 ## Phase 7 — Evaluation harness

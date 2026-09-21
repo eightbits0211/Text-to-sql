@@ -1,5 +1,6 @@
 import json
 import sqlite3
+from dataclasses import replace
 from pathlib import Path
 
 from text_to_sql.data.contracts import DatasetSplit
@@ -106,6 +107,21 @@ def test_evaluation_reports_exact_execution_and_invalid_sql(tmp_path: Path) -> N
     assert report.exact_match_accuracy == 1.0
     assert report.execution_accuracy == 1.0
     assert report.invalid_sql_rate == 0.0
+
+
+def test_execution_accuracy_ignores_sql_alias_case(tmp_path: Path) -> None:
+    source_path, schema_path, database_root = _create_spider_fixture(tmp_path)
+    loaded = load_spider(source_path, schema_path, database_root, split=DatasetSplit.DEV)
+    example = replace(loaded.records[0], gold_sql="SELECT count(*) FROM customers")
+    prediction = Prediction(
+        example_id=example.example_id,
+        model_name="fixture",
+        predicted_sql='SELECT COUNT(*) FROM "customers"',
+    )
+
+    report = evaluate_predictions((example,), (prediction,))
+
+    assert report.execution_accuracy == 1.0
 
 
 def test_evaluation_counts_missing_prediction_as_invalid(tmp_path: Path) -> None:

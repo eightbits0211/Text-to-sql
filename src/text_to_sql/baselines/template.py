@@ -119,7 +119,10 @@ class TemplateBaseline:
     def _choose_table(cls, question: str, schema: DatabaseSchema) -> TableSpec:
         words = set(re.findall(r"[a-z0-9_]+", question.lower()))
         choices = [
-            _TableChoice(table, sum(part in words for part in table.name.lower().split("_")))
+            _TableChoice(
+                table,
+                sum(cls._word_matches(part, words) for part in table.name.lower().split("_")),
+            )
             for table in schema.tables
         ]
         return max(choices, key=lambda choice: (choice.score, -schema.tables.index(choice.table))).table
@@ -128,11 +131,23 @@ class TemplateBaseline:
     def _choose_column(cls, question: str, table: TableSpec):
         lowered = question.lower()
         for column in table.columns:
-            if column.name.lower() in lowered:
+            if cls._word_matches(column.name.lower(), set(re.findall(r"[a-z0-9_]+", lowered))):
                 return column
         if not table.columns:
             raise ValueError(f"table has no columns: {table.name}")
         return table.columns[0]
+
+    @staticmethod
+    def _word_matches(word: str, question_words: set[str]) -> int:
+        normalized = word.replace("_", " ").lower()
+        tokens = normalized.split()
+        if normalized in question_words or any(token in question_words for token in tokens):
+            return 1
+        if any(token.endswith("s") and token[:-1] in question_words for token in tokens):
+            return 1
+        if any(token + "s" in question_words for token in tokens):
+            return 1
+        return 0
 
     @staticmethod
     def _quote(identifier: str) -> str:
