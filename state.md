@@ -90,6 +90,13 @@ before ending every work session.
 - Fixed an identifier-selection bug where “names of singers” selected
   `Singer_ID`; the baseline now selects `Name`. Added a regression test and
   verified the CLI returns all six singer names.
+- Clarified the modeling decision in the technology stack: the deterministic
+  template/grammar parser is the selected Part 2 classical baseline; an LSTM
+  remains an allowed alternative but is not being implemented currently.
+- Clarified that Hugging Face Transformers is reserved for the planned Part 3
+  modern model and has not yet been installed or trained.
+- Updated the progress-log rule to record every meaningful checkpoint, decision,
+  bug fix, experiment, blocker, and handoff with evidence and next action.
 - Full test suite now passes with 23 tests and Ruff clean.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
@@ -145,6 +152,6 @@ before ending every work session.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Active branch | `feature/part2-classical-baseline` |
+| Active branch | `feature/part2-authority-review` |
 | Overall estimate | 76% |
 | Next review point | After larger evaluation and report-ready error analysis |

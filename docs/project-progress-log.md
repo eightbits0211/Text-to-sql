@@ -14,7 +14,7 @@ claims about final model accuracy.
 | Current phase | Part 2 baseline quality and evidence |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
-| Active branch | `feature/part2-classical-baseline` |
+| Active branch | `feature/part2-authority-review` |
 | Current blocker | HPC GPU job submission is paused during partitioning configuration; repository default-branch strategy and HPC remote project/scheduler details remain open |
 | Next checkpoint | Run larger evaluation with manifest and add report-ready error analysis |
 
@@ -56,6 +56,7 @@ claims about final model accuracy.
 | P2.19 | Review | Part 2 merge and authority alignment review | Done | 100% | Lead agent | PR #5 merged as `048cae6`; current implementation aligned with Part 2 PDF requirements, with report/evidence gaps recorded | Improve baseline and prepare report |
 | P2.20 | Baseline | Projection, condition, aggregation, and multi-condition parsing | Done | 100% | Classical baseline agent | 22 tests pass; official 25-example smoke results: WikiSQL 0.0800, Spider 0.0800 execution accuracy | Run larger evaluation and analyze errors |
 | P2.21 | Baseline | Identifier-aware projection selection | Done | 100% | Lead agent | Regression test confirms “names of singers” selects `Name`, not `Singer_ID`; 23 tests pass; CLI verified | Run larger evaluation and analyze errors |
+| P2.22 | Baseline/Debugging | User-reported names projection bug fixed | Done | 100% | Lead agent | Reproduced CLI output selecting `Singer_ID`; updated semantic column scoring; 23 tests pass; CLI now prints six singer names | Run larger evaluation and analyze errors |
 | P2.9 | Governance | PR creation made approval-gated | Done | 100% | Lead agent | [`agent-rules.md`](./agent-rules.md) updated; no automatic PR policy | Notify user at major checkpoints |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |
@@ -80,3 +81,31 @@ When changing this log:
    `Deferred`.
 4. Add evidence such as a file, test command, metric artifact, or PR link.
 5. Record blockers explicitly instead of lowering the percentage silently.
+
+## Decision and evidence record
+
+### 2026-09-21 — Classical baseline selection
+
+- **Decision:** Use the deterministic template/grammar parser as the Part 2
+  classical baseline.
+- **Alternatives considered:** Sequence-to-sequence LSTM.
+- **Reason:** Both are allowed by the project requirements, but the template
+  parser is CPU-friendly, deterministic, interpretable, and faster to validate
+  before the September 30 freeze. HPC GPU submission is paused.
+- **Impact:** Part 2 focuses on baseline quality, evaluation, demo, and report
+  evidence. The LSTM is not being silently promised or partially implemented.
+- **Future compatibility:** The baseline exposes the shared fit/predict/evaluate
+  interface, so a Part 3 transformer can use the same evaluator and CLI.
+
+### 2026-09-21 — Official smoke and projection correction
+
+- **Initial observation:** On the official 25-example slices, execution
+  accuracy was 0.0800 for WikiSQL and Spider.
+- **User-reported bug:** “What are the names of all singers?” generated
+  `SELECT "Singer_ID" FROM "singer"`.
+- **Correction:** Added semantic name-column scoring and a regression test;
+  the same CLI query now generates `SELECT "Name" FROM "singer"` and returns
+  six names.
+- **Evidence:** `uv run pytest` → 23 passed; Ruff passed; CLI smoke command
+  verified manually.
+- **Next action:** Run a larger evaluation and preserve a run manifest.
