@@ -36,6 +36,8 @@ before ending every work session.
   be committed to the temporary remote default branch.
 - Documented HPC security and setup requirements without reading or copying the
   local private key.
+- Added a standing rule to provide a context-history summary before every
+  session ends.
 - Initialized local Git on `spec/agent-governance-rules`.
 - Configured the intended `origin` remote.
 - Added agent governance rules for surgical edits, clarification, configuration,
@@ -63,6 +65,8 @@ before ending every work session.
 3. Implement and test the WikiSQL data contract and schema serializer.
 4. Implement the WikiSQL-first loader and deterministic schema serializer.
 5. Confirm HPC connection details before creating a local SSH alias.
+6. Before the next session ends, update this file and provide a context-history
+   summary.
 
 ## Session metadata
 
@@ -70,5 +74,5 @@ before ending every work session.
 |---|---|
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-data-contracts` |
-| Overall estimate | 22% |
+| Overall estimate | 23% |
 | Next review point | After default-branch strategy and data contracts |

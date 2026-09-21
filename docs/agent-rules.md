@@ -67,6 +67,10 @@ assistant session working in this repository.
 13. Keep autonomous fix/debug loops bounded: after 3 consecutive failed attempts
     at the same issue, stop, preserve the failure trace, and ask the user for
     direction instead of trying a fourth autonomous fix.
+14. Before every session ends, provide a context-history summary covering
+    completed work, decisions, current blockers, active branch/PR, validation
+    performed, and next immediate steps. Update `state.md` first so the summary
+    remains recoverable.
 
 ## 4. NLP/Text-to-SQL rules
 
