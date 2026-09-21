@@ -85,9 +85,9 @@ Last checklist update: 2026-09-21
 ## Phase 6 — Classical baseline
 
 - [x] 6.1 Select template/grammar or LSTM baseline and record rationale.
-- [ ] 6.2 Define supported SQL subset.
-- [ ] 6.3 Define question parsing features.
-- [ ] 6.4 Define schema matching behavior.
+- [x] 6.2 Define supported SQL subset.
+- [x] 6.3 Define question parsing features.
+- [x] 6.4 Define schema matching behavior.
 - [x] 6.5 Implement SQL rendering.
 - [x] 6.6 Implement unsupported-input behavior.
 - [x] 6.7 Implement model adapter interface.
@@ -166,3 +166,20 @@ Last checklist update: 2026-09-21
 - [ ] 11.7 Open PR for review.
 - [ ] 11.8 Incorporate review feedback through additional commits.
 - [ ] 11.9 Submit only after user approval.
+
+## Current Part 2 gate
+
+Part 2 implementation is approximately **72% complete**. The merged
+checkpoint proves the data, evaluation, and demo path on official five-example
+smoke slices, but it is not yet submission-ready. Remaining Part 2 gates are:
+
+- Improve WikiSQL projection, condition, aggregation, and multi-column parsing.
+- Run a larger bounded evaluation and preserve the resulting artifacts.
+- Add scripted easy, filter, and failure demo examples.
+- Draft the required report sections, citations, dataset statistics, method,
+  preliminary results, limitations, and error analysis.
+- Add a run manifest and clean-environment reproduction instructions.
+- Rehearse the demo and freeze scope by September 30.
+
+The modern transformer and novelty tracks remain Part 3 work and are not
+required to close the Part 2 gate.

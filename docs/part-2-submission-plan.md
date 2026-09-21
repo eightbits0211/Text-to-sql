@@ -295,3 +295,30 @@ that the loader and evaluator can recognize equivalent result tables. Result
 column labels are compared case-insensitively; row order remains
 order-sensitive until a separate policy is approved. Archive checksums and
 source URLs are stored in the external dataset manifest, not in Git.
+
+## 13. Authority alignment and remaining Part 2 work
+
+The current implementation is aligned with the authoritative course
+description and evaluation requirements for the **Part 2 baseline stage**:
+
+| Requirement area | Current status |
+|---|---|
+| Dataset selection and justification | Covered: Spider primary, WikiSQL warm-up, sources and citations documented |
+| Classical baseline | Covered: deterministic template baseline with shared adapter |
+| Schema/data processing | Covered: official loaders, typed records, schema serialization, exclusions |
+| Evaluation | Covered: exact match, execution accuracy, invalid-SQL rate, breakdown reports |
+| Error analysis | Partially covered: quantitative breakdowns exist; report-ready examples remain |
+| Demonstration | Covered technically: CLI question → SQL → result/error |
+| Report evidence | Outstanding: sections, citations, statistics, and polished error analysis |
+| Modern model and novelty | Intentionally deferred to Part 3 |
+
+The project is therefore consistent with the PDFs at the current milestone,
+but it must not be presented as the complete course project yet. Remaining
+Part 2 work is primarily quality and evidence work:
+
+1. Improve baseline coverage beyond the five-example smoke slice.
+2. Save a larger reproducible run manifest and metric artifacts.
+3. Add three scripted demo cases and rehearse them from a clean environment.
+4. Draft and review the required report sections and preliminary error analysis.
+5. Freeze Part 2 scope on September 30 and open the final review PR only after
+   user approval.

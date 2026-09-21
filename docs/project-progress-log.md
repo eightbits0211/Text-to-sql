@@ -10,13 +10,13 @@ claims about final model accuracy.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Overall completion | 70% |
-| Current phase | Part 2 baseline smoke analysis |
+| Overall completion | 72% |
+| Current phase | Part 2 evidence and baseline quality |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
 | Active branch | `feature/part2-classical-baseline` |
 | Current blocker | HPC GPU job submission is paused during partitioning configuration; repository default-branch strategy and HPC remote project/scheduler details remain open |
-| Next checkpoint | Improve WikiSQL condition/projection parsing and rerun smoke |
+| Next checkpoint | Improve baseline coverage, add demo cases, and draft report evidence |
 
 ## Checkpoint log
 
@@ -53,6 +53,7 @@ claims about final model accuracy.
 | P2.16 | Reproducibility | Typed dataset configuration and smoke runner | Done | 100% | Lead agent | `config.py`, `data/README.md`, `scripts/run_part2_smoke.py`; explicit missing-path failure and CLI help | Configure real dataset paths |
 | P2.17 | Dataset/Evaluation | Official WikiSQL and Spider download and smoke run | Done | 100% | Lead agent | External archives verified; 5 retained/0 excluded per dataset; artifacts written outside Git; Spider execution accuracy 0.4000, WikiSQL 0.0000 | Improve WikiSQL parsing |
 | P2.18 | Evaluation | Result-table comparison policy | Done | 100% | Lead agent | Execution comparison now ignores SQL result-column label case; row order remains sensitive; regression test added; 18 tests pass | Reassess ordering policy before full evaluation |
+| P2.19 | Review | Part 2 merge and authority alignment review | Done | 100% | Lead agent | PR #5 merged as `048cae6`; current implementation aligned with Part 2 PDF requirements, with report/evidence gaps recorded | Improve baseline and prepare report |
 | P2.9 | Governance | PR creation made approval-gated | Done | 100% | Lead agent | [`agent-rules.md`](./agent-rules.md) updated; no automatic PR policy | Notify user at major checkpoints |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |

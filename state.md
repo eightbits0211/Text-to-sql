@@ -76,6 +76,11 @@ before ending every work session.
   accuracy.
 - Updated execution comparison to ignore SQL result-column label case while
   retaining order-sensitive row comparison, with a regression test.
+- Raised and merged PR #5 for the official-dataset smoke checkpoint:
+  `https://github.com/eightbits0211/Text-to-sql/pull/5`.
+- Audited the implementation against the authoritative project description and
+  evaluation PDF. The Part 2 baseline stage is aligned, while report evidence,
+  larger evaluation, scripted demos, and baseline quality remain outstanding.
 - Full test suite now passes with 18 tests and Ruff clean.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
@@ -114,18 +119,17 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Review the baseline, evaluation-report, official-data smoke checkpoint;
-   PR creation is approval-gated and no PR is currently open.
-2. Inspect the saved official-data prediction/report artifacts and categorize
-   WikiSQL failures.
-3. Improve WikiSQL schema matching, condition extraction, and projection
-   parsing with targeted tests.
-4. Confirm the HPC remote project path and scheduler before creating a local
+1. Improve WikiSQL schema matching, condition extraction, projection, and
+   aggregation parsing with targeted tests.
+2. Run a larger bounded official-data evaluation and preserve a run manifest.
+3. Add scripted easy/filter/failure demo examples and rehearse the CLI.
+4. Draft report sections and evidence required by Part 2.
+5. Confirm the HPC remote project path and scheduler before creating a local
    project sync/job workflow.
-5. Continue CPU-only work while GPU submission is paused.
-6. Do not open another PR until the user requests it or approves a notified
+6. Continue CPU-only work while GPU submission is paused.
+7. Do not open another PR until the user requests it or approves a notified
    major-checkpoint PR recommendation.
-7. Before the next session ends, update this file and provide a context-history
+8. Before the next session ends, update this file and provide a context-history
    summary.
 
 ## Session metadata
@@ -134,5 +138,5 @@ before ending every work session.
 |---|---|
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-classical-baseline` |
-| Overall estimate | 70% |
-| Next review point | After WikiSQL parser improvements and smoke rerun |
+| Overall estimate | 72% |
+| Next review point | After baseline quality and Part 2 report evidence checkpoint |
