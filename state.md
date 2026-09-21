@@ -45,6 +45,17 @@ before ending every work session.
   - contract tests.
 - Implemented read-only SQLite schema extraction and synthetic fixture tests for
   tables, columns, types, primary keys, and foreign keys.
+- Implemented the WikiSQL JSON loader with structured SQL reconstruction,
+  configurable database resolution, single-table filtering, schema attachment,
+  and explicit exclusion/statistics reporting.
+- Implemented the Spider loader with official-style schema metadata, database
+  resolution, difficulty labels, query-structure classification, and exclusion
+  statistics.
+- Added Spider cross-domain join fixtures.
+- Implemented the CPU-only evaluation harness for SQL normalization, read-only
+  SQLite execution, exact match, execution accuracy, invalid-SQL rate, and
+  per-example failure records.
+- Full test suite now passes with 12 tests and Ruff clean.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
 - Updated governance so PRs are raised only when explicitly requested or after
@@ -79,9 +90,10 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Review and merge the SQLite fixture/schema-extraction PR.
-2. Implement and test the WikiSQL data loader.
-3. Add deterministic dataset statistics and exclusion reporting.
+1. Review this combined data/evaluation checkpoint; PR creation is
+   approval-gated.
+2. Confirm evaluation policy decisions before expanding reports and metrics.
+3. Implement the classical baseline behind the shared prediction interface.
 4. Confirm the HPC remote project path and scheduler before creating a local
    project sync/job workflow.
 6. Continue CPU-only fixtures, loaders, evaluator, and CLI work while GPU
@@ -96,6 +108,6 @@ before ending every work session.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Active branch | `feature/part2-sqlite-fixtures` |
-| Overall estimate | 31% |
-| Next review point | After PR #3 review and WikiSQL loader implementation |
+| Active branch | `feature/part2-wikisql-loader` |
+| Overall estimate | 45% |
+| Next review point | After approval to raise the combined data/evaluation PR |
