@@ -144,7 +144,7 @@ class TemplateBaseline:
     def _choose_column(cls, question: str, table: TableSpec) -> ColumnSpec:
         words = set(re.findall(r"[a-z0-9_]+", question.lower()))
         matches = [
-            (cls._word_matches(column.name.lower(), words), -index, column)
+            (cls._column_match_score(column.name, words), -index, column)
             for index, column in enumerate(table.columns)
         ]
         best = max(matches, default=(0, 0, None))
@@ -153,6 +153,22 @@ class TemplateBaseline:
         if not table.columns:
             raise ValueError(f"table has no columns: {table.name}")
         return table.columns[0]
+
+    @staticmethod
+    def _column_match_score(column_name: str, question_words: set[str]) -> int:
+        normalized = column_name.lower().replace("_", " ")
+        tokens = normalized.split()
+        if normalized in question_words:
+            return 3
+        if len(tokens) > 1 and all(token in question_words for token in tokens):
+            return 3
+        if normalized.endswith("s") and normalized[:-1] in question_words:
+            return 2
+        if normalized + "s" in question_words:
+            return 2
+        if "_" not in column_name and normalized in question_words:
+            return 2
+        return 0
 
     @classmethod
     def _extract_conditions(

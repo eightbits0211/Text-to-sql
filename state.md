@@ -87,7 +87,10 @@ before ending every work session.
 - Revalidated the official data with a 25-example slice per dataset: 25
   retained and 0 excluded for each; execution accuracy improved to 0.0800 for
   both WikiSQL and Spider.
-- Full test suite now passes with 22 tests and Ruff clean.
+- Fixed an identifier-selection bug where “names of singers” selected
+  `Singer_ID`; the baseline now selects `Name`. Added a regression test and
+  verified the CLI returns all six singer names.
+- Full test suite now passes with 23 tests and Ruff clean.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
 - Updated governance so PRs are raised only when explicitly requested or after
@@ -143,5 +146,5 @@ before ending every work session.
 |---|---|
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-classical-baseline` |
-| Overall estimate | 75% |
+| Overall estimate | 76% |
 | Next review point | After larger evaluation and report-ready error analysis |
