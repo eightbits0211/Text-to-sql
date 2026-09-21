@@ -14,9 +14,9 @@ claims about final model accuracy.
 | Current phase | Planning and repository setup |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
-| Active branch | `spec/agent-governance-rules` |
-| Current blocker | Repository default-branch strategy and HPC remote project/scheduler details remain open |
-| Next checkpoint | Review data-contract PR, then implement fixtures and WikiSQL loader |
+| Active branch | `feature/part2-data-contracts` |
+| Current blocker | HPC GPU job submission is paused during partitioning configuration; repository default-branch strategy and HPC remote project/scheduler details remain open |
+| Next checkpoint | Review PR #2, then implement fixtures and WikiSQL loader |
 
 ## Checkpoint log
 
@@ -40,8 +40,9 @@ claims about final model accuracy.
 | P2.2 | Repository | Initial project baseline pushed | Done | 100% | Lead agent | Commits `72fbc48`, `cee1f4e`; branch pushed using `eightbits0211` CLI account | Establish PR base/default branch |
 | P2.3 | HPC | HPC security/setup notes documented | Done | 100% | Lead agent | [`hpc-setup.md`](./hpc-setup.md); no key read or copied | Confirm host/user/scheduler |
 | P2.4 | Governance | Session-end context-history rule documented | Done | 100% | Lead agent | [`agent-rules.md`](./agent-rules.md) and [`../state.md`](../state.md) updated | Apply at every session end |
-| P2.5 | Data | Typed contracts and deterministic schema serializer | Done | 100% | Lead agent | `src/text_to_sql/data/`; 3 tests pass; Ruff passes | Add SQLite fixtures |
+| P2.5 | Data | Typed contracts and deterministic schema serializer | Done | 100% | Lead agent | `src/text_to_sql/data/`; 3 tests pass; Ruff passes; PR #2 open | Add SQLite fixtures after review |
 | P2.6 | HPC | Non-destructive SSH authentication test | Done | 100% | Lead agent | Host authentication succeeded; no key contents accessed | Confirm remote path/scheduler |
+| P2.7 | Repository/HPC | PR #1 merged and GPU submission pause recorded | Done | 100% | Lead agent | PR #1 merged; HPC team pause is documented | Continue CPU-only work; resume GPU work when enabled |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |
 | P2.3 | Data | WikiSQL loader and validation | Not started | 0% | Unassigned | Part 2 gate | Implement fixtures/tests |
@@ -59,7 +60,8 @@ claims about final model accuracy.
 When changing this log:
 
 1. Update `Last updated`, `Overall completion`, and `Next checkpoint`.
-2. Change only affected rows; preserve historical notes.
+2. Change only affected rows; preserve historical notes. Do not update this
+   file for every small edit, test, or intermediate command.
 3. Set status to one of `Not started`, `In progress`, `Blocked`, `Done`, or
    `Deferred`.
 4. Add evidence such as a file, test command, metric artifact, or PR link.
