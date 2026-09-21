@@ -7,6 +7,7 @@ dependencies = []
 
 [project.scripts]
 text-to-sql-demo = "text_to_sql.cli:main"
+text-to-sql-part2-smoke = "scripts.run_part2_smoke:main"
 
 [dependency-groups]
 dev = [

@@ -27,20 +27,20 @@ Last checklist update: 2026-09-21
 - [x] 1.1 Identify supported Python version.
 - [x] 1.2 Create dependency manifest.
 - [x] 1.3 Add reproducible environment setup instructions.
-- [ ] 1.4 Add typed configuration model.
-- [ ] 1.5 Add environment-variable and CLI overrides for paths.
+- [x] 1.4 Add typed configuration model.
+- [x] 1.5 Add environment-variable and CLI overrides for paths.
 - [ ] 1.6 Add seed configuration and deterministic seed helper.
-- [ ] 1.7 Add run-name and artifact-directory resolution.
-- [ ] 1.8 Add `--help` output for each planned entry point.
+- [x] 1.7 Add run-name and artifact-directory resolution.
+- [x] 1.8 Add `--help` output for each planned entry point.
 - [x] 1.9 Run a clean-environment import smoke test.
 - [x] 1.10 Update progress log with command evidence.
 
 ## Phase 2 — Dataset acquisition and fixtures
 
-- [ ] 2.1 Document Spider source, license/citation, expected layout, and checksum policy.
-- [ ] 2.2 Document WikiSQL source, license/citation, expected layout, and checksum policy.
+- [x] 2.1 Document Spider source, license/citation, expected layout, and checksum policy.
+- [x] 2.2 Document WikiSQL source, license/citation, expected layout, and checksum policy.
 - [x] 2.3 Add small committed synthetic fixtures for tests.
-- [ ] 2.4 Add local dataset download/preparation instructions without credentials.
+- [x] 2.4 Add local dataset download/preparation instructions without credentials.
 - [x] 2.5 Define canonical dataset record schema.
 - [x] 2.6 Define exclusion reasons and counters.
 - [x] 2.7 Define deterministic split/statistics output schema.
@@ -92,7 +92,7 @@ Last checklist update: 2026-09-21
 - [x] 6.6 Implement unsupported-input behavior.
 - [x] 6.7 Implement model adapter interface.
 - [x] 6.8 Add baseline unit tests.
-- [ ] 6.9 Run WikiSQL training/fitting or initialization.
+- [x] 6.9 Run WikiSQL training/fitting or initialization.
 - [ ] 6.10 Run WikiSQL dev evaluation.
 - [ ] 6.11 Run Spider smoke evaluation.
 - [x] 6.12 Save predictions and run manifest.
