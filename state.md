@@ -28,28 +28,30 @@ before ending every work session.
 - Verified the environment smoke test, pytest, and Ruff all pass.
 - Prepared the initial project documentation and setup for publication on the
   dedicated specification branch.
+- Created local commit `72fbc48`
+  (`chore: establish Text-to-SQL project baseline`).
 - Initialized local Git on `spec/agent-governance-rules`.
-- Configured the intended `origin` remote without committing or pushing.
+- Configured the intended `origin` remote.
 - Added agent governance rules for surgical edits, clarification, configuration,
   branch/PR safety, and progress tracking.
 
 ## Current roadblocks
 
-- The repository has no commits yet; the initial project baseline is ready to
-  commit and push on the specification branch.
-- The initial tracked-file scope has not been approved.
-- Dataset acquisition and the Python implementation environment are not set up.
-- No implementation baseline, tests, or demo exists yet.
+- GitHub rejected the push with HTTP 403 because the authenticated account
+  `jithu004` does not have permission to push to
+  `eightbits0211/Text-to-sql.git`.
+- Dataset acquisition, typed data contracts, and the implementation baseline are
+  not set up yet.
+- No model implementation or demo exists yet.
 - The modern-model dependency set is intentionally not installed yet; it will
   be added only after the Part 2 baseline and compute requirements are clearer.
-- The evaluation-contract sub-agent is still running.
 - Evaluation policy decisions remain open: literal-sensitive exact-match
   diagnostic, result ordering, accuracy denominators, and Spider split policy.
 
 ## Next immediate steps
 
-1. Commit and push the reviewed project baseline on the specification branch.
-2. Open a pull request for review; do not merge it automatically.
+1. Resolve GitHub authentication/permission for the configured remote.
+2. Push the existing local specification branch and open a pull request.
 3. Add typed data contracts and synthetic SQLite fixtures.
 4. Implement and test the WikiSQL data contract and schema serializer.
 5. Implement the WikiSQL-first loader and deterministic schema serializer.
@@ -61,4 +63,4 @@ before ending every work session.
 | Last updated | 2026-09-21 |
 | Active branch | `spec/agent-governance-rules` |
 | Overall estimate | 22% |
-| Next review point | After the baseline PR and data contracts |
+| Next review point | After remote permissions are fixed |

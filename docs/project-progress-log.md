@@ -15,8 +15,8 @@ claims about final model accuracy.
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
 | Active branch | `spec/agent-governance-rules` |
-| Current blocker | Initial baseline is uncommitted; data contracts are next |
-| Next checkpoint | Commit/push baseline, then implement data contracts and fixtures |
+| Current blocker | GitHub push rejected with HTTP 403 for authenticated account `jithu004` |
+| Next checkpoint | Resolve remote permissions, then push and open PR |
 
 ## Checkpoint log
 
@@ -37,7 +37,7 @@ claims about final model accuracy.
 | P1.8 | Coordination | Environment and data-pipeline agents completed bounded reports | Done | 100% | Lead agent | Agent reports received; no files modified | Resolve setup decisions |
 | P1.9 | Coordination | Evaluation-contract agent report | Done | 100% | Evaluation agent | Shared evaluator contracts and fixture acceptance checks received | Confirm policy decisions |
 | P2.1 | Environment | Python 3.12 + uv environment and smoke test | Done | 100% | Lead agent | `uv sync --dev`, pytest, Ruff, and SQLite smoke test pass | Implement data contracts |
-| P2.2 | Repository | Initial project baseline staged for specification branch | In progress | 75% | Lead agent | Docs, setup, package skeleton, and environment test selected; source attachments excluded | Commit and push; open PR |
+| P2.2 | Repository | Initial project baseline committed locally | In progress | 90% | Lead agent | Commit `72fbc48`; push blocked by GitHub permission error; source attachments excluded | Fix authentication/permission and push |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |
 | P2.3 | Data | WikiSQL loader and validation | Not started | 0% | Unassigned | Part 2 gate | Implement fixtures/tests |
