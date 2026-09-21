@@ -42,13 +42,19 @@ report polishing, packaging, and submission—not for starting new core features
 
 ## 3. Deliberately reduced Part 2 scope
 
-The following are explicitly deferred to Part 3:
+The following remain explicitly deferred to Part 3:
 
 - Fine-tuned transformer model as the main modern system.
 - Constrained decoding or execution-error self-correction.
 - Novelty ablations.
 - BIRD evaluation.
 - Production-style deployment and conversational memory.
+
+An additive CPU-fallback LSTM seq2seq baseline is now included in the Part 2
+comparison plan. It does not replace the deterministic template baseline and
+must not block the Part 2 submission if compute constraints prevent comparable
+results. Its architecture and validation gates are specified in
+[`lstm-baseline-design.md`](./lstm-baseline-design.md).
 
 The Part 2 baseline must still be designed behind an interface that will allow
 the Part 3 model to use the same evaluation and demo layers.
@@ -57,9 +63,10 @@ the Part 3 model to use the same evaluation and demo layers.
 
 ### Classical baseline
 
-Use a deterministic template/grammar-based baseline first because it is faster
-to debug and easier to demonstrate than implementing an LSTM from scratch.
-The baseline should support a bounded but explicit subset such as:
+Use the deterministic template/grammar baseline as the stable primary baseline.
+Add the LSTM seq2seq model as a secondary trainable baseline after its design
+checkpoint is reviewed. The template baseline should support a bounded but
+explicit subset such as:
 
 - SELECT columns
 - Single-table filtering
@@ -69,6 +76,8 @@ The baseline should support a bounded but explicit subset such as:
 
 Unsupported questions must return an empty candidate or a clearly recorded
 unsupported result; they must not be silently reported as successful queries.
+The LSTM must use the same prediction adapter and evaluation path so the two
+baselines can be compared without changing metric definitions.
 
 ### Dataset order
 
@@ -295,3 +304,46 @@ that the loader and evaluator can recognize equivalent result tables. Result
 column labels are compared case-insensitively; row order remains
 order-sensitive until a separate policy is approved. Archive checksums and
 source URLs are stored in the external dataset manifest, not in Git.
+
+## 13. Authority alignment and remaining Part 2 work
+
+The current implementation is aligned with the authoritative course
+description and evaluation requirements for the **Part 2 baseline stage**:
+
+| Requirement area | Current status |
+|---|---|
+| Dataset selection and justification | Covered: Spider primary, WikiSQL warm-up, sources and citations documented |
+| Classical baselines | Covered: deterministic template baseline; additive LSTM design checkpoint completed and implementation gated on review |
+| Schema/data processing | Covered: official loaders, typed records, schema serialization, exclusions |
+| Evaluation | Covered: exact match, execution accuracy, invalid-SQL rate, breakdown reports |
+| Error analysis | Partially covered: quantitative breakdowns exist; report-ready examples remain |
+| Demonstration | Covered technically: CLI question → SQL → result/error |
+| Report evidence | Outstanding: sections, citations, statistics, and polished error analysis |
+| Modern transformer model and novelty | Intentionally deferred to Part 3 |
+
+The project is therefore consistent with the PDFs at the current milestone,
+but it must not be presented as the complete course project yet. Remaining
+Part 2 work is primarily quality and evidence work:
+
+1. Improve baseline coverage beyond the five-example smoke slice.
+2. Save a larger reproducible run manifest and metric artifacts.
+3. Add three scripted demo cases and rehearse them from a clean environment.
+4. Draft and review the required report sections and preliminary error analysis.
+5. Freeze Part 2 scope on September 30 and open the final review PR only after
+   user approval.
+
+## 14. Baseline quality checkpoint
+
+The deterministic baseline now supports simple projection selection, equality
+and comparison conditions, multiple `AND` conditions, common aggregations, and
+limited natural-language age/country phrasing. On a bounded official
+development slice of 25 examples per dataset, the current smoke results are:
+
+| Dataset | Retained | Excluded | Execution accuracy |
+|---|---:|---:|---:|
+| WikiSQL | 25 | 0 | 0.0800 |
+| Spider | 25 | 0 | 0.0800 |
+
+These are preliminary baseline results, not final benchmark claims. The next
+gate is a larger reproducible run with a manifest and report-ready error
+analysis.

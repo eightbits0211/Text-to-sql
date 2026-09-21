@@ -65,9 +65,10 @@ assistant session working in this repository.
     documented command-line arguments with validated defaults.
 12. Update the persistent project state file at the end of every work session
     with what was completed, current roadblocks, and next immediate steps.
-    Update the project progress log only for major checkpoints, milestone
-    completion, blockers, scope changes, or important handoffs; do not add a
-    row for every small edit or test.
+    Update the project progress log at every meaningful implementation
+    checkpoint, decision, bug fix, experiment run, blocker, or handoff. Each
+    entry must state what changed, why it changed, evidence/commands, and the
+    next action. Routine repeated commands may be grouped into one entry.
 13. Keep autonomous fix/debug loops bounded: after 3 consecutive failed attempts
     at the same issue, stop, preserve the failure trace, and ask the user for
     direction instead of trying a fourth autonomous fix.
