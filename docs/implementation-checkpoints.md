@@ -139,8 +139,11 @@ Last checklist update: 2026-09-21
 
 - [x] 9.1 Document LSTM architecture, vocabulary, copy mechanism, compute
   fallback, and integration boundaries.
-- [ ] 9.2 Reuse loader/schema records and add model-side tokenization.
-- [ ] 9.3 Build training-only vocabulary and copy-target handling.
+- [ ] 9.2 Reuse loader/schema records and add model-side tokenization. **In
+  progress on `feature/lstm-preprocessing`.**
+- [ ] 9.3 Build training-only vocabulary and copy-target handling. **In
+  progress on `feature/lstm-preprocessing`; isolated tests are required before
+  the encoder/decoder phase.**
 - [ ] 9.4 Implement packed-sequence encoder and attention decoder.
 - [ ] 9.5 Add checkpointing and CPU-only 200-example smoke test.
 - [ ] 9.6 Add local CPU and Colab-ready run configurations.
@@ -201,6 +204,11 @@ smoke slices, but it is not yet submission-ready. Remaining Part 2 gates are:
   preliminary results, limitations, and error analysis.
 - Add a run manifest and clean-environment reproduction instructions.
 - Rehearse the demo and freeze scope by September 30.
+
+The report-ready template evaluation now uses the complete official
+development splits: 8,415 retained WikiSQL records and 1,034 Spider records.
+The LSTM preprocessing checkpoint is active, but the template baseline remains
+the primary Part 2 fallback and the LSTM must not block submission.
 
 The modern transformer and novelty tracks remain Part 3 work and are not
 required to close the Part 2 gate.

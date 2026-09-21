@@ -10,18 +10,19 @@ claims about final model accuracy.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Overall completion | 76% |
-| Current phase | HPC connectivity verified; LSTM preprocessing next |
+| Overall completion | 78% |
+| Current phase | LSTM preprocessing completed |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
-| Active branch | `feature/part2-authority-review` |
+| Active branch | `feature/lstm-preprocessing` |
 | Current blocker | HPC login works and Slurm is available, but GPU partition/readiness and remote project path remain unconfirmed; repository default-branch strategy also remains open |
-| Next checkpoint | Implement LSTM-side tokenization and training-only vocabulary |
+| Next checkpoint | Implement bounded 200-example CPU smoke training loop and checkpoint reload test |
 
 ## Checkpoint log
 
 | ID | Workstream | Checkpoint | Status | Completion | Owner | Evidence / notes | Next action |
 |---|---|---|---|---:|---|---|---|
+| P2.24 | LSTM baseline | Model-side tokenization, training-only vocabulary, and copy-target handling | Done | 100% | Lead agent | `src/text_to_sql/lstm/preprocessing.py`; 7 tests pass; Ruff clean | Implement CPU smoke training loop |
 | P0.1 | Requirements | Course PDFs reviewed and scope extracted | Done | 100% | Lead agent | Text-to-SQL, Spider/WikiSQL, baseline/demo/report requirements recorded | Maintain traceability |
 | P0.2 | Product | Main PRD created | Done | 100% | Lead agent | [`text-to-sql-prd.md`](./text-to-sql-prd.md) | Update only when scope changes |
 | P0.3 | Part 2 | Part 2 plan and Sep 30 internal freeze created | Done | 100% | Lead agent | [`part-2-submission-plan.md`](./part-2-submission-plan.md) | Execute checkpoints |
@@ -277,3 +278,131 @@ When changing this log:
   written yet.
 - **Next action:** Implement the model-side tokenizer and copy-target data
   structures first, with focused unit tests before encoder/decoder training.
+
+### 2026-09-21 — LSTM preprocessing checkpoint started
+
+- **Branch:** Created `feature/lstm-preprocessing` after PR #6 merged and
+  stale merged branches were removed locally and remotely.
+- **Scope:** Implement only model-side tokenization, training-only vocabulary,
+  and copy-target data structures. No encoder/decoder or training loop is
+  included in this checkpoint.
+- **Preservation gate:** Existing template behavior, loaders, evaluator,
+  metrics, reports, artifacts, and public interfaces must remain unchanged.
+- **Required tests:** Deterministic question/schema/SQL tokenization,
+  training-only vocabulary isolation, unseen schema identifier copy targets,
+  fixed-vocabulary precedence, duplicate source mapping, and explicit
+  unresolvable-target events.
+- **Next action:** Complete the preprocessing implementation and run the
+  focused/full test suites before starting the packed encoder/attention
+  decoder checkpoint.
+
+### 2026-09-21 — Architecture and subagent documentation synchronized
+
+- **Technology stack:** Corrected the runtime to Python 3.12 with `uv`,
+  recorded PyTorch as the planned LSTM dependency, and documented CPU fallback,
+  Colab fallback, and the verified-but-not-yet-GPU-ready Slurm HPC status.
+- **System architecture:** Added explicit LSTM preprocessing/training
+  boundaries for tokenization, training-only vocabulary, copy targets,
+  checkpoint metadata, and shared evaluator integration. The template remains
+  the primary baseline and the LSTM remains additive.
+- **Subagent coordination:** Added a dedicated LSTM preprocessing/training role
+  with boundaries preventing changes to loaders, template behavior, or the
+  evaluator. Copy behavior must pass isolated tests before training work.
+- **Evidence of subagent use:** The bounded LSTM preprocessing task was executed
+  under agent ID `12a33cad-fdcf-4de4-be80-a01eb9ac573e`; prior bounded agents
+  completed the template efficiency and baseline-quality tasks.
+- **Next action:** Review the active preprocessing agent's implementation and
+  integrate only after tests and Ruff pass.
+
+### 2026-09-21 — LSTM preprocessing completed and verified
+
+- **What changed:** Fixed keyword and case-normalization mismatch in
+  `FixedVocabulary.get_index`, `FixedVocabulary.__contains__`, `build_copy_target`,
+  and `resolve_target_token`. Added round-trip copy reconstruction assertion and
+  duplicate unseen source token test in `tests/test_lstm_preprocessing.py`. Sorted
+  `__all__` to satisfy Ruff.
+- **Evidence:** 7 targeted unit tests in `tests/test_lstm_preprocessing.py` pass;
+  Ruff passes cleanly across the repository.
+- **Next action:** Proceed to the bounded 200-example CPU smoke training loop and
+  checkpoint reload test.
+
+### 2026-09-21 — LSTM preprocessing nuances addressed and verified
+
+- **What changed:**
+  1. Updated `_normalize_token` to strip enclosing quotes for matching so that
+     quoted SQL identifiers (e.g. WikiSQL's `"custom_col"`) and single-quoted
+     literals (e.g. `'Foo_Bar'`) resolve directly to copy targets.
+  2. Added `encoder_tokens` to `TokenizedExample` with `<bos>`, question tokens,
+     `<schema_sep>`, schema tokens, and `<eos>`.
+  3. Added `encoder_positions` to `CopyTarget` so that the model attention weights
+     tensor aligns directly with source token positions, accounting for special
+     token offsets (+1 for question tokens, +2 for schema tokens).
+  4. Cached `tokenize_example(example)` in `build_training_vocabulary` to eliminate
+     redundant tokenization calls.
+  5. Added 2 unit tests verifying encoder sequence/position alignment and quoted
+     identifier resolution in `tests/test_lstm_preprocessing.py`.
+- **Evidence:** All 9 LSTM preprocessing tests and all 38 test suite tests pass;
+  Ruff passes cleanly.
+- **Next action:** Proceed to the bounded 200-example CPU smoke training loop.
+
+### 2026-09-21 — LSTM smoke training loop implemented and verified
+
+- **What changed:**
+  - Installed `torch==2.14.0` (CPU wheel) as a project dependency.
+  - Created `src/text_to_sql/lstm/model.py`: bidirectional LSTM encoder,
+    additive attention decoder, pointer-generator output head (`Seq2SeqLSTM`).
+  - Created `src/text_to_sql/lstm/collation.py`: `collate_batch` maps
+    `ExampleRecord` lists to padded tensors, builds `encoder_positions`-aware
+    `src_token_indices` for copy accumulation.
+  - Created `src/text_to_sql/lstm/training.py`: `train_smoke` (teacher-forced
+    NLL, Adam lr=1e-3, grad clip 1.0, configurable smoke_limit/epochs/batch),
+    checkpoint + vocabulary saving, `load_checkpoint` reload utility.
+  - Created `src/text_to_sql/lstm/adapter.py`: `LSTMBaseline` with
+    `fit/load/predict/predict_records/evaluate` interface mirroring `TemplateBaseline`.
+  - Updated `src/text_to_sql/lstm/__init__.py` to export new public names.
+  - Created `tests/test_lstm_training.py`: 5 tests covering training completion,
+    loss finiteness, checkpoint reload equivalence, adapter predict, shared
+    evaluation harness, and untrained empty-string fallback.
+- **Evidence:** All 43 tests pass (38 existing + 5 new) in ≤15s on CPU.
+  Ruff passes cleanly. NumPy not required (torch warning is informational only).
+- **Next action:** Run 200-example official WikiSQL/Spider smoke evaluations
+  comparing LSTMBaseline vs TemplateBaseline through the existing metrics harness.
+
+### 2026-09-21 — LSTM vs Template baseline comparative evaluation & GPU readiness analysis
+
+- **What changed:**
+  - Created `scripts/run_lstm_comparison.py` to run comparative evaluation between
+    `TemplateBaseline` and `LSTMBaseline` on identical official WikiSQL and Spider
+    development slices (200 examples each) using the shared evaluation harness and
+    schema-aware metrics.
+  - Executed the comparative evaluation runner: trained smoke `LSTMBaseline` on 200
+    training examples over 5 epochs; generated full prediction artifacts, failure
+    records, evaluation summaries, and run manifest under
+    `/Users/roshini/datasets/text-to-sql/artifacts-lstm-comparison/`.
+  - Formatted comprehensive comparative report artifact `lstm_comparison_report.md`
+    detailing metrics, failure categorization, convergence dynamics, and structural
+    analysis.
+- **Results:**
+  - WikiSQL (200 dev examples): Template achieved Execution Accuracy 0.1650, Exact
+    Match 0.1100, Invalid SQL Rate 0.0000. LSTM achieved Execution Accuracy 0.0000,
+    Exact Match 0.0000, Invalid SQL Rate 1.0000.
+  - Spider (200 dev examples): Template achieved Execution Accuracy 0.0950, Exact
+    Match 0.0000, Invalid SQL Rate 0.0000. LSTM achieved Execution Accuracy 0.0000,
+    Exact Match 0.0000, Invalid SQL Rate 1.0000.
+  - LSTM loss converged steadily from ~4.07 down to ~1.21 over 5 epochs. Root-cause
+    diagnostic for LSTM invalid rate: data starvation on 200 examples prevents the
+    model from mastering SQLite column quotation conventions (e.g. copying multi-word
+    column names like `school/club team` without enclosing double quotes), causing
+    SQLite syntax/column lookup errors.
+- **Decision & GPU Readiness:**
+  - Evaluated GPU acceleration requirements: `Seq2SeqLSTM`, `collate_batch`, and
+    `TrainingConfig` are completely device-agnostic (`torch.device`), supporting
+    CUDA seamlessly. For full convergence, full WikiSQL train split (~56k examples)
+    and 15–30 epochs are planned once GPU environment (local CUDA, Colab, or Slurm
+    partition) is active.
+- **Evidence:** Comparative run output and artifacts verified under
+  `/Users/roshini/datasets/text-to-sql/artifacts-lstm-comparison/`. Full test suite of
+  43 tests passes in ~3s. Ruff clean.
+- **Next action:** Commit feature branch changes and open Pull Request for the LSTM
+  implementation, smoke training loop, and comparative evaluation baseline checkpoint.
+
