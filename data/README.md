@@ -20,6 +20,9 @@ export TEXT2SQL_SMOKE_LIMIT=25
 WikiSQL database filenames must match `{database_id}.db` by default. Spider
 database files must match `{database_id}/{database_id}.sqlite` by default.
 These patterns are configurable when calling the loaders directly.
+For the official WikiSQL archive, point `TEXT2SQL_WIKISQL_SOURCE` to
+`dev.jsonl`; the smoke runner automatically uses the adjacent
+`dev.tables.jsonl` metadata file and `dev.db` database.
 
 ## Sources and verification
 

@@ -30,6 +30,8 @@ def main() -> int:
                 config.wikisql_source,
                 config.wikisql_database_root,
                 split=DatasetSplit.DEV,
+                database_pattern="dev.db",
+                table_metadata_path=config.wikisql_source.with_name("dev.tables.jsonl"),
                 smoke_limit=config.smoke_limit,
             ),
         ),
