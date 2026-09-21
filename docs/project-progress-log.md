@@ -10,13 +10,13 @@ claims about final model accuracy.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Overall completion | 23% |
+| Overall completion | 27% |
 | Current phase | Planning and repository setup |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
 | Active branch | `spec/agent-governance-rules` |
-| Current blocker | Repository is empty-origin initialized with the specification branch as temporary default; HPC details are unknown |
-| Next checkpoint | Establish PR base/default branch, then implement data contracts |
+| Current blocker | Repository default-branch strategy and HPC remote project/scheduler details remain open |
+| Next checkpoint | Review data-contract PR, then implement fixtures and WikiSQL loader |
 
 ## Checkpoint log
 
@@ -40,6 +40,8 @@ claims about final model accuracy.
 | P2.2 | Repository | Initial project baseline pushed | Done | 100% | Lead agent | Commits `72fbc48`, `cee1f4e`; branch pushed using `eightbits0211` CLI account | Establish PR base/default branch |
 | P2.3 | HPC | HPC security/setup notes documented | Done | 100% | Lead agent | [`hpc-setup.md`](./hpc-setup.md); no key read or copied | Confirm host/user/scheduler |
 | P2.4 | Governance | Session-end context-history rule documented | Done | 100% | Lead agent | [`agent-rules.md`](./agent-rules.md) and [`../state.md`](../state.md) updated | Apply at every session end |
+| P2.5 | Data | Typed contracts and deterministic schema serializer | Done | 100% | Lead agent | `src/text_to_sql/data/`; 3 tests pass; Ruff passes | Add SQLite fixtures |
+| P2.6 | HPC | Non-destructive SSH authentication test | Done | 100% | Lead agent | Host authentication succeeded; no key contents accessed | Confirm remote path/scheduler |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |
 | P2.3 | Data | WikiSQL loader and validation | Not started | 0% | Unassigned | Part 2 gate | Implement fixtures/tests |
