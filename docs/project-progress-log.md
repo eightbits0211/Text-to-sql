@@ -10,13 +10,13 @@ claims about final model accuracy.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Overall completion | 36% |
+| Overall completion | 45% |
 | Current phase | Planning and repository setup |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
 | Active branch | `feature/part2-wikisql-loader` |
 | Current blocker | HPC GPU job submission is paused during partitioning configuration; repository default-branch strategy and HPC remote project/scheduler details remain open |
-| Next checkpoint | Review WikiSQL loader checkpoint, then implement Spider loader |
+| Next checkpoint | Review combined data/evaluation checkpoint; request PR approval |
 
 ## Checkpoint log
 
@@ -45,6 +45,7 @@ claims about final model accuracy.
 | P2.7 | Repository/HPC | PR #1 merged and GPU submission pause recorded | Done | 100% | Lead agent | PR #1 merged; HPC team pause is documented | Continue CPU-only work; resume GPU work when enabled |
 | P2.8 | Data | SQLite schema extraction and synthetic fixture tests | Done | 100% | Lead agent | `sqlite_schema.py`; 6 tests pass; Ruff passes | Implement WikiSQL loader |
 | P2.10 | Data | WikiSQL JSON loader and exclusion statistics | Done | 100% | Lead agent | `wikisql.py`; 9 tests pass; Ruff passes; no PR opened yet | Implement Spider loader |
+| P2.11 | Data/Evaluation | Spider loader, fixtures, and CPU evaluation harness | Done | 100% | Lead agent | `spider.py`, `metrics.py`; 12 tests pass; Ruff passes; no PR opened | Review checkpoint and select baseline |
 | P2.9 | Governance | PR creation made approval-gated | Done | 100% | Lead agent | [`agent-rules.md`](./agent-rules.md) updated; no automatic PR policy | Notify user at major checkpoints |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |
