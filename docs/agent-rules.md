@@ -11,8 +11,9 @@ assistant session working in this repository.
    `spec/part2-baseline-plan` or `feature/part2-data-pipeline`.
 3. Never force-push, rewrite shared history, amend someone else's commit, or
    reset/discard unrelated work.
-4. Every completed change must be submitted through a pull request targeting the
-   default branch.
+4. Do not open a pull request automatically after every completed change.
+   Open a PR only when the user explicitly asks, or after informing the user
+   that a major checkpoint is ready and receiving approval to raise it.
 5. The agent must not merge its own pull request unless the user explicitly
    requests that action and repository policy permits it.
 6. Before opening a PR, inspect the diff, run the smallest relevant validation,
@@ -118,7 +119,9 @@ assistant session working in this repository.
 7. Review the diff for accidental files, secrets, generated data, and unrelated
    edits.
 8. Commit only on the dedicated branch.
-9. Open/update the PR with summary, tests, artifacts, and known limitations.
+9. If a PR has been requested or approved at a major checkpoint, open/update it
+   with summary, tests, artifacts, and known limitations. Otherwise report that
+   the branch is ready without opening a PR.
 10. Stop and ask the user when a design choice materially changes scope,
     evaluation validity, deadlines, or external resource usage.
 11. At the autonomous-loop limit, report the attempted approaches, commands or

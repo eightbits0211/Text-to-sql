@@ -47,6 +47,8 @@ before ending every work session.
   tables, columns, types, primary keys, and foreign keys.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
+- Updated governance so PRs are raised only when explicitly requested or after
+  notifying the user that a major checkpoint is ready and receiving approval.
 - Merged PR #1 into `spec/agent-governance-rules`.
 - Merged PR #2 for the data-contract slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/2`.
@@ -67,6 +69,7 @@ before ending every work session.
   and PR base should be established before merging feature work.
 - Dataset acquisition and loaders are not set up yet.
 - HPC GPU job submission is currently paused; CPU-only work can continue.
+- PR creation is now approval-gated; no automatic PRs for ordinary checkpoints.
 - No model implementation or demo exists yet.
 - HPC remote project path and scheduler details are not confirmed.
 - The modern-model dependency set is intentionally not installed yet; it will
@@ -83,6 +86,8 @@ before ending every work session.
    project sync/job workflow.
 6. Continue CPU-only fixtures, loaders, evaluator, and CLI work while GPU
    submission is paused.
+7. Do not open another PR until the user requests it or approves a notified
+   major-checkpoint PR recommendation.
 6. Before the next session ends, update this file and provide a context-history
    summary.
 
