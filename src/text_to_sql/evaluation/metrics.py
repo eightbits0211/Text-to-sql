@@ -84,7 +84,8 @@ def evaluate_predictions(
         execution_match = (
             gold_result.status == "success"
             and predicted_result.status == "success"
-            and gold_result.columns == predicted_result.columns
+            and tuple(column.lower() for column in gold_result.columns)
+            == tuple(column.lower() for column in predicted_result.columns)
             and gold_result.rows == predicted_result.rows
         )
         failure_category = None

@@ -230,22 +230,22 @@ be committed to the repository.
 
 ## 9. Part 2 checklist
 
-- [ ] Scope and internal deadline confirmed.
-- [ ] Environment setup is documented.
-- [ ] Dataset acquisition instructions are reproducible.
-- [ ] WikiSQL smoke pipeline passes.
-- [ ] Spider smoke pipeline passes.
+- [x] Scope and internal deadline confirmed.
+- [x] Environment setup is documented.
+- [x] Dataset acquisition instructions are reproducible.
+- [x] WikiSQL smoke pipeline passes.
+- [x] Spider smoke pipeline passes.
 - [ ] Schema serialization includes required relations.
-- [ ] Classical baseline returns one candidate per input.
+- [x] Classical baseline returns one candidate per input.
 - [ ] Unsupported/invalid outputs are explicitly counted.
-- [ ] Exact-match implementation is tested.
-- [ ] Execution accuracy implementation is tested.
-- [ ] Invalid-SQL rate implementation is tested.
-- [ ] Metrics are reproducible from saved predictions.
+- [x] Exact-match implementation is tested.
+- [x] Execution accuracy implementation is tested.
+- [x] Invalid-SQL rate implementation is tested.
+- [x] Metrics are reproducible from saved predictions.
 - [ ] Error analysis tables and examples are prepared.
-- [ ] CLI or GUI demo runs from one command.
+- [x] CLI or GUI demo runs from one command.
 - [ ] Report sections a–d are complete.
-- [ ] Clean-environment verification passes.
+- [x] Clean-environment verification passes.
 - [ ] Final PR is reviewed before submission.
 
 ## 10. Stop/go rules
@@ -258,3 +258,40 @@ be committed to the repository.
   full-data pipeline.
 - **Escalate a blocker** when it remains unresolved for one working day or
   threatens the Sep 30 internal freeze.
+
+## 11. Current checkpoint status
+
+As of September 21, the baseline, evaluation harness, report breakdowns, CLI,
+typed configuration, and dataset-layout instructions are implemented and
+validated on synthetic fixtures. Real WikiSQL and Spider smoke execution is
+intentionally **not marked complete** until the datasets are supplied through
+the documented environment variables. This prevents empty-path runs from being
+reported as benchmark results.
+
+The next execution gate is:
+
+1. Configure approved local WikiSQL and Spider paths.
+2. Run `uv run python scripts/run_part2_smoke.py`.
+3. Inspect prediction and evaluation artifacts under the configured output
+   directory.
+4. Update this plan, checklist, and progress log with retained/excluded counts
+   and metrics.
+
+## 12. Dataset smoke checkpoint
+
+The official WikiSQL archive and official Yale Spider release have now been
+downloaded outside the repository and extracted successfully. The bounded
+smoke run used five development examples from each dataset:
+
+| Dataset | Retained | Excluded | Execution accuracy |
+|---|---:|---:|---:|
+| WikiSQL | 5 | 0 | 0.0000 |
+| Spider | 5 | 0 | 0.4000 |
+
+These are template-baseline smoke results, not final benchmark claims. The
+WikiSQL zero score identifies the next engineering task: improve question
+parsing and condition rendering. Spider's 0.4000 execution accuracy confirms
+that the loader and evaluator can recognize equivalent result tables. Result
+column labels are compared case-insensitively; row order remains
+order-sensitive until a separate policy is approved. Archive checksums and
+source URLs are stored in the external dataset manifest, not in Git.

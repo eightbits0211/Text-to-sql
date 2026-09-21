@@ -17,7 +17,7 @@ from .contracts import (
     QueryStructure,
     SplitStatistics,
 )
-from .schema import serialize_schema
+from .schema import ColumnSpec, DatabaseSchema, TableSpec, serialize_schema
 from .sqlite_schema import load_sqlite_schema
 
 
@@ -27,6 +27,7 @@ def load_wikisql(
     *,
     split: DatasetSplit,
     database_pattern: str = "{database_id}.db",
+    table_metadata_path: Path | None = None,
     smoke_limit: int | None = None,
 ) -> LoadResult:
     """Load standard WikiSQL records and retain single-table queries.
@@ -36,6 +37,7 @@ def load_wikisql(
     or structured ``sql`` fields (``sel``, ``agg``, and ``conds``).
     """
     source_records = _read_records(source_path)
+    table_metadata = _read_table_metadata(table_metadata_path) if table_metadata_path else {}
     if smoke_limit is not None:
         if smoke_limit < 0:
             raise ValueError("smoke_limit must be non-negative")
@@ -53,6 +55,7 @@ def load_wikisql(
                 split=split,
                 database_root=database_root,
                 database_pattern=database_pattern,
+                table_metadata=table_metadata,
             )
         except _Excluded as excluded:
             exclusions.append(
@@ -79,10 +82,25 @@ def _read_records(source_path: Path) -> list[dict[str, Any]]:
     if not source_path.is_file():
         raise FileNotFoundError(f"WikiSQL source does not exist: {source_path}")
     with source_path.open(encoding="utf-8") as source_file:
-        payload = json.load(source_file)
+        if source_path.suffix == ".jsonl":
+            payload = [json.loads(line) for line in source_file if line.strip()]
+        else:
+            payload = json.load(source_file)
     if not isinstance(payload, list) or not all(isinstance(item, dict) for item in payload):
         raise ValueError("WikiSQL source must contain a JSON array of objects")
     return payload
+
+
+def _read_table_metadata(path: Path) -> dict[str, dict[str, Any]]:
+    if not path.is_file():
+        raise FileNotFoundError(f"WikiSQL table metadata does not exist: {path}")
+    with path.open(encoding="utf-8") as source_file:
+        records = [json.loads(line) for line in source_file if line.strip()]
+    return {
+        record["id"]: record
+        for record in records
+        if isinstance(record, dict) and isinstance(record.get("id"), str)
+    }
 
 
 def _build_record(
@@ -93,25 +111,34 @@ def _build_record(
     split: DatasetSplit,
     database_root: Path,
     database_pattern: str,
+    table_metadata: dict[str, dict[str, Any]],
 ) -> ExampleRecord:
     question = _text(source_record.get("question"))
     if not question:
         raise _Excluded(ExclusionReason.MISSING_QUESTION, "question is blank")
 
-    table = source_record.get("table")
+    embedded_table = source_record.get("table")
+    table = embedded_table
+    if table is None and isinstance(source_record.get("table_id"), str):
+        table = table_metadata.get(source_record["table_id"])
     if not isinstance(table, dict):
         raise _Excluded(ExclusionReason.MALFORMED_SOURCE_RECORD, "table object is missing")
-    database_id = _text(table.get("id"))
+    database_id = _text(table.get("id") or source_record.get("table_id"))
     if not database_id:
         raise _Excluded(ExclusionReason.MISSING_DATABASE_ID, "table.id is blank")
     headers = table.get("header")
     if not isinstance(headers, list) or not headers:
         raise _Excluded(ExclusionReason.SCHEMA_UNREADABLE, "table.header is missing")
 
-    gold_sql = _build_sql(source_record.get("sql"), headers, database_id)
+    table_name = (
+        _text(table.get("name")) or database_id
+        if embedded_table is not None
+        else f"table_{database_id.replace('-', '_')}"
+    )
+    gold_sql = _build_sql(source_record.get("sql"), headers, table_name)
     if not gold_sql:
         raise _Excluded(ExclusionReason.MISSING_GOLD_SQL, "SQL is missing or blank")
-    if not _is_single_table_query(gold_sql, database_id):
+    if not _is_single_table_query(gold_sql, table_name):
         raise _Excluded(
             ExclusionReason.UNSUPPORTED_QUERY_STRUCTURE,
             "query references more than one table or a nested query",
@@ -124,7 +151,23 @@ def _build_record(
             f"database file not found for {database_id}",
         )
     try:
-        schema = load_sqlite_schema(database_path, database_id)
+        load_sqlite_schema(database_path, database_id)
+        schema = DatabaseSchema(
+            database_id,
+            (
+                TableSpec(
+                    table_name,
+                    tuple(
+                        ColumnSpec(str(header), str(data_type))
+                        for header, data_type in zip(
+                            headers,
+                            table.get("types", ["TEXT"] * len(headers)),
+                            strict=True,
+                        )
+                    ),
+                ),
+            ),
+        )
     except (OSError, ValueError) as error:
         raise _Excluded(ExclusionReason.DATABASE_UNREADABLE, str(error)) from error
 
