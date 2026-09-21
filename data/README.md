@@ -23,8 +23,25 @@ These patterns are configurable when calling the loaders directly.
 
 ## Sources and verification
 
-Use the official WikiSQL and Spider releases or course-approved mirrors.
-Record the download URL, release/version, local file checksums, and any
+Recommended official sources:
+
+- WikiSQL repository and release archive:
+  <https://github.com/salesforce/WikiSQL>
+- WikiSQL paper/citation: Zhong, Xiong, and Socher, *Seq2SQL*,
+  <https://arxiv.org/abs/1709.00103>
+- Spider dataset page and download:
+  <https://yale-lily.github.io/spider>
+- Spider scripts and evaluation repository:
+  <https://github.com/taoyds/spider>
+- Spider paper/citation: Yu et al., *Spider*,
+  <https://arxiv.org/abs/1809.08887>
+
+The WikiSQL repository identifies its code/data release with the BSD-3-Clause
+license. The Spider dataset page identifies the dataset distribution as
+CC BY-SA 4.0; this is distinct from the license of the Spider helper-code
+repository. Confirm course policy before redistribution.
+
+Record the exact download URL, release/version, local file checksums, and any
 preprocessing in the experiment run manifest. Do not commit downloaded files,
 credentials, or private benchmark labels.
 
