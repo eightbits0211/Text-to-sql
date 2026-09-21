@@ -43,8 +43,10 @@ before ending every work session.
   - deterministic schema serialization,
   - required-field validation,
   - contract tests.
+- Implemented read-only SQLite schema extraction and synthetic fixture tests for
+  tables, columns, types, primary keys, and foreign keys.
 - Merged PR #1 into `spec/agent-governance-rules`.
-- Opened PR #2 for the data-contract slice:
+- Merged PR #2 for the data-contract slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/2`.
 - Merged PR #1 successfully and synchronized the local base branch.
 - Recorded the HPC team's notice that GPU job submission is paused while GPU
@@ -72,11 +74,10 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Push the completed data-contract slice and open its PR.
-2. Add synthetic SQLite fixtures and fixture tests.
-3. Implement and test the WikiSQL data loader.
-4. Implement deterministic schema extraction from SQLite metadata.
-5. Confirm the HPC remote project path and scheduler before creating a local
+1. Review and merge the SQLite fixture/schema-extraction PR.
+2. Implement and test the WikiSQL data loader.
+3. Add deterministic dataset statistics and exclusion reporting.
+4. Confirm the HPC remote project path and scheduler before creating a local
    project sync/job workflow.
 6. Continue CPU-only fixtures, loaders, evaluator, and CLI work while GPU
    submission is paused.
@@ -88,6 +89,6 @@ before ending every work session.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Active branch | `feature/part2-data-contracts` |
-| Overall estimate | 27% |
-| Next review point | After PR #2 review and synthetic fixture implementation |
+| Active branch | `feature/part2-sqlite-fixtures` |
+| Overall estimate | 31% |
+| Next review point | After the SQLite fixture/schema-extraction PR |

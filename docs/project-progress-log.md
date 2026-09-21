@@ -10,13 +10,13 @@ claims about final model accuracy.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Overall completion | 27% |
+| Overall completion | 31% |
 | Current phase | Planning and repository setup |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
-| Active branch | `feature/part2-data-contracts` |
+| Active branch | `feature/part2-sqlite-fixtures` |
 | Current blocker | HPC GPU job submission is paused during partitioning configuration; repository default-branch strategy and HPC remote project/scheduler details remain open |
-| Next checkpoint | Review PR #2, then implement fixtures and WikiSQL loader |
+| Next checkpoint | Review SQLite fixture/schema-extraction PR, then implement WikiSQL loader |
 
 ## Checkpoint log
 
@@ -40,9 +40,10 @@ claims about final model accuracy.
 | P2.2 | Repository | Initial project baseline pushed | Done | 100% | Lead agent | Commits `72fbc48`, `cee1f4e`; branch pushed using `eightbits0211` CLI account | Establish PR base/default branch |
 | P2.3 | HPC | HPC security/setup notes documented | Done | 100% | Lead agent | [`hpc-setup.md`](./hpc-setup.md); no key read or copied | Confirm host/user/scheduler |
 | P2.4 | Governance | Session-end context-history rule documented | Done | 100% | Lead agent | [`agent-rules.md`](./agent-rules.md) and [`../state.md`](../state.md) updated | Apply at every session end |
-| P2.5 | Data | Typed contracts and deterministic schema serializer | Done | 100% | Lead agent | `src/text_to_sql/data/`; 3 tests pass; Ruff passes; PR #2 open | Add SQLite fixtures after review |
+| P2.5 | Data | Typed contracts and deterministic schema serializer | Done | 100% | Lead agent | `src/text_to_sql/data/`; 3 tests pass; Ruff passes; PR #2 merged | Add SQLite fixtures |
 | P2.6 | HPC | Non-destructive SSH authentication test | Done | 100% | Lead agent | Host authentication succeeded; no key contents accessed | Confirm remote path/scheduler |
 | P2.7 | Repository/HPC | PR #1 merged and GPU submission pause recorded | Done | 100% | Lead agent | PR #1 merged; HPC team pause is documented | Continue CPU-only work; resume GPU work when enabled |
+| P2.8 | Data | SQLite schema extraction and synthetic fixture tests | Done | 100% | Lead agent | `sqlite_schema.py`; 6 tests pass; Ruff passes | Implement WikiSQL loader |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |
 | P2.3 | Data | WikiSQL loader and validation | Not started | 0% | Unassigned | Part 2 gate | Implement fixtures/tests |
