@@ -33,17 +33,28 @@ configuration or command-line arguments.
 
 ## 3. NLP and modeling
 
-### Part 2 baseline
+### Part 2 baselines
 
-- Template/grammar-based parser is the recommended first baseline because it
-  minimizes implementation and compute risk.
-- A sequence-to-sequence LSTM remains an allowed alternative if the team selects
-  it after a feasibility check.
+- **Selected baseline:** deterministic template/grammar parser, implemented in
+  `src/text_to_sql/baselines/template.py`. This is the classical baseline
+  used for Part 2.
+- It was selected because it is explicitly allowed by the project requirements,
+  minimizes implementation and compute risk, and provides interpretable
+  errors while HPC GPU submission is paused.
+- **Additive baseline:** CPU-fallback sequence-to-sequence LSTM with
+  attention and a pointer-generator copy mechanism. Its architecture is
+  specified in [`lstm-baseline-design.md`](./lstm-baseline-design.md) and will
+  be implemented without changing the template baseline or shared evaluation
+  interfaces.
+- The template baseline remains primary until the LSTM has comparable,
+  reproducible results. The LSTM is an additional baseline, not a replacement.
 
 ### Part 3 modern model
 
 - PyTorch for tensor computation and training.
-- Hugging Face Transformers for tokenizer, checkpoint, fine-tuning, and inference.
+- Hugging Face Transformers for tokenizer, checkpoint, fine-tuning, and
+  inference **in the planned Part 3 modern model**; no Hugging Face model has
+  been installed or trained yet.
 - T5 or a BERT-based schema-aware parser, selected after a small compute smoke test.
 
 Model checkpoint names, cache directories, maximum sequence lengths, batch sizes,
@@ -116,4 +127,3 @@ Before adding a package:
 
 These choices must be resolved with evidence from smoke tests and available
 compute, not silently hardcoded.
-

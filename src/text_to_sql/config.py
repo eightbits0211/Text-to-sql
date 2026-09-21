@@ -13,7 +13,7 @@ class Part2Config:
     spider_schema: Path
     spider_database_root: Path
     artifact_directory: Path = Path("artifacts/part2")
-    smoke_limit: int = 25
+    smoke_limit: int | None = 25
 
     @classmethod
     def from_environment(cls) -> "Part2Config":
@@ -31,7 +31,7 @@ class Part2Config:
         )
 
     def validate(self) -> None:
-        if self.smoke_limit < 0:
+        if self.smoke_limit is not None and self.smoke_limit < 0:
             raise ValueError("smoke_limit must be non-negative")
         required = (
             self.wikisql_source,
