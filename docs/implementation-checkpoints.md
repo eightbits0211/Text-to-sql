@@ -125,14 +125,14 @@ Last checklist update: 2026-09-21
 - [x] 8.4 Display generated SQL.
 - [x] 8.5 Display validation status.
 - [x] 8.6 Display result table or explicit error.
-- [ ] 8.7 Add scripted easy/filter/failure examples.
+- [x] 8.7 Add scripted easy/filter/failure examples.
 - [ ] 8.8 Draft introduction and motivation.
 - [ ] 8.9 Draft literature survey and citations.
 - [ ] 8.10 Draft dataset/preprocessing section.
 - [ ] 8.11 Draft baseline/method section.
 - [ ] 8.12 Add metrics, preliminary results, and error analysis.
 - [ ] 8.13 Add limitations and reproducibility instructions.
-- [ ] 8.14 Run a clean demo rehearsal.
+- [x] 8.14 Run a clean demo rehearsal.
 - [ ] 8.15 Freeze Part 2 scope on September 30.
 
 ## Phase 9 — LSTM secondary baseline
