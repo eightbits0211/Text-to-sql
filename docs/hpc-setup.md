@@ -16,10 +16,15 @@ repository's source and configuration files.
 
 ## Information still needed
 
-Before configuring a local alias, confirm:
+The currently supplied connection details are:
 
-- HPC hostname
-- HPC username
+- Hostname: `hpc.bits-hyderabad.ac.in`
+- Username: `csisnlp_20`
+- Private key path: `~/.ssh/csisnlp_20`
+- Port: assumed to be 22 unless the HPC documentation says otherwise
+
+Before configuring a local alias, still confirm:
+
 - SSH port, if not 22
 - Remote project directory
 - Whether the cluster requires a login node or a scheduler
@@ -41,6 +46,10 @@ Do not infer these values from the key filename.
 9. Copy only reproducible metrics and report-ready artifacts back to the local
    workspace.
 
+The provided connection was tested successfully on 2026-09-21 using a
+non-destructive authentication command. The remote project directory and
+scheduler are still not confirmed.
+
 ## Example local-only SSH configuration
 
 The following is a template, not a configuration to use without confirmed
@@ -48,13 +57,13 @@ values:
 
 ```sshconfig
 Host project-hpc
-    HostName <confirmed-hpc-hostname>
-    User <confirmed-hpc-username>
-    Port <confirmed-port>
-    IdentityFile ~/.ssh/<confirmed-key-filename>
+    HostName hpc.bits-hyderabad.ac.in
+    User csisnlp_20
+    Port 22
+    IdentityFile ~/.ssh/csisnlp_20
     IdentitiesOnly yes
 ```
 
-The actual host, user, port, and key filename must remain in the user's local
-SSH configuration and must not be committed.
-
+The actual connection configuration should remain in the user's local SSH
+configuration and must not be committed. The private key itself must never be
+read, copied, or committed.
