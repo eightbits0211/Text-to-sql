@@ -31,10 +31,14 @@
               ┌────────────────────┴────────────────────┐
               ↓                                         ↓
    ┌──────────────────────┐                 ┌──────────────────────┐
-   │ Classical baseline   │                 │ Modern transformer   │
-   │ template/grammar/LSTM│                 │ T5 or schema-aware   │
+   │ Classical baselines  │                 │ Modern transformer   │
+   │ template/grammar     │                 │ T5 or schema-aware   │
+   │ additive seq2seq LSTM│                 │ parser (Part 3)      │
    └──────────┬───────────┘                 └──────────┬───────────┘
-              └────────────────────┬────────────────────┘
+              │                                        │
+              │ LSTM preprocessing/training             │
+              │ tokenization → vocab → copy targets    │
+              └────────────────────┬───────────────────┘
                                    ↓
                     ┌─────────────────────────────┐
                     │ SQL normalization/validation│
@@ -59,7 +63,9 @@
 src/
   config/       Typed configuration and environment/path resolution
   data/         Dataset loaders, validators, schema serialization, statistics
-  models/       Classical and transformer adapters
+  models/       Template and LSTM adapters; future transformer adapters
+  preprocessing/ LSTM tokenization, vocabularies, copy-target mappings
+  training/     Packed-sequence training, checkpointing, device configs
   generation/   SQL rendering, normalization, validation, novelty hooks
   evaluation/   Metrics, SQLite execution, reports, error categories
   demo/         CLI first; optional web UI
@@ -143,6 +149,9 @@ EvaluationResult:
 - Dataset roots, database roots, checkpoint paths, seeds, limits, and output
   directories must be configured, not embedded in source code.
 - Configurations must identify dataset, split, model, seed, and run name.
+- LSTM checkpoints must be saved with the tokenizer, vocabulary, copy-target
+  metadata, model configuration, and training configuration used to create
+  them.
 - Each run writes a manifest containing the resolved configuration and software
   version information.
 - Large datasets, checkpoints, generated predictions, and logs remain local or
@@ -162,8 +171,7 @@ EvaluationResult:
 | Component | Part 2 | Part 3 |
 |---|---|---|
 | Data pipeline | Required WikiSQL and Spider smoke path | Scale and harden |
-| Model | Classical baseline | Modern transformer |
+| Model | Template primary plus additive LSTM secondary | Modern transformer |
 | Evaluation | Required metrics and error analysis | Comparative final evaluation |
 | Novelty | Interface only | Constrained decoding or self-correction |
 | UI | CLI required; web optional | Full polished demo |
-

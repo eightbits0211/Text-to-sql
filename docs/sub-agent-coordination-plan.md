@@ -25,8 +25,17 @@ evaluation harness.
 
 ### Classical baseline agent
 
-Owns the selected template/grammar or LSTM baseline behind the shared model
-interface. Must use the data contracts and must not change dataset formats.
+Owns bounded template/grammar improvements and reviews the additive LSTM model
+adapter behind the shared interface. Must use the data contracts and must not
+change dataset formats.
+
+### LSTM preprocessing/training agent
+
+Owns model-side tokenization, training-only vocabularies, copy-target mappings,
+packed-sequence training, attention decoding, checkpoint metadata, and CPU
+smoke validation. It must not change the template baseline, dataset loaders,
+or shared evaluator. Copy-mechanism behavior must be covered by isolated tests
+before full training work begins.
 
 ### Evaluation agent
 
@@ -80,7 +89,12 @@ Data contracts and loaders
           ↓
 Schema serialization
           ↓
-Classical model ───────┐
+Template model ────────┐
+          ↓            │
+LSTM preprocessing     │
+and training           │
+          ↓            │
+Classical model ───────┘
                        ├──→ Evaluation harness ──→ Error analysis
                        └──→ CLI/demo
                                       ↓
@@ -138,6 +152,7 @@ interface rather than merging incompatible assumptions.
 | Spider loader | Baseline parser design | Record contract |
 | Evaluation tests | Loader implementation | Prediction/result contracts |
 | Baseline implementation | Evaluation implementation | Model interface |
+| LSTM preprocessing | Template regression work, documentation | Existing records/schema contract |
 | CLI integration | Error analysis templates | Prediction interface |
 | Modern model | Final Part 2 report polish | Part 2 freeze and stable evaluator |
 | Novelty | Final report expansion | Modern baseline metrics |
@@ -153,4 +168,3 @@ Escalate immediately when:
 - A data issue changes split membership or benchmark validity.
 - Two agents produce incompatible interfaces.
 - The agent cannot verify a claimed test, branch, commit, or PR.
-
