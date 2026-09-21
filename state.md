@@ -166,15 +166,23 @@ before ending every work session.
   mixture equation, target mapping precedence, teacher-forced NLL, padding
   masks, duplicate-source accumulation, exact copied-token reconstruction,
   explicit unknown-token failures, and isolated copy-mechanism test gates.
+- Implemented and verified LSTM preprocessing on `feature/lstm-preprocessing`:
+  deterministic tokenization, training-only vocabulary, copy-target structures
+  with pointer-generator extended vocabulary, resolution precedence, and
+  unresolvable target events. 7 unit tests pass and Ruff is clean.
+- Synchronized the technology stack, system architecture, and subagent
+  coordination documents with the approved additive LSTM workflow. The stack
+  now records Python 3.12/`uv`, PyTorch for LSTM work, CPU/Colab fallback, and
+  verified Slurm connectivity without claiming GPU readiness.
+
+## Current roadblocks
+
 - Scripted demos, full report-ready error analysis, and clean reproduction
   remain outstanding.
 - HPC GPU job submission is currently paused; CPU-only work can continue.
   Connectivity is healthy, but scheduler resource details and GPU partition
   readiness must be confirmed before submitting jobs.
 - PR creation is now approval-gated; no automatic PRs for ordinary checkpoints.
-- No LSTM implementation, transformer model, or novelty implementation exists
-  yet. The A1 design is approved and preprocessing is the next implementation
-  checkpoint.
 - HPC remote project path and scheduler details are not confirmed.
 - The modern-model dependency set is intentionally not installed yet; it will
   be added only after the Part 2 baseline and compute requirements are clearer.
@@ -183,25 +191,22 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Implement model-side tokenization and training-only vocabulary/copy-target
-   handling for the additive LSTM.
-2. Add vocabulary and copy-mechanism tests.
-3. Add the bounded CPU smoke training loop and checkpoint reload test.
-4. Run comparable LSTM WikiSQL/Spider smoke evaluations through the existing
+1. Implement the bounded 200-example CPU smoke training loop and checkpoint reload test.
+2. Run comparable LSTM WikiSQL/Spider smoke evaluations through the existing
    metrics and reports.
-5. Inspect baseline breakdowns and select representative successes/failures.
-6. Add scripted easy/filter/failure demo examples and rehearse the CLI.
-7. Draft report sections and evidence required by Part 2.
-8. Confirm the HPC remote project path and scheduler before any job workflow.
-9. Continue CPU-only work while GPU submission is paused.
-10. Do not open another PR until the user requests it or approves a notified
-    major-checkpoint PR recommendation.
+3. Inspect baseline breakdowns and select representative successes/failures.
+4. Add scripted easy/filter/failure demo examples and rehearse the CLI.
+5. Draft report sections and evidence required by Part 2.
+6. Confirm the HPC remote project path and scheduler before any job workflow.
+7. Continue CPU-only work while GPU submission is paused.
+8. Do not open another PR until the user requests it or approves a notified
+   major-checkpoint PR recommendation.
 
 ## Session metadata
 
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Active branch | `feature/part2-authority-review` |
-| Overall estimate | 76% |
-| Next review point | LSTM preprocessing checkpoint |
+| Active branch | `feature/lstm-preprocessing` |
+| Overall estimate | 78% |
+| Next review point | LSTM CPU smoke training loop |

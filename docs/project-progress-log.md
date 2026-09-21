@@ -10,18 +10,19 @@ claims about final model accuracy.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Overall completion | 76% |
-| Current phase | HPC connectivity verified; LSTM preprocessing next |
+| Overall completion | 78% |
+| Current phase | LSTM preprocessing completed |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
-| Active branch | `feature/part2-authority-review` |
+| Active branch | `feature/lstm-preprocessing` |
 | Current blocker | HPC login works and Slurm is available, but GPU partition/readiness and remote project path remain unconfirmed; repository default-branch strategy also remains open |
-| Next checkpoint | Implement LSTM-side tokenization and training-only vocabulary |
+| Next checkpoint | Implement bounded 200-example CPU smoke training loop and checkpoint reload test |
 
 ## Checkpoint log
 
 | ID | Workstream | Checkpoint | Status | Completion | Owner | Evidence / notes | Next action |
 |---|---|---|---|---:|---|---|---|
+| P2.24 | LSTM baseline | Model-side tokenization, training-only vocabulary, and copy-target handling | Done | 100% | Lead agent | `src/text_to_sql/lstm/preprocessing.py`; 7 tests pass; Ruff clean | Implement CPU smoke training loop |
 | P0.1 | Requirements | Course PDFs reviewed and scope extracted | Done | 100% | Lead agent | Text-to-SQL, Spider/WikiSQL, baseline/demo/report requirements recorded | Maintain traceability |
 | P0.2 | Product | Main PRD created | Done | 100% | Lead agent | [`text-to-sql-prd.md`](./text-to-sql-prd.md) | Update only when scope changes |
 | P0.3 | Part 2 | Part 2 plan and Sep 30 internal freeze created | Done | 100% | Lead agent | [`part-2-submission-plan.md`](./part-2-submission-plan.md) | Execute checkpoints |
@@ -277,3 +278,50 @@ When changing this log:
   written yet.
 - **Next action:** Implement the model-side tokenizer and copy-target data
   structures first, with focused unit tests before encoder/decoder training.
+
+### 2026-09-21 — LSTM preprocessing checkpoint started
+
+- **Branch:** Created `feature/lstm-preprocessing` after PR #6 merged and
+  stale merged branches were removed locally and remotely.
+- **Scope:** Implement only model-side tokenization, training-only vocabulary,
+  and copy-target data structures. No encoder/decoder or training loop is
+  included in this checkpoint.
+- **Preservation gate:** Existing template behavior, loaders, evaluator,
+  metrics, reports, artifacts, and public interfaces must remain unchanged.
+- **Required tests:** Deterministic question/schema/SQL tokenization,
+  training-only vocabulary isolation, unseen schema identifier copy targets,
+  fixed-vocabulary precedence, duplicate source mapping, and explicit
+  unresolvable-target events.
+- **Next action:** Complete the preprocessing implementation and run the
+  focused/full test suites before starting the packed encoder/attention
+  decoder checkpoint.
+
+### 2026-09-21 — Architecture and subagent documentation synchronized
+
+- **Technology stack:** Corrected the runtime to Python 3.12 with `uv`,
+  recorded PyTorch as the planned LSTM dependency, and documented CPU fallback,
+  Colab fallback, and the verified-but-not-yet-GPU-ready Slurm HPC status.
+- **System architecture:** Added explicit LSTM preprocessing/training
+  boundaries for tokenization, training-only vocabulary, copy targets,
+  checkpoint metadata, and shared evaluator integration. The template remains
+  the primary baseline and the LSTM remains additive.
+- **Subagent coordination:** Added a dedicated LSTM preprocessing/training role
+  with boundaries preventing changes to loaders, template behavior, or the
+  evaluator. Copy behavior must pass isolated tests before training work.
+- **Evidence of subagent use:** The bounded LSTM preprocessing task was executed
+  under agent ID `12a33cad-fdcf-4de4-be80-a01eb9ac573e`; prior bounded agents
+  completed the template efficiency and baseline-quality tasks.
+- **Next action:** Review the active preprocessing agent's implementation and
+  integrate only after tests and Ruff pass.
+
+### 2026-09-21 — LSTM preprocessing completed and verified
+
+- **What changed:** Fixed keyword and case-normalization mismatch in
+  `FixedVocabulary.get_index`, `FixedVocabulary.__contains__`, `build_copy_target`,
+  and `resolve_target_token`. Added round-trip copy reconstruction assertion and
+  duplicate unseen source token test in `tests/test_lstm_preprocessing.py`. Sorted
+  `__all__` to satisfy Ruff.
+- **Evidence:** 7 targeted unit tests in `tests/test_lstm_preprocessing.py` pass;
+  Ruff passes cleanly across the repository.
+- **Next action:** Proceed to the bounded 200-example CPU smoke training loop and
+  checkpoint reload test.
