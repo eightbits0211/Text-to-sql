@@ -11,6 +11,7 @@ from text_to_sql.data.contracts import (
 )
 from text_to_sql.data.schema import ColumnSpec, DatabaseSchema, TableSpec
 from text_to_sql.evaluation.artifacts import write_prediction_artifacts
+from text_to_sql.evaluation.reports import write_evaluation_reports
 
 
 def _schema() -> DatabaseSchema:
@@ -73,3 +74,12 @@ def test_template_baseline_evaluates_and_writes_jsonl(tmp_path: Path) -> None:
     assert json.loads(artifact_path.read_text(encoding="utf-8"))["model_name"] == (
         "template-baseline"
     )
+
+    report_directory = tmp_path / "reports"
+    write_evaluation_reports(report_directory, report, (example,))
+    report_payload = json.loads(
+        (report_directory / "evaluation.json").read_text(encoding="utf-8")
+    )
+    assert report_payload["breakdowns"]["difficulty"][0]["category"] == "easy"
+    assert (report_directory / "breakdowns.csv").is_file()
+    assert (report_directory / "evaluation.md").is_file()
