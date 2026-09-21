@@ -322,3 +322,19 @@ Part 2 work is primarily quality and evidence work:
 4. Draft and review the required report sections and preliminary error analysis.
 5. Freeze Part 2 scope on September 30 and open the final review PR only after
    user approval.
+
+## 14. Baseline quality checkpoint
+
+The deterministic baseline now supports simple projection selection, equality
+and comparison conditions, multiple `AND` conditions, common aggregations, and
+limited natural-language age/country phrasing. On a bounded official
+development slice of 25 examples per dataset, the current smoke results are:
+
+| Dataset | Retained | Excluded | Execution accuracy |
+|---|---:|---:|---:|
+| WikiSQL | 25 | 0 | 0.0800 |
+| Spider | 25 | 0 | 0.0800 |
+
+These are preliminary baseline results, not final benchmark claims. The next
+gate is a larger reproducible run with a manifest and report-ready error
+analysis.

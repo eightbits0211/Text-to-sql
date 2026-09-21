@@ -81,7 +81,13 @@ before ending every work session.
 - Audited the implementation against the authoritative project description and
   evaluation PDF. The Part 2 baseline stage is aligned, while report evidence,
   larger evaluation, scripted demos, and baseline quality remain outstanding.
-- Full test suite now passes with 18 tests and Ruff clean.
+- Delegated the bounded baseline-quality task to the classical baseline
+  subagent. It added projection, comparison/equality condition, multi-condition,
+  aggregation, and limited age/country parsing with targeted tests.
+- Revalidated the official data with a 25-example slice per dataset: 25
+  retained and 0 excluded for each; execution accuracy improved to 0.0800 for
+  both WikiSQL and Spider.
+- Full test suite now passes with 22 tests and Ruff clean.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
 - Updated governance so PRs are raised only when explicitly requested or after
@@ -104,10 +110,10 @@ before ending every work session.
 - The GitHub repository was initially empty, so GitHub currently treats
   `spec/agent-governance-rules` as its default branch. A proper default branch
   and PR base should be established before merging feature work.
-- WikiSQL smoke execution is still zero for the deterministic template
-  baseline, so question parsing and condition rendering need improvement.
-- Spider smoke execution is 0.4000; remaining failures are mostly projection,
-  ordering, aggregation, and table/column selection limitations.
+- The deterministic baseline remains limited on broader official data:
+  25-example smoke execution accuracy is 0.0800 on both WikiSQL and Spider.
+- Larger evaluation, run manifests, scripted demos, and report-ready error
+  analysis remain outstanding.
 - HPC GPU job submission is currently paused; CPU-only work can continue.
 - PR creation is now approval-gated; no automatic PRs for ordinary checkpoints.
 - No modern model or novelty implementation exists yet.
@@ -119,9 +125,8 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Improve WikiSQL schema matching, condition extraction, projection, and
-   aggregation parsing with targeted tests.
-2. Run a larger bounded official-data evaluation and preserve a run manifest.
+1. Run a larger bounded official-data evaluation and preserve a run manifest.
+2. Inspect breakdowns and select representative baseline successes/failures.
 3. Add scripted easy/filter/failure demo examples and rehearse the CLI.
 4. Draft report sections and evidence required by Part 2.
 5. Confirm the HPC remote project path and scheduler before creating a local
@@ -138,5 +143,5 @@ before ending every work session.
 |---|---|
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-classical-baseline` |
-| Overall estimate | 72% |
-| Next review point | After baseline quality and Part 2 report evidence checkpoint |
+| Overall estimate | 75% |
+| Next review point | After larger evaluation and report-ready error analysis |

@@ -39,37 +39,50 @@ class TemplateBaseline:
             raise ValueError("question must not be empty")
         database_schema = self._coerce_schema(schema)
         table = self._choose_table(question, database_schema)
-        column = self._choose_column(question, table)
         lowered = question.lower()
+        conditions = self._extract_conditions(question, table)
+        projection_question = re.split(
+            r"\b(?:where|with|whose|that|which have|who have)\b",
+            question,
+            maxsplit=1,
+            flags=re.IGNORECASE,
+        )[0]
+        column = self._choose_column(projection_question, table)
 
         if re.search(r"\b(how many|number of|count)\b", lowered):
-            return f"SELECT COUNT(*) FROM {self._quote(table.name)}"
-
-        aggregate = next(
-            (
-                function
-                for keyword, function in (
-                    ("average", "AVG"),
-                    ("avg", "AVG"),
-                    ("mean", "AVG"),
-                    ("maximum", "MAX"),
-                    ("max", "MAX"),
-                    ("minimum", "MIN"),
-                    ("min", "MIN"),
-                    ("total", "SUM"),
-                    ("sum", "SUM"),
-                )
-                if keyword in lowered
-            ),
-            None,
-        )
-        if aggregate:
-            return (
-                f"SELECT {aggregate}({self._quote(column.name)}) "
-                f"FROM {self._quote(table.name)}"
+            expression = "COUNT(*)"
+        else:
+            aggregate = next(
+                (
+                    function
+                    for keyword, function in (
+                        ("average", "AVG"),
+                        ("avg", "AVG"),
+                        ("mean", "AVG"),
+                        ("maximum", "MAX"),
+                        ("max", "MAX"),
+                        ("minimum", "MIN"),
+                        ("min", "MIN"),
+                        ("total", "SUM"),
+                        ("sum", "SUM"),
+                    )
+                    if re.search(rf"\b{re.escape(keyword)}\b", lowered)
+                ),
+                None,
+            )
+            expression = (
+                f"{aggregate}({self._quote(column.name)})"
+                if aggregate
+                else self._quote(column.name)
             )
 
-        return f"SELECT {self._quote(column.name)} FROM {self._quote(table.name)}"
+        query = f"SELECT {expression} FROM {self._quote(table.name)}"
+        if conditions:
+            query += " WHERE " + " AND ".join(
+                f"{self._quote(column_name)} {operator} {self._quote_literal(value)}"
+                for column_name, operator, value in conditions
+            )
+        return query
 
     def predict_record(self, example: ExampleRecord) -> Prediction:
         return Prediction(
@@ -128,14 +141,67 @@ class TemplateBaseline:
         return max(choices, key=lambda choice: (choice.score, -schema.tables.index(choice.table))).table
 
     @classmethod
-    def _choose_column(cls, question: str, table: TableSpec):
-        lowered = question.lower()
-        for column in table.columns:
-            if cls._word_matches(column.name.lower(), set(re.findall(r"[a-z0-9_]+", lowered))):
-                return column
+    def _choose_column(cls, question: str, table: TableSpec) -> ColumnSpec:
+        words = set(re.findall(r"[a-z0-9_]+", question.lower()))
+        matches = [
+            (cls._word_matches(column.name.lower(), words), -index, column)
+            for index, column in enumerate(table.columns)
+        ]
+        best = max(matches, default=(0, 0, None))
+        if best[0]:
+            return best[2]
         if not table.columns:
             raise ValueError(f"table has no columns: {table.name}")
         return table.columns[0]
+
+    @classmethod
+    def _extract_conditions(
+        cls, question: str, table: TableSpec
+    ) -> list[tuple[str, str, str]]:
+        """Extract the small comparison vocabulary used by WikiSQL questions."""
+        normalized_question = question
+        if any(column.name.lower() == "age" for column in table.columns):
+            normalized_question = re.sub(
+                r"\b(older|younger)\s+than\b",
+                r"age \1 than",
+                normalized_question,
+                flags=re.IGNORECASE,
+            )
+        if any(column.name.lower() in {"country", "nation"} for column in table.columns):
+            normalized_question = re.sub(
+                r"\bfrom\s+(?P<value>[A-Za-z][A-Za-z -]*?)(?=[?.!,]|$)",
+                r"country from \g<value>",
+                normalized_question,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+        conditions: list[tuple[int, str, str, str]] = []
+        operators = (
+            (r"(?:is\s+)?not\s+equal\s+to|is\s+not", "!="),
+            (r"(?:is\s+)?at\s+least|(?:is\s+)?no\s+less\s+than", ">="),
+            (r"(?:is\s+)?at\s+most|(?:is\s+)?no\s+more\s+than", "<="),
+            (r"greater\s+than|more\s+than|older\s+than|over|above", ">"),
+            (r"less\s+than|fewer\s+than|under|below", "<"),
+            (r"equals?|is|are|in|from|=", "="),
+        )
+        for column in table.columns:
+            aliases = [re.escape(column.name).replace("_", r"[\s_]+")]
+            alias = rf"(?:{'|'.join(aliases)})"
+            for operator_pattern, operator in operators:
+                pattern = (
+                    rf"(?P<column>\b{alias}\b)\s*(?:{operator_pattern})\s*"
+                    r"(?P<value>[^,;?.!]+?)(?=\s+\b(?:and|or|where)\b|[,;?.!]|$)"
+                )
+                match = re.search(pattern, normalized_question, flags=re.IGNORECASE)
+                if match:
+                    value = match.group("value").strip().strip("\"'")
+                    if value:
+                        conditions.append(
+                            (match.start(), column.name, operator, value)
+                        )
+                    break
+        conditions.sort(key=lambda item: item[0])
+        return [(name, operator, value) for _, name, operator, value in conditions]
 
     @staticmethod
     def _word_matches(word: str, question_words: set[str]) -> int:
@@ -152,3 +218,9 @@ class TemplateBaseline:
     @staticmethod
     def _quote(identifier: str) -> str:
         return '"' + identifier.replace('"', '""') + '"'
+
+    @staticmethod
+    def _quote_literal(value: str) -> str:
+        if re.fullmatch(r"-?\d+(?:\.\d+)?", value):
+            return value
+        return "'" + value.replace("'", "''") + "'"

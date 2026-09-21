@@ -58,6 +58,67 @@ def test_template_baseline_matches_plural_table_name() -> None:
     )) == 'SELECT COUNT(*) FROM "singer"'
 
 
+def test_template_baseline_selects_projection_column() -> None:
+    schema = DatabaseSchema(
+        "people",
+        (TableSpec("people", (
+            ColumnSpec("id", "INTEGER"),
+            ColumnSpec("full name", "TEXT"),
+            ColumnSpec("age", "INTEGER"),
+        )),),
+    )
+
+    assert TemplateBaseline().predict("What is the full name of each person?", schema) == (
+        'SELECT "full name" FROM "people"'
+    )
+
+
+def test_template_baseline_extracts_numeric_condition() -> None:
+    schema = DatabaseSchema(
+        "people",
+        (TableSpec("people", (
+            ColumnSpec("name", "TEXT"),
+            ColumnSpec("age", "INTEGER"),
+        )),),
+    )
+
+    assert TemplateBaseline().predict(
+        "Which name belongs to a person older than 30?", schema
+    ) == 'SELECT "name" FROM "people" WHERE "age" > 30'
+
+
+def test_template_baseline_extracts_string_and_multiple_conditions() -> None:
+    schema = DatabaseSchema(
+        "people",
+        (TableSpec("people", (
+            ColumnSpec("name", "TEXT"),
+            ColumnSpec("country", "TEXT"),
+            ColumnSpec("age", "INTEGER"),
+        )),),
+    )
+
+    assert TemplateBaseline().predict(
+        "List the name where country is India and age is at least 18.", schema
+    ) == (
+        'SELECT "name" FROM "people" WHERE "country" = \'India\' AND "age" >= 18'
+    )
+
+
+def test_template_baseline_aggregates_selected_column_with_condition() -> None:
+    schema = DatabaseSchema(
+        "people",
+        (TableSpec("people", (
+            ColumnSpec("name", "TEXT"),
+            ColumnSpec("salary", "INTEGER"),
+            ColumnSpec("country", "TEXT"),
+        )),),
+    )
+
+    assert TemplateBaseline().predict(
+        "What is the average salary for people from India?", schema
+    ) == 'SELECT AVG("salary") FROM "people" WHERE "country" = \'India\''
+
+
 def test_template_baseline_evaluates_and_writes_jsonl(tmp_path: Path) -> None:
     database_path = tmp_path / "shop.sqlite"
     connection = sqlite3.connect(database_path)

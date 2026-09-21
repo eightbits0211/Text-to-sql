@@ -169,11 +169,11 @@ Last checklist update: 2026-09-21
 
 ## Current Part 2 gate
 
-Part 2 implementation is approximately **72% complete**. The merged
+Part 2 implementation is approximately **75% complete**. The merged
 checkpoint proves the data, evaluation, and demo path on official five-example
 smoke slices, but it is not yet submission-ready. Remaining Part 2 gates are:
 
-- Improve WikiSQL projection, condition, aggregation, and multi-column parsing.
+- Improve the baseline beyond the current 25-example smoke results.
 - Run a larger bounded evaluation and preserve the resulting artifacts.
 - Add scripted easy, filter, and failure demo examples.
 - Draft the required report sections, citations, dataset statistics, method,
