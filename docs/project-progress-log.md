@@ -11,12 +11,12 @@ claims about final model accuracy.
 |---|---|
 | Last updated | 2026-09-21 |
 | Overall completion | 76% |
-| Current phase | Part 2 baseline quality and evidence |
+| Current phase | HPC connectivity verified; LSTM preprocessing next |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
 | Active branch | `feature/part2-authority-review` |
-| Current blocker | HPC GPU job submission is paused during partitioning configuration; repository default-branch strategy and HPC remote project/scheduler details remain open |
-| Next checkpoint | Run larger evaluation with manifest and add report-ready error analysis |
+| Current blocker | HPC login works and Slurm is available, but GPU partition/readiness and remote project path remain unconfirmed; repository default-branch strategy also remains open |
+| Next checkpoint | Implement LSTM-side tokenization and training-only vocabulary |
 
 ## Checkpoint log
 
@@ -57,6 +57,7 @@ claims about final model accuracy.
 | P2.20 | Baseline | Projection, condition, aggregation, and multi-condition parsing | Done | 100% | Classical baseline agent | 22 tests pass; official 25-example smoke results: WikiSQL 0.0800, Spider 0.0800 execution accuracy | Run larger evaluation and analyze errors |
 | P2.21 | Baseline | Identifier-aware projection selection | Done | 100% | Lead agent | Regression test confirms “names of singers” selects `Name`, not `Singer_ID`; 23 tests pass; CLI verified | Run larger evaluation and analyze errors |
 | P2.22 | Baseline/Debugging | User-reported names projection bug fixed | Done | 100% | Lead agent | Reproduced CLI output selecting `Singer_ID`; updated semantic column scoring; 23 tests pass; CLI now prints six singer names | Run larger evaluation and analyze errors |
+| P2.23 | LSTM baseline | Additive LSTM architecture and copy-mechanism design | **Checkpoint — awaiting user review** | 100% | Lead agent | [`lstm-baseline-design.md`](./lstm-baseline-design.md); specifies encoder, attention decoder, training-only vocabulary, schema-identifier copy mechanism, CPU/Colab configurations, and shared evaluation boundaries; no implementation code added | Review design, then proceed to A2/A3 tokenization and vocabulary |
 | P2.9 | Governance | PR creation made approval-gated | Done | 100% | Lead agent | [`agent-rules.md`](./agent-rules.md) updated; no automatic PR policy | Notify user at major checkpoints |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |
@@ -89,13 +90,28 @@ When changing this log:
 - **Decision:** Use the deterministic template/grammar parser as the Part 2
   classical baseline.
 - **Alternatives considered:** Sequence-to-sequence LSTM.
-- **Reason:** Both are allowed by the project requirements, but the template
-  parser is CPU-friendly, deterministic, interpretable, and faster to validate
-  before the September 30 freeze. HPC GPU submission is paused.
-- **Impact:** Part 2 focuses on baseline quality, evaluation, demo, and report
-  evidence. The LSTM is not being silently promised or partially implemented.
-- **Future compatibility:** The baseline exposes the shared fit/predict/evaluate
-  interface, so a Part 3 transformer can use the same evaluator and CLI.
+- **Reason:** Both are allowed by the project requirements. The template
+  parser remains the CPU-friendly, deterministic primary baseline, while the
+  LSTM is now an additive secondary baseline with a CPU fallback and Colab
+  path. HPC GPU submission remains paused.
+- **Impact:** Part 2 now includes a bounded LSTM comparison without removing,
+  changing, or blocking the existing template deliverable.
+- **Future compatibility:** Both baselines use the shared fit/predict/evaluate
+  contract and can use the same evaluator and CLI.
+
+### 2026-09-21 — LSTM architecture checkpoint A1
+
+- **Decision:** Add an attention-based bidirectional LSTM seq2seq model with a
+  pointer-generator copy mechanism for unseen schema identifiers.
+- **Design:** Embedding dimension 256, hidden dimension 512, packed sequences,
+  training-only vocabulary, greedy decoding first, and CPU/Colab configurations
+  are documented in [`lstm-baseline-design.md`](./lstm-baseline-design.md).
+- **Integration constraint:** Existing loaders, typed records, metrics,
+  reports, artifacts, CLI, and template baseline remain unchanged.
+- **Status:** **Checkpoint awaiting user review.** No model code or dependency
+  changes have been made.
+- **Next action:** After approval, implement A2/A3 model-side tokenization,
+  training-only vocabulary construction, and copy-target tests.
 
 ### 2026-09-21 — Official smoke and projection correction
 
@@ -109,3 +125,155 @@ When changing this log:
 - **Evidence:** `uv run pytest` → 23 passed; Ruff passed; CLI smoke command
   verified manually.
 - **Next action:** Run a larger evaluation and preserve a run manifest.
+
+### 2026-09-21 — Template baseline design hardening
+
+- **Decision:** The deterministic template parser is documented as a bounded,
+  legitimate classical baseline, not as a complete SQL parser.
+- **Scope recorded:** Single-table projections, counts, basic aggregations,
+  comparison predicates, and `AND` conditions are supported. Joins,
+  subqueries, set operations, grouping, ordering, limits, and `OR`
+  predicates remain explicit limitations.
+- **Implementation:** Added immutable capability declarations to
+  `TemplateBaseline` and created [`template-baseline-design.md`](./template-baseline-design.md)
+  with the input/output contract, grammar, determinism, and evaluation policy.
+- **Regression evidence:** Added a capability-contract test; `uv run pytest
+  tests/test_baseline_and_artifacts.py` → 9 passed; Ruff clean.
+- **Next action:** Run a larger official template evaluation, preserve a
+  manifest, and select representative successes/failures for the report.
+
+### 2026-09-21 — Larger template evaluation and manifest
+
+- **Run:** Evaluated the template baseline on the first 250 official
+  development examples from WikiSQL and Spider using the existing loaders and
+  evaluator.
+- **Results:** WikiSQL retained 250/250, execution accuracy **0.1560**, exact
+  match **0.1040**, invalid-SQL rate **0.0000**. Spider retained 250/250,
+  execution accuracy **0.0720**, exact match **0.0000**, invalid-SQL rate
+  **0.0000**.
+- **Breakdown:** WikiSQL had 39 successful executions and 211 wrong-result
+  cases. Spider had 18 successful executions and 232 wrong-result cases;
+  Spider execution accuracy was 0.136 single-table and 0.029 join queries.
+- **Interpretation:** The parser is syntactically robust on this slice but
+  semantically limited, especially on Spider joins and compositional queries.
+  These results support adding the LSTM rather than replacing the template
+  baseline.
+- **Reproducibility:** Added manifest generation to
+  `scripts/run_part2_smoke.py`. Manifest records command, UTC timestamp,
+  configuration, source SHA-256 hashes, Git commit, counts, metrics, and
+  artifact directories. Saved outside Git at
+  `/Users/roshini/datasets/text-to-sql/artifacts-template-250/run-manifest.json`.
+- **Validation:** `uv run pytest` → 24 passed; Ruff clean.
+- **Next action:** Implement model-side tokenization and training-only
+  vocabulary construction for the additive LSTM.
+
+### 2026-09-21 — Template efficiency improvements
+
+- **Goal:** Improve the deterministic baseline before beginning LSTM work,
+  using the 250-example error evidence while preserving the shared interfaces.
+- **Changes:** Added multi-column projections, `DISTINCT`, multiple aggregate
+  expressions, `ORDER BY`/top-N handling, question-order preservation,
+  comparison aliases, implicit WikiSQL value links, and safer `OR` handling.
+- **Regression correction:** A column-specific count heuristic improved some
+  WikiSQL cases but reduced valid Spider count-query matches. It was removed,
+  retaining the established `COUNT(*)` behavior.
+- **Final results:** On the same 250-example slices, WikiSQL execution
+  accuracy is **0.1560** and Spider is **0.0920**, both with invalid-SQL rate
+  **0.0000**. Spider improved from the prior **0.0720**.
+- **Validation:** `uv run pytest` → 29 passed; Ruff clean. Final artifacts and
+  manifest are outside Git at
+  `/Users/roshini/datasets/text-to-sql/artifacts-template-250-final2/`.
+- **Decision:** Template efficiency work is complete for now. Further
+  capability expansion should wait until the LSTM comparison, to avoid
+  turning the classical baseline into an uncontrolled parser project.
+- **Next action:** Begin LSTM model-side tokenization and training-only
+  vocabulary/copy-target handling.
+
+### 2026-09-21 — Full-dev evaluation started
+
+- **Methodology decision:** The first-250 rows are not treated as an unbiased
+  sample because both official dev files are grouped: WikiSQL begins with
+  repeated table IDs, while Spider's first 250 records cover only four
+  databases. The 250 results remain a fixed regression subset only.
+- **Run started:** Full development evaluation launched with `--full-dev`:
+  8,421 WikiSQL examples and 1,034 Spider examples, using the same prediction,
+  evaluator, and report-generation path.
+- **Expected runtime:** This is CPU/local execution, not HPC. HPC GPU
+  submission remains paused due to partition configuration, and this
+  deterministic template evaluation is not GPU-accelerated. The full run is
+  slower than expected because each example executes gold and predicted SQL
+  against SQLite with separate read-only database connections.
+- **Artifact policy:** The run will write full predictions, `evaluation.json`,
+  `breakdowns.csv`, `evaluation.md`, and a run manifest under
+  `/Users/roshini/datasets/text-to-sql/artifacts-template-full-dev/`.
+- **Next action:** Wait for completion, verify both dataset counts and all
+  full-run breakdowns, then record the final report-ready metrics.
+
+### 2026-09-21 — Full official dev evaluation complete
+
+- **Coverage:** Full WikiSQL dev: 8,421 source records, 8,415 retained, 6
+  excluded. Full Spider dev: 1,034 source records, 1,034 retained, 0
+  excluded. This replaces the first-250 run as the report's headline
+  evaluation.
+- **WikiSQL results:** Execution accuracy **0.0723** (608/8,415), exact match
+  **0.0126** (106/8,415), invalid-SQL rate **0.0000**. All retained records
+  are single-table by construction.
+- **Spider results:** Execution accuracy **0.0580** (60/1,034), exact match
+  **0.0000**, invalid-SQL rate **0.0058** (6/1,034). Single-table execution
+  accuracy was **0.1029** (56/544); multi-table join accuracy was **0.0091**
+  (4/438); other structures were 0/52.
+- **Breakdowns:** The same full-run records generated `evaluation.json`,
+  `breakdowns.csv`, and `evaluation.md` for each dataset. Failure categories
+  were regenerated from the full run: WikiSQL 608 successes/7,807 wrong
+  results; Spider 60 successes/968 wrong results/6 invalid SQL.
+- **Reproducibility:** Full artifacts and manifest are outside Git at
+  `/Users/roshini/datasets/text-to-sql/artifacts-template-full-dev/`.
+  Manifest records `smoke_limit: null`, source hashes, commit, timestamp,
+  counts, and metrics.
+- **Interpretation:** The 250-example metrics were not representative and are
+  retained only as fast regression evidence. The full-dev results are the
+  report-ready template baseline numbers, with explicit dataset coverage.
+- **Validation:** Full-dev runner completed successfully; the 29-test suite
+  and Ruff remain clean.
+- **Next action:** Begin LSTM tokenization and training-only vocabulary work.
+
+### 2026-09-21 — HPC connectivity check
+
+- **Authentication:** Non-destructive SSH test succeeded using the existing
+  local key path; the private key was not read, copied, or logged.
+- **Remote identity:** The remote host reported `hpc01.sharanga.local`, user
+  `csisnlp_20`, and home `/home/csisnlp_20`.
+- **Scheduler:** Slurm is installed and reports version 25.05.3.
+- **GPU visibility:** `nvidia-smi` is unavailable on the login node. This does
+  not prove that compute-node GPUs are unavailable; a scheduled allocation or
+  confirmed partition is required.
+- **Environment:** `/usr/bin/python3` is available; `uv` is not currently on
+  the login-node PATH.
+- **Decision:** HPC is reachable and scheduler-backed, but not yet ready for
+  an LSTM GPU run until the team confirms a GPU partition and job resource
+  format. Continue local CPU preprocessing and smoke work.
+- **Next action:** Confirm Slurm GPU partition name/resource syntax and remote
+  project/dataset paths before submitting any job.
+
+### 2026-09-21 — LSTM copy-mechanism design audit
+
+- **Concern reviewed:** The pointer-generator is the riskiest LSTM subsystem
+  because it combines attention, generation/copy mixing, extended-vocabulary
+  target mapping, and exact identifier reconstruction.
+- **Design revision:** Expanded [`lstm-baseline-design.md`](./lstm-baseline-design.md)
+  with the per-example extended vocabulary, source-position mapping, duplicate
+  token accumulation, padding mask, generation probability, mixed
+  distribution, target precedence rules, teacher-forced NLL, decoding behavior,
+  and explicit failure events.
+- **Implementation boundary:** Copy support is now divided into seven testable
+  units before full training: extended vocabulary, duplicate attention,
+  fixed-vocabulary precedence, unseen identifier round-trip, unresolvable
+  targets, normalized mixed distribution, and greedy reconstruction.
+- **Fallback decision:** If copy support cannot pass its isolated tests before
+  the CPU smoke gate, the LSTM will remain a restricted secondary experiment
+  with the limitation reported explicitly; silent identifier guessing is not
+  allowed, and the template remains primary.
+- **Status:** A1 design is now materially specified; no LSTM code has been
+  written yet.
+- **Next action:** Implement the model-side tokenizer and copy-target data
+  structures first, with focused unit tests before encoder/decoder training.

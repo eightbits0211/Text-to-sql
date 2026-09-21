@@ -33,7 +33,7 @@ configuration or command-line arguments.
 
 ## 3. NLP and modeling
 
-### Part 2 baseline
+### Part 2 baselines
 
 - **Selected baseline:** deterministic template/grammar parser, implemented in
   `src/text_to_sql/baselines/template.py`. This is the classical baseline
@@ -41,9 +41,13 @@ configuration or command-line arguments.
 - It was selected because it is explicitly allowed by the project requirements,
   minimizes implementation and compute risk, and provides interpretable
   errors while HPC GPU submission is paused.
-- A sequence-to-sequence LSTM remains an allowed alternative if the team selects
-  it after a separate feasibility review; it is not part of the current
-  implementation.
+- **Additive baseline:** CPU-fallback sequence-to-sequence LSTM with
+  attention and a pointer-generator copy mechanism. Its architecture is
+  specified in [`lstm-baseline-design.md`](./lstm-baseline-design.md) and will
+  be implemented without changing the template baseline or shared evaluation
+  interfaces.
+- The template baseline remains primary until the LSTM has comparable,
+  reproducible results. The LSTM is an additional baseline, not a replacement.
 
 ### Part 3 modern model
 

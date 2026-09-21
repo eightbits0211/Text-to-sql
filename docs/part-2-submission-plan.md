@@ -42,13 +42,19 @@ report polishing, packaging, and submission—not for starting new core features
 
 ## 3. Deliberately reduced Part 2 scope
 
-The following are explicitly deferred to Part 3:
+The following remain explicitly deferred to Part 3:
 
 - Fine-tuned transformer model as the main modern system.
 - Constrained decoding or execution-error self-correction.
 - Novelty ablations.
 - BIRD evaluation.
 - Production-style deployment and conversational memory.
+
+An additive CPU-fallback LSTM seq2seq baseline is now included in the Part 2
+comparison plan. It does not replace the deterministic template baseline and
+must not block the Part 2 submission if compute constraints prevent comparable
+results. Its architecture and validation gates are specified in
+[`lstm-baseline-design.md`](./lstm-baseline-design.md).
 
 The Part 2 baseline must still be designed behind an interface that will allow
 the Part 3 model to use the same evaluation and demo layers.
@@ -57,9 +63,10 @@ the Part 3 model to use the same evaluation and demo layers.
 
 ### Classical baseline
 
-Use a deterministic template/grammar-based baseline first because it is faster
-to debug and easier to demonstrate than implementing an LSTM from scratch.
-The baseline should support a bounded but explicit subset such as:
+Use the deterministic template/grammar baseline as the stable primary baseline.
+Add the LSTM seq2seq model as a secondary trainable baseline after its design
+checkpoint is reviewed. The template baseline should support a bounded but
+explicit subset such as:
 
 - SELECT columns
 - Single-table filtering
@@ -69,6 +76,8 @@ The baseline should support a bounded but explicit subset such as:
 
 Unsupported questions must return an empty candidate or a clearly recorded
 unsupported result; they must not be silently reported as successful queries.
+The LSTM must use the same prediction adapter and evaluation path so the two
+baselines can be compared without changing metric definitions.
 
 ### Dataset order
 
@@ -304,13 +313,13 @@ description and evaluation requirements for the **Part 2 baseline stage**:
 | Requirement area | Current status |
 |---|---|
 | Dataset selection and justification | Covered: Spider primary, WikiSQL warm-up, sources and citations documented |
-| Classical baseline | Covered: deterministic template baseline with shared adapter |
+| Classical baselines | Covered: deterministic template baseline; additive LSTM design checkpoint completed and implementation gated on review |
 | Schema/data processing | Covered: official loaders, typed records, schema serialization, exclusions |
 | Evaluation | Covered: exact match, execution accuracy, invalid-SQL rate, breakdown reports |
 | Error analysis | Partially covered: quantitative breakdowns exist; report-ready examples remain |
 | Demonstration | Covered technically: CLI question → SQL → result/error |
 | Report evidence | Outstanding: sections, citations, statistics, and polished error analysis |
-| Modern model and novelty | Intentionally deferred to Part 3 |
+| Modern transformer model and novelty | Intentionally deferred to Part 3 |
 
 The project is therefore consistent with the PDFs at the current milestone,
 but it must not be presented as the complete course project yet. Remaining

@@ -96,6 +96,11 @@ Last checklist update: 2026-09-21
 - [x] 6.10 Run WikiSQL dev evaluation.
 - [x] 6.11 Run Spider smoke evaluation.
 - [x] 6.12 Save predictions and run manifest.
+- [x] 6.13 Document the template baseline grammar, capabilities, and explicit
+  limitations.
+- [x] 6.14 Run a larger official template evaluation and save a run manifest.
+- [x] 6.15 Improve high-impact template parsing without regressing the
+  established Spider evaluation point.
 
 ## Phase 7 — Evaluation harness
 
@@ -130,49 +135,65 @@ Last checklist update: 2026-09-21
 - [ ] 8.14 Run a clean demo rehearsal.
 - [ ] 8.15 Freeze Part 2 scope on September 30.
 
-## Phase 9 — Modern model
+## Phase 9 — LSTM secondary baseline
 
-- [ ] 9.1 Select checkpoint based on compute smoke test.
-- [ ] 9.2 Define transformer input serialization.
-- [ ] 9.3 Define tokenizer and sequence limits.
-- [ ] 9.4 Add training configuration.
-- [ ] 9.5 Run a tiny fine-tuning smoke test.
-- [ ] 9.6 Add checkpoint save/resume.
-- [ ] 9.7 Add inference adapter.
-- [ ] 9.8 Evaluate on WikiSQL.
-- [ ] 9.9 Evaluate on Spider.
-- [ ] 9.10 Compare against classical baseline.
+- [x] 9.1 Document LSTM architecture, vocabulary, copy mechanism, compute
+  fallback, and integration boundaries.
+- [ ] 9.2 Reuse loader/schema records and add model-side tokenization.
+- [ ] 9.3 Build training-only vocabulary and copy-target handling.
+- [ ] 9.4 Implement packed-sequence encoder and attention decoder.
+- [ ] 9.5 Add checkpointing and CPU-only 200-example smoke test.
+- [ ] 9.6 Add local CPU and Colab-ready run configurations.
+- [ ] 9.7 Adapt predictions to the existing shared evaluation pipeline.
+- [ ] 9.8 Run comparable WikiSQL and Spider smoke slices.
+- [ ] 9.9 Generate LSTM breakdown reports.
+- [ ] 9.10 Compare LSTM with template and decide primary/secondary status.
 
-## Phase 10 — Novelty and final system
+## Phase 10 — Modern model
 
-- [ ] 10.1 Select constrained decoding or self-correction after baseline evidence.
-- [ ] 10.2 Define algorithm, hyperparameters, and stopping conditions.
-- [ ] 10.3 Implement novelty behind the shared generation interface.
-- [ ] 10.4 Add targeted tests.
-- [ ] 10.5 Run novelty ablation.
-- [ ] 10.6 Measure accuracy and invalid-rate change.
-- [ ] 10.7 Analyze remaining failures.
-- [ ] 10.8 Evaluate optional BIRD only if core work is stable.
-- [ ] 10.9 Update final report and demo.
+- [ ] 10.1 Select checkpoint based on compute smoke test.
+- [ ] 10.2 Define transformer input serialization.
+- [ ] 10.3 Define tokenizer and sequence limits.
+- [ ] 10.4 Add training configuration.
+- [ ] 10.5 Run a tiny fine-tuning smoke test.
+- [ ] 10.6 Add checkpoint save/resume.
+- [ ] 10.7 Add inference adapter.
+- [ ] 10.8 Evaluate on WikiSQL.
+- [ ] 10.9 Evaluate on Spider.
+- [ ] 10.10 Compare against classical baselines.
 
-## Phase 11 — Final QA and submission
+## Phase 11 — Novelty and final system
 
-- [ ] 11.1 Re-run all required experiments from recorded configs.
-- [ ] 11.2 Verify report numbers against artifacts.
-- [ ] 11.3 Verify citations, licenses, and dataset acknowledgements.
-- [ ] 11.4 Run secret and large-file checks.
-- [ ] 11.5 Review PR diff and generated files.
-- [ ] 11.6 Perform final demo rehearsal.
-- [ ] 11.7 Open PR for review.
-- [ ] 11.8 Incorporate review feedback through additional commits.
-- [ ] 11.9 Submit only after user approval.
+- [ ] 11.1 Select constrained decoding or self-correction after baseline evidence.
+- [ ] 11.2 Define algorithm, hyperparameters, and stopping conditions.
+- [ ] 11.3 Implement novelty behind the shared generation interface.
+- [ ] 11.4 Add targeted tests.
+- [ ] 11.5 Run novelty ablation.
+- [ ] 11.6 Measure accuracy and invalid-rate change.
+- [ ] 11.7 Analyze remaining failures.
+- [ ] 11.8 Evaluate optional BIRD only if core work is stable.
+- [ ] 11.9 Update final report and demo.
+
+## Phase 12 — Final QA and submission
+
+- [ ] 12.1 Re-run all required experiments from recorded configs.
+- [ ] 12.2 Verify report numbers against artifacts.
+- [ ] 12.3 Verify citations, licenses, and dataset acknowledgements.
+- [ ] 12.4 Run secret and large-file checks.
+- [ ] 12.5 Review PR diff and generated files.
+- [ ] 12.6 Perform final demo rehearsal.
+- [ ] 12.7 Open PR for review.
+- [ ] 12.8 Incorporate review feedback through additional commits.
+- [ ] 12.9 Submit only after user approval.
 
 ## Current Part 2 gate
 
-Part 2 implementation is approximately **76% complete**. The merged
+Part 2 implementation is approximately **74% complete** after adding the
+approved LSTM secondary-baseline scope. The merged
 checkpoint proves the data, evaluation, and demo path on official five-example
 smoke slices, but it is not yet submission-ready. Remaining Part 2 gates are:
 
+- Review and implement the LSTM design as a bounded secondary baseline.
 - Improve the baseline beyond the current 25-example smoke results.
 - Run a larger bounded evaluation and preserve the resulting artifacts.
 - Add scripted easy, filter, and failure demo examples.
