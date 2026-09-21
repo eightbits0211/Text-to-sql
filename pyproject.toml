@@ -3,7 +3,9 @@ name = "text-to-sql"
 version = "0.1.0"
 description = "CS F429 Text-to-SQL project"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "torch>=2.2,<3",
+]
 
 [project.scripts]
 text-to-sql-demo = "text_to_sql.cli:main"

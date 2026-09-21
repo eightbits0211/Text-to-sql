@@ -10,6 +10,7 @@ from text_to_sql.lstm.preprocessing import (
     build_copy_target,
     build_training_vocabulary,
     resolve_target_token,
+    tokenize_example,
     tokenize_question,
     tokenize_schema,
     tokenize_sql,
@@ -197,3 +198,59 @@ def test_duplicate_unseen_source_token_shares_single_copy_index() -> None:
     assert "tag_x" in copy_target.copy_index_by_token
     assert copy_target.source_to_index["tag_x"] == copy_target.copy_index_by_token["tag_x"]
     assert copy_target.extended_tokens.count("tag_x") == 1
+
+
+def test_encoder_tokens_and_position_alignment() -> None:
+    example = _example(
+        example_id="enc_1",
+        question="Which singer has id?",
+        schema_text="database: music\ntable: singers\ncolumns:\n  - singer_id [INTEGER]",
+        gold_sql="SELECT singer_id FROM singers;",
+        split=DatasetSplit.DEV,
+    )
+    vocab = build_training_vocabulary((example,))
+    copy_target = build_copy_target(example, vocab)
+    tokenized = tokenize_example(example)
+
+    assert tokenized.encoder_tokens[0] == "<bos>"
+    assert tokenized.encoder_tokens[-1] == "<eos>"
+    assert "<schema_sep>" in tokenized.encoder_tokens
+
+    # Verify that encoder_positions in copy_target aligns directly with encoder_tokens
+    for normalized, enc_positions in copy_target.encoder_positions.items():
+        for pos in enc_positions:
+            token_at_pos = tokenized.encoder_tokens[pos]
+            assert token_at_pos.lower() == normalized or token_at_pos == normalized
+
+
+def test_quoted_identifier_and_literal_resolution() -> None:
+    # Unseen double-quoted column in gold SQL matches unquoted schema token
+    example = _example(
+        example_id="quote_1",
+        question="Find Foo_Bar row.",
+        schema_text="database: demo\ntable: custom_table\ncolumns:\n  - custom_col [TEXT]",
+        gold_sql='SELECT "custom_col" FROM "custom_table" WHERE custom_col = \'Foo_Bar\';',
+        split=DatasetSplit.DEV,
+    )
+    train_example = _example(
+        example_id="train_quote",
+        question="Basic query",
+        schema_text="database: demo\ntable: base\ncolumns:\n  - id [INTEGER]",
+        gold_sql="SELECT id FROM base;",
+        split=DatasetSplit.TRAIN,
+    )
+    vocab = build_training_vocabulary((train_example,))
+    copy_target = build_copy_target(example, vocab)
+
+    # Double-quoted identifier in SQL resolves to unquoted schema token in copy target
+    res_col = resolve_target_token('"custom_col"', vocab, copy_target)
+    assert res_col.token == '"custom_col"'
+    assert res_col.event is None
+    assert copy_target.extended_tokens[res_col.index] == "custom_col"
+
+    # Single-quoted value in SQL resolves to question token in copy target
+    res_val = resolve_target_token("'Foo_Bar'", vocab, copy_target)
+    assert res_val.token == "'Foo_Bar'"
+    assert res_val.event is None
+    assert copy_target.extended_tokens[res_val.index] == "Foo_Bar"
+
