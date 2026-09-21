@@ -44,6 +44,8 @@ before ending every work session.
   - required-field validation,
   - contract tests.
 - Merged PR #1 into `spec/agent-governance-rules`.
+- Opened PR #2 for the data-contract slice:
+  `https://github.com/eightbits0211/Text-to-sql/pull/2`.
 - Added a standing rule to provide a context-history summary before every
   session ends.
 - Initialized local Git on `spec/agent-governance-rules`.
@@ -82,4 +84,4 @@ before ending every work session.
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-data-contracts` |
 | Overall estimate | 27% |
-| Next review point | After the data-contract PR and fixture slice |
+| Next review point | After PR #2 review and synthetic fixture implementation |
