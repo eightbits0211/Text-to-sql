@@ -45,6 +45,8 @@ before ending every work session.
   - contract tests.
 - Implemented read-only SQLite schema extraction and synthetic fixture tests for
   tables, columns, types, primary keys, and foreign keys.
+- Opened PR #3 for the SQLite schema/fixture slice:
+  `https://github.com/eightbits0211/Text-to-sql/pull/3`.
 - Merged PR #1 into `spec/agent-governance-rules`.
 - Merged PR #2 for the data-contract slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/2`.
@@ -91,4 +93,4 @@ before ending every work session.
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-sqlite-fixtures` |
 | Overall estimate | 31% |
-| Next review point | After the SQLite fixture/schema-extraction PR |
+| Next review point | After PR #3 review and WikiSQL loader implementation |
