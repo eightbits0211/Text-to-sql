@@ -406,3 +406,28 @@ When changing this log:
 - **Next action:** Commit feature branch changes and open Pull Request for the LSTM
   implementation, smoke training loop, and comparative evaluation baseline checkpoint.
 
+### 2026-09-21 — Part 2 live demo showcase & rehearsal runner implemented (Phase 8.7 & 8.14)
+
+- **What changed:**
+  - Enhanced `src/text_to_sql/cli.py` to support the required Part 2 live demonstration
+    workflow:
+    - Added `--demo` flag implementing the three scripted showcase cases required by
+      the Part 2 specifications:
+      1. Easy / Single-Table Projection: "What are the names of all singers from France?"
+         (tests schema resolution, column projection, and string equality condition).
+      2. Filter & Numeric Comparison: "What are the names and ages of singers older than 30?"
+         (tests multi-column projection and comparison filtering).
+      3. Complex / Failure Case: "What is the stadium name and capacity for the concert with
+         the highest attendance?" (demonstrates graceful handling of unsupported cross-table
+         joins or missing constructs without crashing).
+    - Added model selection flag (`--model template|lstm`) and optional checkpoint loading
+      (`--checkpoint <path>`), enabling live side-by-side demonstration of both the Template
+      baseline and the neural LSTM baseline.
+    - Implemented clean ASCII table formatting for multi-column query outputs.
+  - Created `tests/test_cli.py` with 6 unit tests validating parser configuration, ASCII table
+    formatting, query execution, scripted showcase execution, and CLI exit codes.
+- **Evidence:** `uv run text-to-sql-demo --demo` executes cleanly against `concert_singer.sqlite`.
+  All 49 unit tests in the repository pass cleanly in 2.94s (`uv run pytest`), and Ruff linting is clean.
+- **Next action:** Draft Sections a–d of the Part 2 report (Introduction, Literature Survey,
+  Dataset/Preprocessing, Methodology & Comparative Baseline Results).
+
