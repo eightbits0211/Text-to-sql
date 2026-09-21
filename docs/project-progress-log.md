@@ -10,7 +10,7 @@ claims about final model accuracy.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Overall completion | 75% |
+| Overall completion | 76% |
 | Current phase | Part 2 baseline quality and evidence |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
@@ -55,6 +55,7 @@ claims about final model accuracy.
 | P2.18 | Evaluation | Result-table comparison policy | Done | 100% | Lead agent | Execution comparison now ignores SQL result-column label case; row order remains sensitive; regression test added; 18 tests pass | Reassess ordering policy before full evaluation |
 | P2.19 | Review | Part 2 merge and authority alignment review | Done | 100% | Lead agent | PR #5 merged as `048cae6`; current implementation aligned with Part 2 PDF requirements, with report/evidence gaps recorded | Improve baseline and prepare report |
 | P2.20 | Baseline | Projection, condition, aggregation, and multi-condition parsing | Done | 100% | Classical baseline agent | 22 tests pass; official 25-example smoke results: WikiSQL 0.0800, Spider 0.0800 execution accuracy | Run larger evaluation and analyze errors |
+| P2.21 | Baseline | Identifier-aware projection selection | Done | 100% | Lead agent | Regression test confirms “names of singers” selects `Name`, not `Singer_ID`; 23 tests pass; CLI verified | Run larger evaluation and analyze errors |
 | P2.9 | Governance | PR creation made approval-gated | Done | 100% | Lead agent | [`agent-rules.md`](./agent-rules.md) updated; no automatic PR policy | Notify user at major checkpoints |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |

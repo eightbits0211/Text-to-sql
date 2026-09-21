@@ -169,7 +169,7 @@ Last checklist update: 2026-09-21
 
 ## Current Part 2 gate
 
-Part 2 implementation is approximately **75% complete**. The merged
+Part 2 implementation is approximately **76% complete**. The merged
 checkpoint proves the data, evaluation, and demo path on official five-example
 smoke slices, but it is not yet submission-ready. Remaining Part 2 gates are:
 

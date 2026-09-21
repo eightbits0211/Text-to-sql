@@ -73,6 +73,21 @@ def test_template_baseline_selects_projection_column() -> None:
     )
 
 
+def test_template_baseline_prefers_name_over_identifier_for_name_question() -> None:
+    schema = DatabaseSchema(
+        "concert_singer",
+        (TableSpec("singer", (
+            ColumnSpec("Singer_ID", "INTEGER"),
+            ColumnSpec("Name", "TEXT"),
+            ColumnSpec("Country", "TEXT"),
+        )),),
+    )
+
+    assert TemplateBaseline().predict("What are the names of all singers?", schema) == (
+        'SELECT "Name" FROM "singer"'
+    )
+
+
 def test_template_baseline_extracts_numeric_condition() -> None:
     schema = DatabaseSchema(
         "people",
