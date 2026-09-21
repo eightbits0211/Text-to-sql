@@ -15,8 +15,8 @@ claims about final model accuracy.
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
 | Active branch | `spec/agent-governance-rules` |
-| Current blocker | GitHub push rejected with HTTP 403 for authenticated account `jithu004` |
-| Next checkpoint | Resolve remote permissions, then push and open PR |
+| Current blocker | Repository is empty-origin initialized with the specification branch as temporary default; HPC details are unknown |
+| Next checkpoint | Establish PR base/default branch, then implement data contracts |
 
 ## Checkpoint log
 
@@ -37,7 +37,8 @@ claims about final model accuracy.
 | P1.8 | Coordination | Environment and data-pipeline agents completed bounded reports | Done | 100% | Lead agent | Agent reports received; no files modified | Resolve setup decisions |
 | P1.9 | Coordination | Evaluation-contract agent report | Done | 100% | Evaluation agent | Shared evaluator contracts and fixture acceptance checks received | Confirm policy decisions |
 | P2.1 | Environment | Python 3.12 + uv environment and smoke test | Done | 100% | Lead agent | `uv sync --dev`, pytest, Ruff, and SQLite smoke test pass | Implement data contracts |
-| P2.2 | Repository | Initial project baseline committed locally | In progress | 90% | Lead agent | Commit `72fbc48`; push blocked by GitHub permission error; source attachments excluded | Fix authentication/permission and push |
+| P2.2 | Repository | Initial project baseline pushed | Done | 100% | Lead agent | Commits `72fbc48`, `cee1f4e`; branch pushed using `eightbits0211` CLI account | Establish PR base/default branch |
+| P2.3 | HPC | HPC security/setup notes documented | Done | 100% | Lead agent | [`hpc-setup.md`](./hpc-setup.md); no key read or copied | Confirm host/user/scheduler |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |
 | P2.3 | Data | WikiSQL loader and validation | Not started | 0% | Unassigned | Part 2 gate | Implement fixtures/tests |
