@@ -61,6 +61,8 @@ before ending every work session.
   and model metadata.
 - Added the `text-to-sql-demo` CLI for database selection, schema inspection,
   question-to-SQL generation, validation, and result output.
+- Added deterministic evaluation report generation with difficulty,
+  query-structure, and failure-category breakdowns in JSON, CSV, and Markdown.
 - Full test suite now passes with 14 tests and Ruff clean.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
@@ -84,7 +86,7 @@ before ending every work session.
 - The GitHub repository was initially empty, so GitHub currently treats
   `spec/agent-governance-rules` as its default branch. A proper default branch
   and PR base should be established before merging feature work.
-- Dataset acquisition and loaders are not set up yet.
+- Real WikiSQL and Spider benchmark datasets are not yet acquired/configured.
 - HPC GPU job submission is currently paused; CPU-only work can continue.
 - PR creation is now approval-gated; no automatic PRs for ordinary checkpoints.
 - No modern model or novelty implementation exists yet.
@@ -96,10 +98,11 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Review the classical baseline checkpoint; PR creation is approval-gated.
+1. Review the classical baseline and evaluation-report checkpoint; PR creation
+   is approval-gated and no PR is currently open.
 2. Acquire/configure permitted WikiSQL and Spider data before claiming
    benchmark metrics.
-3. Persist metric reports and add difficulty/query-structure breakdowns.
+3. Run the baseline on bounded WikiSQL and Spider smoke data and save artifacts.
 4. Confirm the HPC remote project path and scheduler before creating a local
    project sync/job workflow.
 5. Continue CPU-only work while GPU submission is paused.
@@ -114,5 +117,5 @@ before ending every work session.
 |---|---|
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-classical-baseline` |
-| Overall estimate | 52% |
-| Next review point | After approval to raise the classical baseline checkpoint PR |
+| Overall estimate | 58% |
+| Next review point | After approval to raise the baseline/evaluation checkpoint PR |
