@@ -45,6 +45,9 @@ before ending every work session.
   - contract tests.
 - Implemented read-only SQLite schema extraction and synthetic fixture tests for
   tables, columns, types, primary keys, and foreign keys.
+- Implemented the WikiSQL JSON loader with structured SQL reconstruction,
+  configurable database resolution, single-table filtering, schema attachment,
+  and explicit exclusion/statistics reporting.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
 - Updated governance so PRs are raised only when explicitly requested or after
@@ -79,9 +82,9 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Review and merge the SQLite fixture/schema-extraction PR.
-2. Implement and test the WikiSQL data loader.
-3. Add deterministic dataset statistics and exclusion reporting.
+1. Review the WikiSQL loader checkpoint; PR creation is approval-gated.
+2. Add Spider loader support and cross-domain fixture coverage.
+3. Add deterministic dataset statistics and exclusion reporting for Spider.
 4. Confirm the HPC remote project path and scheduler before creating a local
    project sync/job workflow.
 6. Continue CPU-only fixtures, loaders, evaluator, and CLI work while GPU
@@ -96,6 +99,6 @@ before ending every work session.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Active branch | `feature/part2-sqlite-fixtures` |
-| Overall estimate | 31% |
-| Next review point | After PR #3 review and WikiSQL loader implementation |
+| Active branch | `feature/part2-wikisql-loader` |
+| Overall estimate | 36% |
+| Next review point | After WikiSQL loader review and Spider loader planning |
