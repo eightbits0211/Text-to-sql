@@ -36,6 +36,14 @@ before ending every work session.
   be committed to the temporary remote default branch.
 - Documented HPC security and setup requirements without reading or copying the
   local private key.
+- Recorded the supplied HPC host, username, and key path; non-destructive SSH
+  authentication succeeded.
+- Implemented the first data-contract slice:
+  - typed dataset/enumeration contracts,
+  - deterministic schema serialization,
+  - required-field validation,
+  - contract tests.
+- Merged PR #1 into `spec/agent-governance-rules`.
 - Added a standing rule to provide a context-history summary before every
   session ends.
 - Initialized local Git on `spec/agent-governance-rules`.
@@ -48,11 +56,9 @@ before ending every work session.
 - The GitHub repository was initially empty, so GitHub currently treats
   `spec/agent-governance-rules` as its default branch. A proper default branch
   and PR base should be established before merging feature work.
-- Dataset acquisition, typed data contracts, and the implementation baseline are
-  not set up yet.
+- Dataset acquisition and loaders are not set up yet.
 - No model implementation or demo exists yet.
-- HPC hostname, username, remote project path, and scheduler details are not
-  confirmed.
+- HPC remote project path and scheduler details are not confirmed.
 - The modern-model dependency set is intentionally not installed yet; it will
   be added only after the Part 2 baseline and compute requirements are clearer.
 - Evaluation policy decisions remain open: literal-sensitive exact-match
@@ -60,11 +66,12 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Confirm the repository default-branch strategy and PR base.
-2. Add typed data contracts and synthetic SQLite fixtures on the feature branch.
-3. Implement and test the WikiSQL data contract and schema serializer.
-4. Implement the WikiSQL-first loader and deterministic schema serializer.
-5. Confirm HPC connection details before creating a local SSH alias.
+1. Push the completed data-contract slice and open its PR.
+2. Add synthetic SQLite fixtures and fixture tests.
+3. Implement and test the WikiSQL data loader.
+4. Implement deterministic schema extraction from SQLite metadata.
+5. Confirm the HPC remote project path and scheduler before creating a local
+   project sync/job workflow.
 6. Before the next session ends, update this file and provide a context-history
    summary.
 
@@ -74,5 +81,5 @@ before ending every work session.
 |---|---|
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-data-contracts` |
-| Overall estimate | 23% |
-| Next review point | After default-branch strategy and data contracts |
+| Overall estimate | 27% |
+| Next review point | After the data-contract PR and fixture slice |
