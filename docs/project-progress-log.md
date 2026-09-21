@@ -10,13 +10,13 @@ claims about final model accuracy.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Overall completion | 58% |
-| Current phase | Part 2 baseline evaluation |
+| Overall completion | 63% |
+| Current phase | Part 2 dataset smoke configuration |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
 | Active branch | `feature/part2-classical-baseline` |
 | Current blocker | HPC GPU job submission is paused during partitioning configuration; repository default-branch strategy and HPC remote project/scheduler details remain open |
-| Next checkpoint | Acquire permitted benchmark data and run baseline smoke evaluation |
+| Next checkpoint | Configure approved datasets and run bounded smoke evaluation |
 
 ## Checkpoint log
 
@@ -50,6 +50,7 @@ claims about final model accuracy.
 | P2.13 | Artifacts | JSONL prediction artifact persistence | Done | 100% | Lead agent | `evaluation/artifacts.py`; one-record-per-example fixture test | Add persisted metric reports |
 | P2.14 | Demo | CLI question → SQL → read-only result | Done | 100% | Lead agent | `text-to-sql-demo` entry point and `cli.py` | Add documented smoke command |
 | P2.15 | Evaluation | Difficulty, query-structure, error breakdowns and report files | Done | 100% | Lead agent | `evaluation/reports.py`; JSON, CSV, and Markdown fixture outputs; 14 tests pass | Run on real benchmark predictions |
+| P2.16 | Reproducibility | Typed dataset configuration and smoke runner | Done | 100% | Lead agent | `config.py`, `data/README.md`, `scripts/run_part2_smoke.py`; explicit missing-path failure and CLI help | Configure real dataset paths |
 | P2.9 | Governance | PR creation made approval-gated | Done | 100% | Lead agent | [`agent-rules.md`](./agent-rules.md) updated; no automatic PR policy | Notify user at major checkpoints |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |

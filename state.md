@@ -63,7 +63,11 @@ before ending every work session.
   question-to-SQL generation, validation, and result output.
 - Added deterministic evaluation report generation with difficulty,
   query-structure, and failure-category breakdowns in JSON, CSV, and Markdown.
-- Full test suite now passes with 14 tests and Ruff clean.
+- Added typed Part 2 configuration with environment-variable path overrides,
+  artifact-directory resolution, and explicit missing-path validation.
+- Added dataset acquisition/layout instructions and a bounded WikiSQL/Spider
+  smoke runner that writes prediction and evaluation artifacts.
+- Full test suite now passes with 16 tests and Ruff clean.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
 - Updated governance so PRs are raised only when explicitly requested or after
@@ -86,7 +90,8 @@ before ending every work session.
 - The GitHub repository was initially empty, so GitHub currently treats
   `spec/agent-governance-rules` as its default branch. A proper default branch
   and PR base should be established before merging feature work.
-- Real WikiSQL and Spider benchmark datasets are not yet acquired/configured.
+- Real WikiSQL and Spider benchmark datasets are not yet acquired/configured;
+  the new smoke runner is therefore not yet a benchmark result.
 - HPC GPU job submission is currently paused; CPU-only work can continue.
 - PR creation is now approval-gated; no automatic PRs for ordinary checkpoints.
 - No modern model or novelty implementation exists yet.
@@ -98,11 +103,10 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Review the classical baseline and evaluation-report checkpoint; PR creation
-   is approval-gated and no PR is currently open.
-2. Acquire/configure permitted WikiSQL and Spider data before claiming
-   benchmark metrics.
-3. Run the baseline on bounded WikiSQL and Spider smoke data and save artifacts.
+1. Review the baseline, evaluation-report, and smoke-configuration checkpoint;
+   PR creation is approval-gated and no PR is currently open.
+2. Configure permitted WikiSQL and Spider data using `data/README.md`.
+3. Run `uv run python scripts/run_part2_smoke.py` and save artifacts.
 4. Confirm the HPC remote project path and scheduler before creating a local
    project sync/job workflow.
 5. Continue CPU-only work while GPU submission is paused.
@@ -117,5 +121,5 @@ before ending every work session.
 |---|---|
 | Last updated | 2026-09-21 |
 | Active branch | `feature/part2-classical-baseline` |
-| Overall estimate | 58% |
-| Next review point | After approval to raise the baseline/evaluation checkpoint PR |
+| Overall estimate | 63% |
+| Next review point | After approved datasets produce the first smoke artifacts |
