@@ -8,8 +8,8 @@ the progress log and made configurable where practical.
 
 | Area | Choice | Purpose |
 |---|---|---|
-| Language | Python 3.11+ (exact supported version to be verified) | Data, modeling, evaluation, and demo |
-| Package management | `venv` plus a locked dependency file | Reproducible local setup |
+| Language | Python 3.12 | Data, modeling, evaluation, and demo |
+| Package management | `uv` with `pyproject.toml` and `uv.lock` | Reproducible local setup |
 | Formatting/linting | Ruff or the repository-approved equivalent | Fast static checks |
 | Type checking | Pyright or mypy if compatible with the selected libraries | Catch interface errors |
 | Testing | pytest | Unit, fixture, integration, and smoke tests |
@@ -44,8 +44,9 @@ configuration or command-line arguments.
 - **Additive baseline:** CPU-fallback sequence-to-sequence LSTM with
   attention and a pointer-generator copy mechanism. Its architecture is
   specified in [`lstm-baseline-design.md`](./lstm-baseline-design.md) and will
-  be implemented without changing the template baseline or shared evaluation
-  interfaces.
+  be implemented in PyTorch without changing the template baseline or shared
+  evaluation interfaces. Model-side tokenization and training-only vocabulary
+  construction are the current implementation checkpoint.
 - The template baseline remains primary until the LSTM has comparable,
   reproducible results. The LSTM is an additional baseline, not a replacement.
 
@@ -100,10 +101,13 @@ constants.
 ## 7. Compute and resource policy
 
 - CPU is sufficient for fixtures, data validation, the classical baseline, and
-  the CLI.
-- GPU may be required for transformer fine-tuning.
-- Colab or a university cluster may be used only with approved access and
-  documented environment details.
+  LSTM preprocessing and a bounded 200-example training smoke test.
+- GPU is preferred for larger LSTM and transformer experiments, but is not a
+  prerequisite for the LSTM fallback.
+- The university HPC is reachable through SSH and exposes Slurm 25.05.3.
+  GPU partition/resource syntax and compute-node visibility remain unconfirmed.
+- Google Colab is the preferred fallback for larger GPU experiments if HPC
+  partitioning remains paused.
 - Training must support bounded smoke runs before full runs.
 - Do not commit checkpoints or expose credentials/tokens.
 
@@ -120,7 +124,6 @@ Before adding a package:
 ## 9. Deferred choices
 
 - Exact Python patch version.
-- LSTM versus template/grammar baseline.
 - T5 checkpoint versus BERT-based parser.
 - Gradio versus Streamlit.
 - Constrained decoding versus execution-error self-correction.

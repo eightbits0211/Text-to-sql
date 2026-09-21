@@ -104,6 +104,22 @@ Streamlit only if the CLI is stable before the internal deadline.
 
 **Done when:** A new environment can run a documented smoke-test command.
 
+### Current execution status
+
+- The template/grammar baseline has been hardened and evaluated on the full
+  official development splits. Report-ready artifacts are stored outside Git
+  under `/Users/roshini/datasets/text-to-sql/artifacts-template-full-dev/`.
+- PR #6 merged the template hardening, full-dev runner, LSTM design, and HPC
+  connectivity documentation into `spec/agent-governance-rules`.
+- Merged feature branches were removed locally and remotely. New work is on
+  `feature/lstm-preprocessing`.
+- The current LSTM checkpoint is model-side tokenization, training-only
+  vocabulary construction, and copy-target structures. It is additive and
+  must preserve the template baseline and shared evaluator.
+- HPC SSH and Slurm connectivity are verified, but GPU partition/resource
+  syntax and remote project paths are not yet confirmed. CPU preprocessing and
+  smoke work continue locally.
+
 ### Workstream B — Data loading and schema serialization
 
 - Implement WikiSQL ingestion.
