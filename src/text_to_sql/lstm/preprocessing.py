@@ -58,8 +58,11 @@ def _normalize_token(token: str) -> str:
     text = token.strip()
     if not text:
         return ""
-    if text.startswith(("'", '"')) and text.endswith(("'", '"')) and len(text) >= 2:
-        return text.lower()
+    if len(text) >= 2 and (
+        (text.startswith("'") and text.endswith("'"))
+        or (text.startswith('"') and text.endswith('"'))
+    ):
+        return text[1:-1].strip().lower()
     return text.lower()
 
 
@@ -98,6 +101,7 @@ class TokenizedExample:
     schema_tokens: tuple[str, ...]
     sql_tokens: tuple[str, ...]
     source_tokens: tuple[str, ...]
+    encoder_tokens: tuple[str, ...] = ()
 
 
 def tokenize_example(example: ExampleRecord) -> TokenizedExample:
@@ -105,11 +109,13 @@ def tokenize_example(example: ExampleRecord) -> TokenizedExample:
     schema_tokens = tuple(tokenize_schema(example.schema_text))
     sql_tokens = tuple(tokenize_sql(example.gold_sql))
     source_tokens = tuple(question_tokens + schema_tokens)
+    encoder_tokens = ("<bos>",) + question_tokens + ("<schema_sep>",) + schema_tokens + ("<eos>",)
     return TokenizedExample(
         question_tokens=question_tokens,
         schema_tokens=schema_tokens,
         sql_tokens=sql_tokens,
         source_tokens=source_tokens,
+        encoder_tokens=encoder_tokens,
     )
 
 
@@ -153,7 +159,8 @@ def build_training_vocabulary(
     for example in examples:
         if example.split != DatasetSplit.TRAIN:
             continue
-        for token in tokenize_example(example).question_tokens + tokenize_example(example).schema_tokens + tokenize_example(example).sql_tokens:
+        tokenized = tokenize_example(example)
+        for token in tokenized.question_tokens + tokenized.schema_tokens + tokenized.sql_tokens:
             counts[token] += 1
 
     ordered = sorted(counts, key=lambda token: (-counts[token], token))
@@ -188,25 +195,30 @@ class CopyTarget:
     source_positions: dict[str, tuple[int, ...]]
     source_to_index: dict[str, int]
     copy_index_by_token: dict[str, int]
+    encoder_positions: dict[str, tuple[int, ...]] = ()
 
 
 def build_copy_target(example: ExampleRecord, vocabulary: FixedVocabulary) -> CopyTarget:
     """Build the example-specific extended vocabulary and source-position map."""
-    raw_source_tokens = _iter_surface_tokens(example.question, QUESTION_SCHEMA_TOKEN_RE) + _iter_surface_tokens(
-        example.schema_text,
-        QUESTION_SCHEMA_TOKEN_RE,
-    )
+    raw_question_tokens = _iter_surface_tokens(example.question, QUESTION_SCHEMA_TOKEN_RE)
+    raw_schema_tokens = _iter_surface_tokens(example.schema_text, QUESTION_SCHEMA_TOKEN_RE)
+    raw_source_tokens = raw_question_tokens + raw_schema_tokens
     source_tokens = tuple(raw_source_tokens)
     source_positions: defaultdict[str, list[int]] = defaultdict(list)
+    encoder_positions: defaultdict[str, list[int]] = defaultdict(list)
     source_to_index: dict[str, int] = {}
     copy_index_by_token: dict[str, int] = {}
     extended_tokens = list(vocabulary.tokens)
 
+    q_len = len(raw_question_tokens)
     for position, token in enumerate(source_tokens):
         normalized = _normalize_token(token)
         if not normalized:
             continue
         source_positions[normalized].append(position)
+        enc_pos = 1 + position if position < q_len else 2 + position
+        encoder_positions[normalized].append(enc_pos)
+
         vocab_index = vocabulary.get_index(token)
         if vocab_index is not None:
             source_to_index[normalized] = vocab_index
@@ -222,6 +234,7 @@ def build_copy_target(example: ExampleRecord, vocabulary: FixedVocabulary) -> Co
         source_positions={key: tuple(value) for key, value in source_positions.items()},
         source_to_index=source_to_index,
         copy_index_by_token=copy_index_by_token,
+        encoder_positions={key: tuple(value) for key, value in encoder_positions.items()},
     )
 
 

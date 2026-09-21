@@ -21,3 +21,10 @@ checkpoints/
 
 # Tool caches
 .uv/
+
+# Reference docs, proposal artifacts, and editor caches
+*.pdf
+*.docx
+*.tex
+*.log
+.kiro/

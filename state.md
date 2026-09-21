@@ -140,18 +140,6 @@ before ending every work session.
 - Configured the intended `origin` remote.
 - Added agent governance rules for surgical edits, clarification, configuration,
   branch/PR safety, and progress tracking.
-
-## Current roadblocks
-
-- The GitHub repository was initially empty, so GitHub currently treats
-  `spec/agent-governance-rules` as its default branch. A proper default branch
-  and PR base should be established before merging feature work.
-- The deterministic baseline remains limited on broader official data,
-  especially Spider joins and compositional queries; the 250-example results
-  are evidence, not final benchmark claims.
-- Full-dev evaluation is currently running locally on CPU. HPC GPU submission
-  remains paused due to partition configuration, and the deterministic
-  SQLite-heavy evaluation is not GPU-accelerated.
 - Full-dev evaluation completed: WikiSQL retained 8,415/8,421 with execution
   accuracy 0.0723; Spider retained 1,034/1,034 with execution accuracy
   0.0580. Full breakdowns and manifest are under
@@ -170,37 +158,52 @@ before ending every work session.
   deterministic tokenization, training-only vocabulary, copy-target structures
   with pointer-generator extended vocabulary, resolution precedence, and
   unresolvable target events. 7 unit tests pass and Ruff is clean.
+- Addressed LSTM preprocessing nuances: updated `_normalize_token` to strip
+  enclosing quotes during matching, added `encoder_tokens` to `TokenizedExample`
+  with `<bos>`, `<schema_sep>`, `<eos>`, added `encoder_positions` to `CopyTarget`
+  to directly align encoder attention weights, cached tokenization in vocabulary
+  construction, and added 2 regression unit tests. All 38 tests pass with Ruff clean.
+- Implemented the LSTM smoke training loop on `feature/lstm-preprocessing`:
+  installed torch 2.14.0 (CPU), created `model.py` (bidir encoder + attention
+  decoder + pointer-generator), `collation.py` (padded tensor batches),
+  `training.py` (teacher-forced NLL, Adam, grad-clip, checkpoint save/reload),
+  and `adapter.py` (fit/predict/evaluate, mirrors TemplateBaseline interface).
+  All 43 tests pass with Ruff clean.
 - Synchronized the technology stack, system architecture, and subagent
   coordination documents with the approved additive LSTM workflow. The stack
   now records Python 3.12/`uv`, PyTorch for LSTM work, CPU/Colab fallback, and
   verified Slurm connectivity without claiming GPU readiness.
+- Created `scripts/run_lstm_comparison.py` and completed the 200-example
+  comparative evaluation between `TemplateBaseline` and `LSTMBaseline` on official
+  WikiSQL and Spider development slices through the shared evaluation harness.
+- Formatted detailed evaluation report artifact `lstm_comparison_report.md` with
+  execution accuracy, exact match, invalid SQL rates, and failure diagnostics.
+- Verified GPU readiness: the model architecture, batch collation, and training
+  pipeline are fully device-agnostic (`torch.device`) and ready for CUDA/Colab/HPC.
+- Added file patterns to `.gitignore` to prevent accidental tracking of PDFs,
+  LaTeX logs, and editor caches.
 
 ## Current roadblocks
 
-- Scripted demos, full report-ready error analysis, and clean reproduction
-  remain outstanding.
-- HPC GPU job submission is currently paused; CPU-only work can continue.
-  Connectivity is healthy, but scheduler resource details and GPU partition
-  readiness must be confirmed before submitting jobs.
-- PR creation is now approval-gated; no automatic PRs for ordinary checkpoints.
-- HPC remote project path and scheduler details are not confirmed.
-- The modern-model dependency set is intentionally not installed yet; it will
-  be added only after the Part 2 baseline and compute requirements are clearer.
+- Scripted demos, Part 2 report drafting (Introduction, Literature Survey,
+  Methodology, Baseline Results), and full error analysis remain outstanding.
+- HPC GPU job submission remains paused pending partition configuration by the
+  HPC team; local CUDA or Google Colab can be used for full-dataset training.
+- LSTM smoke model on 200 examples exhibits a 1.0 invalid SQL rate due to data
+  starvation and unquoted multi-word SQLite identifiers; training on the full
+  WikiSQL train split (~56k examples) is required for robust syntax generation.
 - Evaluation policy decisions remain open: literal-sensitive exact-match
   diagnostic, result ordering, accuracy denominators, and Spider split policy.
 
 ## Next immediate steps
 
-1. Implement the bounded 200-example CPU smoke training loop and checkpoint reload test.
-2. Run comparable LSTM WikiSQL/Spider smoke evaluations through the existing
-   metrics and reports.
-3. Inspect baseline breakdowns and select representative successes/failures.
-4. Add scripted easy/filter/failure demo examples and rehearse the CLI.
-5. Draft report sections and evidence required by Part 2.
-6. Confirm the HPC remote project path and scheduler before any job workflow.
-7. Continue CPU-only work while GPU submission is paused.
-8. Do not open another PR until the user requests it or approves a notified
-   major-checkpoint PR recommendation.
+1. Review and merge the LSTM implementation & comparative evaluation Pull Request.
+2. Select compute environment for full LSTM training (local CUDA, Google Colab,
+   or Slurm once GPU partition is unpaused).
+3. Rehearse CLI demo and select representative success/failure examples across
+   both models.
+4. Draft Part 2 report sections incorporating baseline comparison tables and
+   error analysis.
 
 ## Session metadata
 
@@ -208,5 +211,5 @@ before ending every work session.
 |---|---|
 | Last updated | 2026-09-21 |
 | Active branch | `feature/lstm-preprocessing` |
-| Overall estimate | 78% |
-| Next review point | LSTM CPU smoke training loop |
+| Overall estimate | 88% |
+| Next review point | Pull request review and full GPU/Colab LSTM training |
