@@ -55,7 +55,13 @@ before ending every work session.
 - Implemented the CPU-only evaluation harness for SQL normalization, read-only
   SQLite execution, exact match, execution accuracy, invalid-SQL rate, and
   per-example failure records.
-- Full test suite now passes with 12 tests and Ruff clean.
+- Implemented the deterministic, schema-aware template baseline with a shared
+  fit/predict/evaluate adapter.
+- Added JSONL prediction artifact persistence with example, gold, prediction,
+  and model metadata.
+- Added the `text-to-sql-demo` CLI for database selection, schema inspection,
+  question-to-SQL generation, validation, and result output.
+- Full test suite now passes with 14 tests and Ruff clean.
 - Opened PR #3 for the SQLite schema/fixture slice:
   `https://github.com/eightbits0211/Text-to-sql/pull/3`.
 - Updated governance so PRs are raised only when explicitly requested or after
@@ -81,7 +87,7 @@ before ending every work session.
 - Dataset acquisition and loaders are not set up yet.
 - HPC GPU job submission is currently paused; CPU-only work can continue.
 - PR creation is now approval-gated; no automatic PRs for ordinary checkpoints.
-- No model implementation or demo exists yet.
+- No modern model or novelty implementation exists yet.
 - HPC remote project path and scheduler details are not confirmed.
 - The modern-model dependency set is intentionally not installed yet; it will
   be added only after the Part 2 baseline and compute requirements are clearer.
@@ -90,17 +96,16 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Review this combined data/evaluation checkpoint; PR creation is
-   approval-gated.
-2. Confirm evaluation policy decisions before expanding reports and metrics.
-3. Implement the classical baseline behind the shared prediction interface.
+1. Review the classical baseline checkpoint; PR creation is approval-gated.
+2. Acquire/configure permitted WikiSQL and Spider data before claiming
+   benchmark metrics.
+3. Persist metric reports and add difficulty/query-structure breakdowns.
 4. Confirm the HPC remote project path and scheduler before creating a local
    project sync/job workflow.
-6. Continue CPU-only fixtures, loaders, evaluator, and CLI work while GPU
-   submission is paused.
-7. Do not open another PR until the user requests it or approves a notified
+5. Continue CPU-only work while GPU submission is paused.
+6. Do not open another PR until the user requests it or approves a notified
    major-checkpoint PR recommendation.
-6. Before the next session ends, update this file and provide a context-history
+7. Before the next session ends, update this file and provide a context-history
    summary.
 
 ## Session metadata
@@ -108,6 +113,6 @@ before ending every work session.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Active branch | `feature/part2-wikisql-loader` |
-| Overall estimate | 45% |
-| Next review point | After approval to raise the combined data/evaluation PR |
+| Active branch | `feature/part2-classical-baseline` |
+| Overall estimate | 52% |
+| Next review point | After approval to raise the classical baseline checkpoint PR |

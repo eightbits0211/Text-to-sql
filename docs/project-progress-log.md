@@ -10,13 +10,13 @@ claims about final model accuracy.
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Overall completion | 45% |
-| Current phase | Planning and repository setup |
+| Overall completion | 52% |
+| Current phase | Part 2 baseline and demo |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
-| Active branch | `feature/part2-wikisql-loader` |
+| Active branch | `feature/part2-classical-baseline` |
 | Current blocker | HPC GPU job submission is paused during partitioning configuration; repository default-branch strategy and HPC remote project/scheduler details remain open |
-| Next checkpoint | Review combined data/evaluation checkpoint; request PR approval |
+| Next checkpoint | Review classical baseline checkpoint; request PR approval |
 
 ## Checkpoint log
 
@@ -46,16 +46,19 @@ claims about final model accuracy.
 | P2.8 | Data | SQLite schema extraction and synthetic fixture tests | Done | 100% | Lead agent | `sqlite_schema.py`; 6 tests pass; Ruff passes | Implement WikiSQL loader |
 | P2.10 | Data | WikiSQL JSON loader and exclusion statistics | Done | 100% | Lead agent | `wikisql.py`; 9 tests pass; Ruff passes; no PR opened yet | Implement Spider loader |
 | P2.11 | Data/Evaluation | Spider loader, fixtures, and CPU evaluation harness | Done | 100% | Lead agent | `spider.py`, `metrics.py`; 12 tests pass; Ruff passes; no PR opened | Review checkpoint and select baseline |
+| P2.12 | Baseline | Deterministic template baseline and shared prediction adapter | Done | 100% | Lead agent | `baselines/template.py`; count/aggregate generation and evaluation adapter covered by tests | Evaluate against downloaded benchmark data |
+| P2.13 | Artifacts | JSONL prediction artifact persistence | Done | 100% | Lead agent | `evaluation/artifacts.py`; one-record-per-example fixture test | Add persisted metric reports |
+| P2.14 | Demo | CLI question → SQL → read-only result | Done | 100% | Lead agent | `text-to-sql-demo` entry point and `cli.py` | Add documented smoke command |
 | P2.9 | Governance | PR creation made approval-gated | Done | 100% | Lead agent | [`agent-rules.md`](./agent-rules.md) updated; no automatic PR policy | Notify user at major checkpoints |
 | P2.1 | Environment | Dependency manifest and smoke-test command | Not started | 0% | Unassigned | Required before data/model work | Inspect available Python environment |
 | P2.2 | Data | Dataset configuration and acquisition instructions | Not started | 0% | Unassigned | WikiSQL first, Spider second | Define config and paths |
 | P2.3 | Data | WikiSQL loader and validation | Not started | 0% | Unassigned | Part 2 gate | Implement fixtures/tests |
 | P2.4 | Data | Schema serialization | Not started | 0% | Unassigned | Tables, columns, types, keys | Implement deterministic serializer |
 | P2.5 | Data | Spider loader and smoke split | Not started | 0% | Unassigned | Preserve official split metadata | Implement after WikiSQL |
-| P2.6 | Baseline | Classical parser/template baseline | Not started | 0% | Unassigned | Must return one candidate per input | Select and implement baseline |
+| P2.6 | Baseline | Classical parser/template baseline | Done | 100% | Lead agent | Deterministic schema-aware template baseline implemented | Evaluate against downloaded benchmark data |
 | P2.7 | Evaluation | Exact match, execution accuracy, invalid rate | Not started | 0% | Unassigned | Per-example failures must continue | Build fixture-driven evaluator |
 | P2.8 | Analysis | Error categories and breakdown reports | Not started | 0% | Unassigned | Difficulty and query structure required | Generate CSV/Markdown reports |
-| P2.9 | Demo | CLI question → SQL → result/error | Not started | 0% | Unassigned | Must run from one documented command | Integrate stable baseline |
+| P2.9 | Demo | CLI question → SQL → result/error | Done | 100% | Lead agent | CLI integrated with read-only SQLite execution | Add documented smoke command |
 | P2.10 | Report | Part 2 report sections and citations | Not started | 0% | Unassigned | Introduction through baseline results | Draft from saved evidence |
 | P2.11 | QA | Clean-environment reproduction and PR review | Not started | 0% | Unassigned | Required before Sep 30 freeze | Run final checklist |
 
