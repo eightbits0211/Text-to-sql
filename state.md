@@ -208,16 +208,18 @@ before ending every work session.
 - Applied low fixes:
   7. Properly imported `CopyTarget` in `adapter.py` (removed `# noqa: F821`).
   8. Fixed `forward_step` return type annotation in `model.py`.
-- Cancelled old GPU job `359338` via `scancel`.
-- Synced fixed code to HPC via `git pull` (fast-forward `3d302f7..7976d6f`).
-- Submitted new GPU training job `359370` via `sbatch scripts/hpc_run_lstm_gpu.sh`.
-- All 50 tests pass in 3.05s; Ruff clean. Commit `7976d6f` pushed to origin.
+- Identified and resolved a severe data loading bottleneck in WikiSQL and Spider:
+  cached read-only SQLite schema introspection via `@lru_cache` and verified database
+  paths once per file, reducing 56k WikiSQL dataset loading from ~15 hours to ~12 seconds.
+- Added periodic batch progress reporting (every 200 batches) and unbuffered stdout
+  logging (`PYTHONUNBUFFERED=1`, `python3 -u`) in `training.py` and `hpc_run_lstm_gpu.sh`.
+- Resubmitted full two-stage GPU training job on Slurm: **Job `359924`** (`csis_gpu_lstm` on `gpunode8`).
+- All 50 tests pass in 3.33s; Ruff clean. Commit `28bd307` pushed to origin.
 
 ## Current roadblocks
 
-- GPU training job `359370` is queued on `gpunode8` (reason: Resources).
-  Estimated start: tonight (Sep 22) to tomorrow (Sep 23) depending on
-  partition load. No action required — will auto-start.
+- GPU training job `359924` is queued on `gpunode8` (reason: Resources).
+  It will auto-start as soon as a GPU MPS slice opens up.
 - Part 2 report drafting (Introduction, Literature Survey, Dataset &
   Preprocessing, Methodology & Baseline Results with Error Analysis) remains
   to be authored. This is the **critical path** item.
@@ -226,8 +228,8 @@ before ending every work session.
 
 ## Next immediate steps
 
-1. Retrieve GPU training results when job `359370` completes; run full
-   comparative evaluation (`--full-eval`) with the trained checkpoint.
+1. Monitor GPU training job `359924` until completion; retrieve checkpoints and
+   run full comparative evaluation (`--full-eval`).
 2. Draft Part 2 report sections (Sections a–d) incorporating dataset
    statistics, dual-baseline architecture (LSTM primary, template comparison),
    comparative results tables, and error analysis.
@@ -238,11 +240,11 @@ before ending every work session.
 
 | Field | Value |
 |---|---|
-| Last updated | 2026-09-22 |
+| Last updated | 2026-09-23 |
 | Active branch | `spec/agent-governance-rules` |
 | Primary baseline | Pointer-Generator LSTM Seq2Seq |
 | Fallback baseline | Deterministic Template Parser |
 | Overall estimate | 85% |
-| HPC Job ID | `359370` (`csis_gpu_lstm` on `gpunode8`) |
+| HPC Job ID | `359924` (`csis_gpu_lstm` on `gpunode8`) |
 | Test suite status | 50 passed, 0 failed, Ruff clean |
 | Next review point | GPU results retrieval and Part 2 report drafting |
