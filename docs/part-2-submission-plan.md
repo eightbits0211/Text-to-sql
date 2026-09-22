@@ -106,19 +106,19 @@ Streamlit only if the CLI is stable before the internal deadline.
 
 ### Current execution status
 
-- The template/grammar baseline has been hardened and evaluated on the full
-  official development splits. Report-ready artifacts are stored outside Git
-  under `/Users/roshini/datasets/text-to-sql/artifacts-template-full-dev/`.
-- PR #6 merged the template hardening, full-dev runner, LSTM design, and HPC
-  connectivity documentation into `spec/agent-governance-rules`.
-- Merged feature branches were removed locally and remotely. New work is on
-  `feature/lstm-preprocessing`.
-- The current LSTM checkpoint is model-side tokenization, training-only
-  vocabulary construction, and copy-target structures. It is additive and
-  must preserve the template baseline and shared evaluator.
-- HPC SSH and Slurm connectivity are verified, but GPU partition/resource
-  syntax and remote project paths are not yet confirmed. CPU preprocessing and
-  smoke work continue locally.
+- The deterministic template/grammar baseline has been hardened and evaluated on the full
+  official development splits (8,415 WikiSQL records, 1,034 Spider records; 0% invalid rate).
+  Report-ready artifacts are stored under `artifacts-template-full-dev/`.
+- PR #7 merged the Pointer-Generator LSTM seq2seq model, attention decoder, and copy mechanism.
+- PR #8 merged the live demo showcase (3 scripted queries, model switcher, ASCII tables) and
+  the HPC Blackwell GPU environment configuration (`gpunode8`, PyTorch 2.14.0+cu130, `--gres=mps:50`).
+- Implemented **two-stage sequential training** per the authoritative Part 1 Proposal
+  (`.kiro/proposals/Part1_Proposal_TextToSQL.md`):
+  1. Stage 1: WikiSQL single-table warm-up training (~56,000 examples, 10 epochs).
+  2. Stage 2: Spider primary cross-domain training (~7,000 examples, 10 epochs).
+  3. Full evaluation across complete dev sets: all 1,034 Spider dev records and 8,415 WikiSQL dev records.
+- 50/50 unit tests pass in 3.31s; Ruff linter clean.
+- HPC Slurm verification job `359139` is queued as #1 in line for the next available GPU slot on `gpunode8`.
 
 ### Workstream B — Data loading and schema serialization
 
@@ -134,18 +134,17 @@ Streamlit only if the CLI is stable before the internal deadline.
 **Done when:** A sample record can be printed and every required field is
 non-empty and traceable to its source database.
 
-### Workstream C — Classical baseline
+### Workstream C — Dual classical baselines (Template + Pointer-Generator LSTM)
 
-- Define the supported SQL grammar/template inventory.
-- Implement question parsing and schema matching.
-- Implement SQL rendering with safe identifier handling.
-- Return one candidate string for every example.
-- Return an empty candidate for unsupported inputs.
-- Save predictions with question, schema/database ID, gold SQL, predicted SQL,
-  and failure reason.
+- **Deterministic Template Baseline (Primary / Fallback)**:
+  - Supported inventory: SELECT projections, single-table filtering, comparisons, AND/OR, aggregations, ORDER BY, LIMIT.
+  - Safe identifier quoting and 0.0000 invalid SQL rate guarantee across all official SQLite databases.
+- **Pointer-Generator LSTM Baseline (Neural Seq2Seq)**:
+  - 2-layer bidirectional LSTM encoder, Bahdanau additive attention decoder, and schema-pointer copy mechanism.
+  - Sequential two-stage training: Stage 1 WikiSQL warm-up (56,000 examples) followed by Stage 2 Spider primary training (~7,000 examples).
+- Save predictions with question, schema/database ID, gold SQL, predicted SQL, and failure reasons.
 
-**Done when:** The baseline runs end-to-end on WikiSQL smoke data and a Spider
-smoke slice without crashing.
+**Done when:** Both baselines run end-to-end on full WikiSQL and Spider dev sets without unhandled exceptions.
 
 ### Workstream D — Evaluation harness
 
