@@ -202,3 +202,36 @@ def test_untrained_lstm_adapter_returns_empty_string() -> None:
     baseline = LSTMBaseline()
     result = baseline.predict("Any question?", "database: x\ntable: t\ncolumns:\n  - id [INTEGER]\nforeign_keys:")
     assert result == ""
+
+
+def test_two_stage_wikisql_then_spider_training(
+    tmp_path: Path,
+    smoke_examples: tuple[ExampleRecord, ...],
+) -> None:
+    """Sequential training on WikiSQL then Spider records must train and save unified checkpoint."""
+    config = TrainingConfig(
+        embedding_dim=32,
+        hidden_dim=64,
+        num_encoder_layers=1,
+        num_decoder_layers=1,
+        dropout=0.0,
+        batch_size=4,
+        max_epochs=1,
+        smoke_limit=None,
+        seed=42,
+    )
+    # Split smoke_examples into mock WikiSQL (first 4) and mock Spider (last 4)
+    wikisql_mock = smoke_examples[:4]
+    spider_mock = smoke_examples[4:]
+
+    baseline = LSTMBaseline(config=config)
+    baseline.fit(
+        wikisql_mock,
+        checkpoint_dir=tmp_path / "two_stage_ckpt",
+        spider_examples=spider_mock,
+        spider_epochs=1,
+    )
+    assert baseline._model is not None
+    assert baseline._vocabulary is not None
+    assert (tmp_path / "two_stage_ckpt" / "lstm_smoke.pt").exists()
+    assert (tmp_path / "two_stage_ckpt" / "training_meta.json").exists()

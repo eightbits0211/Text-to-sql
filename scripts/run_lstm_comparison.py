@@ -109,10 +109,10 @@ def main() -> int:
                         help="LSTM training epochs on the train slice")
     parser.add_argument("--train-limit", type=int, default=200,
                         help="Max WikiSQL train examples for LSTM fitting (e.g. 56000 for full split)")
-    parser.add_argument("--batch-size", type=int, default=32,
-                        help="Minibatch size for LSTM training (default: 32)")
-    parser.add_argument("--device", default=None,
-                        help="Compute device (cuda or cpu). Defaults to cuda if available.")
+    parser.add_argument("--spider-train-limit", type=int, default=0,
+                        help="Max Spider train examples (0 = all ~7,000 Spider train examples; default: 0)")
+    parser.add_argument("--spider-epochs", type=int, default=0,
+                        help="Epochs to train on Spider train split (default: 0)")
     args = parser.parse_args()
 
     selected_device = (
@@ -129,6 +129,8 @@ def main() -> int:
     print(f"\n{'='*60}")
     print(f"  LSTM vs Template comparison  ({eval_label})")
     print(f"  Device: {selected_device} | Batch size: {args.batch_size}")
+    print(f"  WikiSQL Train: limit={args.train_limit}, epochs={args.epochs}")
+    print(f"  Spider Train : limit={args.spider_train_limit}, epochs={args.spider_epochs}")
     print(f"{'='*60}\n")
 
     # ----------------------------------------------------------------
@@ -143,29 +145,50 @@ def main() -> int:
     print(f"  retained={len(spider_dev.records)}  excluded={len(spider_dev.exclusions)}")
 
     # ----------------------------------------------------------------
-    # Fit LSTM on WikiSQL train slice
+    # Fit LSTM on WikiSQL train and/or Spider train
     # ----------------------------------------------------------------
-    print(f"\nFitting LSTM on up to {args.train_limit} WikiSQL train examples "
-          f"({args.epochs} epochs) on {selected_device}...")
-    wikisql_train = load_wikisql(
-        config.wikisql_source.with_name("train.jsonl"),
-        config.wikisql_database_root,
-        split=DatasetSplit.TRAIN,
-        database_pattern="train.db",
-        table_metadata_path=config.wikisql_source.with_name("train.tables.jsonl"),
-        smoke_limit=args.train_limit,
-    )
-    print(f"  train retained={len(wikisql_train.records)}")
+    wikisql_train_records = ()
+    if args.epochs > 0 and args.train_limit > 0:
+        print(f"\nLoading up to {args.train_limit} WikiSQL train examples...")
+        wikisql_train = load_wikisql(
+            config.wikisql_source.with_name("train.jsonl"),
+            config.wikisql_database_root,
+            split=DatasetSplit.TRAIN,
+            database_pattern="train.db",
+            table_metadata_path=config.wikisql_source.with_name("train.tables.jsonl"),
+            smoke_limit=args.train_limit,
+        )
+        wikisql_train_records = wikisql_train.records
+        print(f"  WikiSQL train retained={len(wikisql_train_records)}")
+
+    spider_train_records = None
+    if args.spider_epochs > 0:
+        print(f"\nLoading Spider train records (limit={args.spider_train_limit})...")
+        spider_train_limit = None if args.spider_train_limit <= 0 else args.spider_train_limit
+        spider_train = load_spider(
+            config.spider_source.with_name("train_spider.json"),
+            config.spider_schema,
+            config.spider_database_root,
+            split=DatasetSplit.TRAIN,
+            smoke_limit=spider_train_limit,
+        )
+        spider_train_records = spider_train.records
+        print(f"  Spider train retained={len(spider_train_records)}")
 
     lstm_checkpoint_dir = config.artifact_directory / "lstm-checkpoint"
     lstm_cfg = TrainingConfig(
         max_epochs=args.epochs,
         batch_size=args.batch_size,
-        smoke_limit=args.train_limit,
+        smoke_limit=args.train_limit if args.train_limit > 0 else None,
         seed=42,
     )
     lstm_baseline = LSTMBaseline(config=lstm_cfg, device=selected_device)
-    lstm_baseline.fit(wikisql_train.records, checkpoint_dir=lstm_checkpoint_dir)
+    lstm_baseline.fit(
+        wikisql_train_records,
+        checkpoint_dir=lstm_checkpoint_dir,
+        spider_examples=spider_train_records,
+        spider_epochs=args.spider_epochs,
+    )
     print("  LSTM fitting complete.")
 
     # ----------------------------------------------------------------

@@ -51,17 +51,25 @@ class LSTMBaseline:
         self,
         examples: Iterable[ExampleRecord],
         checkpoint_dir: Path | None = None,
+        spider_examples: Iterable[ExampleRecord] | None = None,
+        spider_epochs: int = 0,
     ) -> LSTMBaseline:
         """Train on the provided examples and cache the model in-process.
 
-        Only TRAIN-split examples are used to build the vocabulary and train.
+        Supports two-stage training: WikiSQL warm-up first, then Spider primary training.
         """
         records = tuple(examples)
+        spider_records = tuple(spider_examples) if spider_examples is not None else None
         if checkpoint_dir is None:
             checkpoint_dir = Path("artifacts/lstm-smoke")
 
         result: TrainingResult = train_smoke(
-            records, checkpoint_dir, config=self._config, device=self._device
+            records,
+            checkpoint_dir,
+            config=self._config,
+            device=self._device,
+            spider_train_records=spider_records,
+            spider_epochs=spider_epochs,
         )
         self._model, self._vocabulary = load_checkpoint(result.checkpoint_path, self._device)
         return self
