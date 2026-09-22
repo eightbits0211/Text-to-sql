@@ -27,7 +27,7 @@ if [ -f "/home/csisnlp_20/venv_nlp/bin/activate" ]; then
 fi
 
 # Verify PyTorch and CUDA
-python3 -c "import torch; print('PyTorch:', torch.__version__, '| CUDA Available:', torch.cuda.is_available(), '| Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'None')"
+/home/csisnlp_20/venv_nlp/bin/python3 -c "import torch; print('PyTorch:', torch.__version__, '| CUDA Available:', torch.cuda.is_available(), '| Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'None')"
 
 # Set dataset paths on HPC storage
 export TEXT2SQL_WIKISQL_SOURCE=/home/csisnlp_20/datasets/wikisql/data/dev.jsonl
@@ -42,7 +42,7 @@ mkdir -p /home/csisnlp_20/artifacts/lstm-gpu-run
 cd /home/csisnlp_20/Text-to-sql
 
 # Run full LSTM training on GPU (train on up to 56,000 WikiSQL training examples for 15 epochs)
-python3 scripts/run_lstm_comparison.py \
+/home/csisnlp_20/venv_nlp/bin/python3 scripts/run_lstm_comparison.py \
     --train-limit 56000 \
     --epochs 15 \
     --batch-size 64 \
