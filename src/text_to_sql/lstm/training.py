@@ -180,6 +180,7 @@ def train_smoke(
             total_loss = 0.0
             total_batches = 0
 
+            total_batches_expected = (len(shuffled) + config.batch_size - 1) // config.batch_size
             for batch_start in range(0, len(shuffled), config.batch_size):
                 batch_examples = shuffled[batch_start : batch_start + config.batch_size]
                 batch = collate_batch(batch_examples, vocabulary, device)
@@ -194,19 +195,26 @@ def train_smoke(
 
                 total_loss += loss.item()
                 total_batches += 1
+                if total_batches % 200 == 0:
+                    print(
+                        f"    [{dataset_name}] epoch {epoch + 1}/{num_epochs} "
+                        f"batch {total_batches}/{total_batches_expected} "
+                        f"loss={total_loss / total_batches:.4f}",
+                        flush=True,
+                    )
 
             epoch_loss = total_loss / max(total_batches, 1)
             epoch_losses.append(epoch_loss)
-            print(f"  [{dataset_name}] epoch {epoch + 1}/{num_epochs}  loss={epoch_loss:.4f}")
+            print(f"  [{dataset_name}] epoch {epoch + 1}/{num_epochs}  loss={epoch_loss:.4f}", flush=True)
 
     # Stage 1: WikiSQL warm-up training
     if wikisql_examples and config.max_epochs > 0:
-        print(f"Starting Stage 1: WikiSQL warm-up training ({len(wikisql_examples)} examples)...")
+        print(f"Starting Stage 1: WikiSQL warm-up training ({len(wikisql_examples)} examples)...", flush=True)
         _train_dataset_epochs("WikiSQL", list(wikisql_examples), config.max_epochs)
 
     # Stage 2: Spider primary training
     if spider_train_records and spider_epochs > 0:
-        print(f"Starting Stage 2: Spider primary training ({len(spider_train_records)} examples)...")
+        print(f"Starting Stage 2: Spider primary training ({len(spider_train_records)} examples)...", flush=True)
         _train_dataset_epochs("Spider", list(spider_train_records), spider_epochs)
 
     # Save checkpoint

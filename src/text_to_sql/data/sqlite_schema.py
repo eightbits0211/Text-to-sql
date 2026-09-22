@@ -1,18 +1,15 @@
-"""Read-only SQLite schema introspection."""
-
+import functools
 import sqlite3
 from pathlib import Path
 
 from .schema import ColumnSpec, DatabaseSchema, ForeignKeySpec, TableSpec
 
 
-def load_sqlite_schema(database_path: Path, database_id: str) -> DatabaseSchema:
-    """Load tables, columns, primary keys, and foreign keys from SQLite."""
-    if not database_id.strip():
-        raise ValueError("database_id must not be empty")
-    if not database_path.is_file():
-        raise FileNotFoundError(f"SQLite database does not exist: {database_path}")
-
+@functools.lru_cache(maxsize=1024)
+def _introspect_sqlite(
+    database_path_str: str,
+) -> tuple[tuple[TableSpec, ...], tuple[ForeignKeySpec, ...]]:
+    database_path = Path(database_path_str)
     uri = f"file:{database_path.resolve()}?mode=ro"
     try:
         connection = sqlite3.connect(uri, uri=True)
@@ -40,6 +37,17 @@ def load_sqlite_schema(database_path: Path, database_id: str) -> DatabaseSchema:
 
     if not tables:
         raise ValueError(f"SQLite database contains no user tables: {database_path}")
+    return tables, foreign_keys
+
+
+def load_sqlite_schema(database_path: Path, database_id: str) -> DatabaseSchema:
+    """Load tables, columns, primary keys, and foreign keys from SQLite."""
+    if not database_id.strip():
+        raise ValueError("database_id must not be empty")
+    if not database_path.is_file():
+        raise FileNotFoundError(f"SQLite database does not exist: {database_path}")
+
+    tables, foreign_keys = _introspect_sqlite(str(database_path.resolve()))
     return DatabaseSchema(database_id, tables, foreign_keys)
 
 

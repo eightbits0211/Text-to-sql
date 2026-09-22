@@ -36,6 +36,7 @@ export TEXT2SQL_SPIDER_SOURCE=/home/csisnlp_20/datasets/spider/spider_data/dev.j
 export TEXT2SQL_SPIDER_SCHEMA=/home/csisnlp_20/datasets/spider/spider_data/tables.json
 export TEXT2SQL_SPIDER_DATABASE_ROOT=/home/csisnlp_20/datasets/spider/spider_data/database
 export TEXT2SQL_ARTIFACT_DIRECTORY=/home/csisnlp_20/artifacts/lstm-gpu-run
+export PYTHONUNBUFFERED=1
 
 mkdir -p /home/csisnlp_20/artifacts/lstm-gpu-run
 
@@ -45,7 +46,7 @@ cd /home/csisnlp_20/Text-to-sql
 # 1. WikiSQL warm-up training (up to 56,000 examples, 10 epochs)
 # 2. Spider primary training (all ~7,000 examples, 10 epochs)
 # 3. Full evaluation on both complete dev splits (1,034 Spider records, 8,415 WikiSQL records)
-/home/csisnlp_20/venv_nlp/bin/python3 scripts/run_lstm_comparison.py \
+/home/csisnlp_20/venv_nlp/bin/python3 -u scripts/run_lstm_comparison.py \
     --train-limit 56000 \
     --epochs 10 \
     --spider-train-limit 7000 \
