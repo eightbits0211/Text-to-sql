@@ -45,6 +45,7 @@ def load_wikisql(
 
     retained: list[ExampleRecord] = []
     exclusions: list[ExclusionEvent] = []
+    verified_databases: set[Path] = set()
     for source_index, source_record in enumerate(source_records):
         example_id = f"wikisql-{split.value}-{source_index}"
         try:
@@ -56,6 +57,7 @@ def load_wikisql(
                 database_root=database_root,
                 database_pattern=database_pattern,
                 table_metadata=table_metadata,
+                verified_databases=verified_databases,
             )
         except _Excluded as excluded:
             exclusions.append(
@@ -112,6 +114,7 @@ def _build_record(
     database_root: Path,
     database_pattern: str,
     table_metadata: dict[str, dict[str, Any]],
+    verified_databases: set[Path] | None = None,
 ) -> ExampleRecord:
     question = _text(source_record.get("question"))
     if not question:
@@ -150,26 +153,30 @@ def _build_record(
             ExclusionReason.DATABASE_NOT_FOUND,
             f"database file not found for {database_id}",
         )
-    try:
-        load_sqlite_schema(database_path, database_id)
-        schema = DatabaseSchema(
-            database_id,
-            (
-                TableSpec(
-                    table_name,
-                    tuple(
-                        ColumnSpec(str(header), str(data_type))
-                        for header, data_type in zip(
-                            headers,
-                            table.get("types", ["TEXT"] * len(headers)),
-                            strict=True,
-                        )
-                    ),
+    if verified_databases is None or database_path not in verified_databases:
+        try:
+            load_sqlite_schema(database_path, database_id)
+            if verified_databases is not None:
+                verified_databases.add(database_path)
+        except (OSError, ValueError) as error:
+            raise _Excluded(ExclusionReason.DATABASE_UNREADABLE, str(error)) from error
+
+    schema = DatabaseSchema(
+        database_id,
+        (
+            TableSpec(
+                table_name,
+                tuple(
+                    ColumnSpec(str(header), str(data_type))
+                    for header, data_type in zip(
+                        headers,
+                        table.get("types", ["TEXT"] * len(headers)),
+                        strict=True,
+                    )
                 ),
             ),
-        )
-    except (OSError, ValueError) as error:
-        raise _Excluded(ExclusionReason.DATABASE_UNREADABLE, str(error)) from error
+        ),
+    )
 
     return ExampleRecord(
         example_id=example_id,
