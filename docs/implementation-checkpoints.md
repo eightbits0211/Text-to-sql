@@ -135,7 +135,7 @@ Last checklist update: 2026-09-21
 - [x] 8.14 Run a clean demo rehearsal.
 - [ ] 8.15 Freeze Part 2 scope on September 30.
 
-## Phase 9 — LSTM secondary baseline
+## Phase 9 — LSTM primary baseline
 
 - [x] 9.1 Document LSTM architecture, vocabulary, copy mechanism, compute
   fallback, and integration boundaries.
@@ -148,6 +148,9 @@ Last checklist update: 2026-09-21
 - [x] 9.8 Run comparable WikiSQL and Spider smoke slices.
 - [x] 9.9 Generate LSTM breakdown reports.
 - [x] 9.10 Compare LSTM with template and decide primary/secondary status.
+- [x] 9.11 Add epoch shuffling with deterministic per-epoch seeded RNG.
+- [x] 9.12 Fix redundant re-tokenization in batch collation.
+- [x] 9.13 Fix CopyTarget type annotation and add empty-vocab warning.
 
 ## Phase 10 — Modern model
 
@@ -188,19 +191,27 @@ Last checklist update: 2026-09-21
 
 ## Current Part 2 gate
 
-Part 2 implementation is approximately **90% complete**.
-- Both the deterministic Template baseline (primary/fallback) and Pointer-Generator LSTM baseline (secondary) are fully implemented, tested, and evaluated.
-- Interactive demo CLI with 3 scripted showcase cases and rehearsal runner is verified locally (49/49 unit tests pass).
-- HPC Blackwell environment with PyTorch 2.14.0+cu130 and MPS allocation is configured; Slurm verification job 359139 is queued for GPU execution.
+Part 2 implementation is approximately **85% complete**.
+- The Pointer-Generator LSTM seq2seq model is now the **primary** Part 2
+  baseline, per user direction. The deterministic template parser serves as
+  the fallback/comparison baseline.
+- Critical training quality bugs were identified and fixed on 2026-09-22:
+  epoch shuffling, missing argparse args (--device, --batch-size), redundant
+  re-tokenization, and CopyTarget type annotation.
+- Old GPU job `359338` was cancelled and replaced by **job 359370** with the
+  fixed code (commit `7976d6f`).
+- Interactive demo CLI with 3 scripted showcase cases supports both models
+  (`--model template|lstm`). 50/50 unit tests pass in 3.05s; Ruff clean.
 - Remaining Part 2 deliverables:
-  1. Full WikiSQL GPU training on HPC (15 epochs).
-  2. Part 2 Report Draft (Sections a–d: Introduction, Literature Survey, Dataset/Preprocessing, Methodology & Comparative Baseline Results).
-  3. Rehearse final demo and freeze scope by September 30.
+  1. Retrieve GPU training results (job 359370) and run full comparative evaluation.
+  2. Part 2 Report Draft (Sections a–d: Introduction, Literature Survey,
+     Dataset/Preprocessing, Methodology & Comparative Baseline Results).
+  3. Error analysis tables with representative examples.
+  4. Rehearse final demo and freeze scope by September 30.
 
-The report-ready template evaluation now uses the complete official
-development splits: 8,415 retained WikiSQL records and 1,034 Spider records.
-The template baseline remains the primary Part 2 fallback and guarantees zero crashes,
-while the LSTM baseline provides the learned neural seq2seq comparison.
+The report-ready template evaluation uses the complete official development
+splits: 8,415 retained WikiSQL records and 1,034 Spider records. LSTM GPU
+results are pending.
 
 The modern transformer and novelty tracks remain Part 3 work and are not
 required to close the Part 2 gate.

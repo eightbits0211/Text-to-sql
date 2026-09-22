@@ -9,14 +9,14 @@ claims about final model accuracy.
 
 | Field | Value |
 |---|---|
-| Last updated | 2026-09-21 |
-| Overall completion | 78% |
-| Current phase | LSTM preprocessing completed |
+| Last updated | 2026-09-22 |
+| Overall completion | 82% |
+| Current phase | Critical LSTM training bug fixes applied; GPU job 359370 resubmitted |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
-| Active branch | `feature/lstm-preprocessing` |
-| Current blocker | HPC login works and Slurm is available, but GPU partition/readiness and remote project path remain unconfirmed; repository default-branch strategy also remains open |
-| Next checkpoint | Implement bounded 200-example CPU smoke training loop and checkpoint reload test |
+| Active branch | `spec/agent-governance-rules` |
+| Current blocker | GPU job 359370 queued on `gpunode8` (waiting for resources); report sections a–d not started |
+| Next checkpoint | Retrieve GPU training results; begin Part 2 report drafting |
 
 ## Checkpoint log
 
@@ -86,17 +86,18 @@ When changing this log:
 
 ## Decision and evidence record
 
-### 2026-09-21 — Classical baseline selection
+### 2026-09-21 — Classical baseline selection (revised 2026-09-22)
 
-- **Decision:** Use the deterministic template/grammar parser as the Part 2
+- **Decision (original):** Use the deterministic template/grammar parser as the Part 2
   classical baseline.
-- **Alternatives considered:** Sequence-to-sequence LSTM.
-- **Reason:** Both are allowed by the project requirements. The template
-  parser remains the CPU-friendly, deterministic primary baseline, while the
-  LSTM is now an additive secondary baseline with a CPU fallback and Colab
-  path. HPC GPU submission remains paused.
-- **Impact:** Part 2 now includes a bounded LSTM comparison without removing,
-  changing, or blocking the existing template deliverable.
+- **Revision (2026-09-22):** The LSTM pointer-generator seq2seq model is now the
+  **primary** Part 2 baseline, per user direction. The template parser is
+  retained as the deterministic fallback/comparison baseline. The Part 1 Proposal
+  describes a "classical seq2seq LSTM parser or template/grammar-based parser" —
+  the LSTM fulfills this requirement as the primary deliverable.
+- **Impact:** Part 2 report will lead with LSTM results and architecture. The
+  template serves as a deterministic floor for comparison. GPU training quality
+  is now critical-path.
 - **Future compatibility:** Both baselines use the shared fit/predict/evaluate
   contract and can use the same evaluator and CLI.
 
@@ -447,4 +448,58 @@ When changing this log:
 - **Evidence:** Commits `184fef1` and `fee78e5` on `feature/part2-demo-rehearsal`. Slurm verification job `359139` submitted and queued.
 - **Next action:** Verify job `359139` GPU tensor output, submit full 15-epoch training job `hpc_run_lstm_gpu.sh`, and draft Part 2 report Sections a–d with empirical results.
 
+### 2026-09-22 — GPU verification passed and full training submitted
+
+- **GPU verification:** Slurm job `359139` completed on `gpunode8.sharanga.local`.
+  NVIDIA RTX PRO 6000 Blackwell Server Edition (98 GB VRAM, CUDA 13.0,
+  capability 12.0). PyTorch 2.14.0+cu130 tensor allocation and matrix
+  multiplication verified under MPS 50% slice (47 GB pinned VRAM).
+- **Training submitted:** Full two-stage training job `359338` queued with:
+  Stage 1 WikiSQL warm-up (56,000 examples, 10 epochs), Stage 2 Spider
+  primary training (~7,000 examples, 10 epochs), full evaluation on all dev
+  splits. `--batch-size 64 --device cuda`.
+- **Next action:** Wait for GPU resources; begin report drafting.
+
+### 2026-09-22 — LSTM designated as primary baseline; critical bug audit and fixes
+
+- **Baseline priority change:** Per user direction, the LSTM pointer-generator
+  seq2seq model is now the **primary** Part 2 baseline. The template parser is
+  the deterministic fallback/comparison. This aligns with the Part 1 Proposal's
+  "classical seq2seq LSTM parser" option.
+- **Bug audit:** Comprehensive line-by-line audit of all preprocessing, training,
+  collation, evaluation, and adapter code revealed 8 issues (3 critical, 3
+  medium, 2 low).
+- **Critical fixes applied:**
+  1. **Epoch shuffling** (`training.py`): Training data was iterated in the same
+     order every epoch. Added deterministic per-epoch shuffling using
+     `random.Random(config.seed + epoch)` for reproducible but varied batch
+     composition.
+  2. **Missing argparse args** (`run_lstm_comparison.py`): `--device` and
+     `--batch-size` were referenced (`args.device`, `args.batch_size`) but never
+     registered. The HPC job would crash immediately.
+  3. **Batch size not wired** (`run_lstm_comparison.py`): Even after fixing the
+     argparse, `args.batch_size` was already in the `TrainingConfig` constructor
+     but not in the manifest. Added `batch_size` and `device` to the manifest.
+- **Medium fixes applied:**
+  4. **Redundant re-tokenization** (`collation.py`): `tokenize_example()` was
+     called twice per example per batch — once in `_encode_encoder_sequence()`
+     and again in the padding loop. Modified the function to return
+     `encoder_tokens` alongside indices and copy target.
+  5. **CopyTarget type annotation** (`preprocessing.py`): `encoder_positions`
+     had default `()` but type `dict`. Changed to `field(default_factory=dict)`.
+  6. **Empty vocab warning** (`preprocessing.py`): `build_training_vocabulary`
+     now warns if no TRAIN-split records are found.
+- **Low fixes applied:**
+  7. **CopyTarget import** (`adapter.py`): Removed `# noqa: F821` suppression;
+     `CopyTarget` is now properly imported.
+  8. **forward_step return type** (`model.py`): Annotation updated from 3 to 4
+     return values to match actual implementation.
+- **Old job cancelled:** `scancel 359338`.
+- **Code synced to HPC:** `git pull` on `/home/csisnlp_20/Text-to-sql` — fast-
+  forward `3d302f7..7976d6f` (7 files changed).
+- **New job submitted:** `sbatch scripts/hpc_run_lstm_gpu.sh` → **job 359370**
+  queued (status PENDING, reason Resources).
+- **Evidence:** Commit `7976d6f` on `spec/agent-governance-rules`; pushed to
+  origin. 50 tests pass in 3.05s; Ruff clean.
+- **Next action:** Retrieve GPU results when job completes; begin Part 2 report.
 
