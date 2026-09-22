@@ -406,3 +406,45 @@ When changing this log:
 - **Next action:** Commit feature branch changes and open Pull Request for the LSTM
   implementation, smoke training loop, and comparative evaluation baseline checkpoint.
 
+### 2026-09-21 — Part 2 live demo showcase & rehearsal runner implemented (Phase 8.7 & 8.14)
+
+- **What changed:**
+  - Enhanced `src/text_to_sql/cli.py` to support the required Part 2 live demonstration
+    workflow:
+    - Added `--demo` flag implementing the three scripted showcase cases required by
+      the Part 2 specifications:
+      1. Easy / Single-Table Projection: "What are the names of all singers from France?"
+         (tests schema resolution, column projection, and string equality condition).
+      2. Filter & Numeric Comparison: "What are the names and ages of singers older than 30?"
+         (tests multi-column projection and comparison filtering).
+      3. Complex / Failure Case: "What is the stadium name and capacity for the concert with
+         the highest attendance?" (demonstrates graceful handling of unsupported cross-table
+         joins or missing constructs without crashing).
+    - Added model selection flag (`--model template|lstm`) and optional checkpoint loading
+      (`--checkpoint <path>`), enabling live side-by-side demonstration of both the Template
+      baseline and the neural LSTM baseline.
+    - Implemented clean ASCII table formatting for multi-column query outputs.
+  - Created `tests/test_cli.py` with 6 unit tests validating parser configuration, ASCII table
+    formatting, query execution, scripted showcase execution, and CLI exit codes.
+- **Evidence:** `uv run text-to-sql-demo --demo` executes cleanly against `concert_singer.sqlite`.
+  All 49 unit tests in the repository pass cleanly in 2.94s (`uv run pytest`), and Ruff linting is clean.
+- **Next action:** Configure HPC Blackwell GPU environment, submit Slurm verification job, and execute full WikiSQL training.
+
+### 2026-09-22 — HPC Blackwell GPU environment configured & local demo rehearsed
+
+- **What changed:**
+  - Configured HPC cluster environment (`hpc.bits-hyderabad.ac.in`, user `csisnlp_20`):
+    - Compute node hardware identified: `gpunode8` with 6 NVIDIA RTX PRO 6000 Blackwell Server Edition GPUs (CUDA capability `sm_120`, Driver 580.126.20, CUDA 13.0).
+    - Resolved Blackwell architecture incompatibility by installing `torch==2.14.0+cu130`, full CUDA 13.0 toolkit (`cuda-toolkit==13.0.3`, `nvidia-cudnn-cu13-9.24.0.43`), and `numpy==2.4.6`.
+    - Synced WikiSQL (~56k train, dev, tables, databases) and Spider (all schemas/DBs) to `/home/csisnlp_20/datasets/`.
+    - Configured Slurm jobs: `scripts/test_env.sh` (verification) and `scripts/hpc_run_lstm_gpu.sh` (15-epoch training) adhering to `--partition=gpu_rtx_pro_6000_6_csis_hyd`, `--qos=gpu_csis_course`, and `--gres=mps:50`.
+  - Rehearsed command-line demo locally across both models (`template` and `lstm`) against `concert_singer.sqlite`.
+    - Case 1 (Easy Projection): returned 4 rows with clean column alignment.
+    - Case 2 (Numeric Filter): returned 4 rows with `Name` and `Age` columns.
+    - Case 3 (Failure / Unsupported): graceful explanation without crashes.
+    - Model selection `--model lstm` verified to emit structured fallback messages cleanly.
+  - Test suite validated: 49/49 tests pass in 3.41s; Ruff clean.
+- **Evidence:** Commits `184fef1` and `fee78e5` on `feature/part2-demo-rehearsal`. Slurm verification job `359139` submitted and queued.
+- **Next action:** Verify job `359139` GPU tensor output, submit full 15-epoch training job `hpc_run_lstm_gpu.sh`, and draft Part 2 report Sections a–d with empirical results.
+
+

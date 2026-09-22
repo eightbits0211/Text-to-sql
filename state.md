@@ -182,34 +182,39 @@ before ending every work session.
   pipeline are fully device-agnostic (`torch.device`) and ready for CUDA/Colab/HPC.
 - Added file patterns to `.gitignore` to prevent accidental tracking of PDFs,
   LaTeX logs, and editor caches.
+- Merged Pull Request #7 into `spec/agent-governance-rules` without conflicts.
+- Enhanced `src/text_to_sql/cli.py` to support the live demo showcase (Phase 8.7 & 8.14):
+  implemented `--demo` flag running the three required showcase queries (easy projection,
+  numeric comparison filter, and graceful failure handling) with model selection
+  (`--model template|lstm`) and formatted ASCII tables.
+- Created `tests/test_cli.py` with 6 unit tests covering parser configuration, table formatting,
+  query execution, and CLI exit codes. All 49 unit tests pass cleanly in 2.94s.
 
 ## Current roadblocks
 
-- Scripted demos, Part 2 report drafting (Introduction, Literature Survey,
-  Methodology, Baseline Results), and full error analysis remain outstanding.
+- Part 2 report drafting (Introduction, Literature Survey, Dataset & Preprocessing,
+  Methodology & Baseline Results with Error Analysis) remains to be authored.
 - HPC GPU job submission remains paused pending partition configuration by the
   HPC team; local CUDA or Google Colab can be used for full-dataset training.
 - LSTM smoke model on 200 examples exhibits a 1.0 invalid SQL rate due to data
-  starvation and unquoted multi-word SQLite identifiers; training on the full
-  WikiSQL train split (~56k examples) is required for robust syntax generation.
+  starvation; training on the full WikiSQL train split (~56k examples) is required
+  for robust neural syntax generation. The template baseline serves as our reliable fallback.
 - Evaluation policy decisions remain open: literal-sensitive exact-match
   diagnostic, result ordering, accuracy denominators, and Spider split policy.
 
 ## Next immediate steps
 
-1. Review and merge the LSTM implementation & comparative evaluation Pull Request.
-2. Select compute environment for full LSTM training (local CUDA, Google Colab,
-   or Slurm once GPU partition is unpaused).
-3. Rehearse CLI demo and select representative success/failure examples across
-   both models.
-4. Draft Part 2 report sections incorporating baseline comparison tables and
-   error analysis.
+1. Draft Part 2 report sections (Sections a–d) incorporating dataset statistics,
+   dual-baseline architecture, comparative results tables, and error analysis.
+2. Launch full-dataset LSTM GPU training once the user provides notice that HPC
+   is unpaused (or via Google Colab).
+3. Review and raise PR for the demo showcase and report draft.
 
 ## Session metadata
 
 | Field | Value |
 |---|---|
 | Last updated | 2026-09-21 |
-| Active branch | `feature/lstm-preprocessing` |
-| Overall estimate | 88% |
-| Next review point | Pull request review and full GPU/Colab LSTM training |
+| Active branch | `feature/part2-demo-rehearsal` |
+| Overall estimate | 90% |
+| Next review point | Part 2 report drafting and full GPU/Colab LSTM training |
