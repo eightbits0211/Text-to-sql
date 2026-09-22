@@ -33,8 +33,8 @@ _SPIDER_ROOT = Path("/Users/roshini/datasets/text-to-sql/spider/spider_data")
 _DEFAULT_ARTIFACT_DIR = Path("/Users/roshini/datasets/text-to-sql/artifacts-lstm-comparison")
 
 
-def _build_config(smoke_limit: int) -> Part2Config:
-    """Try env vars first; fall back to hardcoded local paths."""
+def _build_config(smoke_limit: int | None = None) -> Part2Config:
+    """Try env vars first; fall back to hardcoded local paths. 0 or None means full split."""
     import os
 
     wikisql_source = os.environ.get("TEXT2SQL_WIKISQL_SOURCE")
@@ -44,6 +44,9 @@ def _build_config(smoke_limit: int) -> Part2Config:
     spider_db_root = os.environ.get("TEXT2SQL_SPIDER_DATABASE_ROOT")
     artifact_dir = os.environ.get("TEXT2SQL_ARTIFACT_DIRECTORY")
 
+    # If smoke_limit is 0 or None, treat as full evaluation (no slicing)
+    effective_limit = None if (smoke_limit is None or smoke_limit <= 0) else smoke_limit
+
     return Part2Config(
         wikisql_source=Path(wikisql_source) if wikisql_source else _WIKISQL_ROOT / "dev.jsonl",
         wikisql_database_root=Path(wikisql_db_root) if wikisql_db_root else _WIKISQL_ROOT,
@@ -51,7 +54,7 @@ def _build_config(smoke_limit: int) -> Part2Config:
         spider_schema=Path(spider_schema) if spider_schema else _SPIDER_ROOT / "tables.json",
         spider_database_root=Path(spider_db_root) if spider_db_root else _SPIDER_ROOT / "database",
         artifact_directory=Path(artifact_dir) if artifact_dir else _DEFAULT_ARTIFACT_DIR,
-        smoke_limit=smoke_limit,
+        smoke_limit=effective_limit,
     )
 
 
@@ -98,11 +101,14 @@ def _run_baseline(name: str, baseline: object, records: tuple, output_dir: Path)
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--smoke-limit", type=int, default=200)
+    parser.add_argument("--smoke-limit", type=int, default=200,
+                        help="Max examples to evaluate from dev splits (0 for full evaluation; default: 200)")
+    parser.add_argument("--full-eval", action="store_true", default=False,
+                        help="Evaluate on complete dev splits (all 8,415 WikiSQL and 1,034 Spider records)")
     parser.add_argument("--epochs", type=int, default=5,
                         help="LSTM training epochs on the train slice")
     parser.add_argument("--train-limit", type=int, default=200,
-                        help="Max WikiSQL train examples for LSTM fitting")
+                        help="Max WikiSQL train examples for LSTM fitting (e.g. 56000 for full split)")
     parser.add_argument("--batch-size", type=int, default=32,
                         help="Minibatch size for LSTM training (default: 32)")
     parser.add_argument("--device", default=None,
@@ -115,11 +121,13 @@ def main() -> int:
         else (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"))
     )
 
-    config = _build_config(smoke_limit=args.smoke_limit)
+    eval_limit = None if args.full_eval or args.smoke_limit <= 0 else args.smoke_limit
+    config = _build_config(smoke_limit=eval_limit)
     config.validate()
 
+    eval_label = "FULL DATASET" if eval_limit is None else f"limit={eval_limit}"
     print(f"\n{'='*60}")
-    print(f"  LSTM vs Template comparison  (smoke_limit={args.smoke_limit})")
+    print(f"  LSTM vs Template comparison  ({eval_label})")
     print(f"  Device: {selected_device} | Batch size: {args.batch_size}")
     print(f"{'='*60}\n")
 
