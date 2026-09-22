@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
+import warnings
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ..data.contracts import DatasetSplit, ExampleRecord
 
@@ -163,6 +164,15 @@ def build_training_vocabulary(
         for token in tokenized.question_tokens + tokenized.schema_tokens + tokenized.sql_tokens:
             counts[token] += 1
 
+    train_count = sum(1 for ex in examples if ex.split == DatasetSplit.TRAIN)
+    if examples and train_count == 0:
+        warnings.warn(
+            f"build_training_vocabulary received {len(examples)} examples but none have "
+            f"split=TRAIN. Vocabulary will contain only special tokens and SQL keywords. "
+            f"Ensure training records are loaded with split=DatasetSplit.TRAIN.",
+            stacklevel=2,
+        )
+
     ordered = sorted(counts, key=lambda token: (-counts[token], token))
     if max_size is not None:
         ordered = ordered[:max_size]
@@ -195,7 +205,7 @@ class CopyTarget:
     source_positions: dict[str, tuple[int, ...]]
     source_to_index: dict[str, int]
     copy_index_by_token: dict[str, int]
-    encoder_positions: dict[str, tuple[int, ...]] = ()
+    encoder_positions: dict[str, tuple[int, ...]] = field(default_factory=dict)
 
 
 def build_copy_target(example: ExampleRecord, vocabulary: FixedVocabulary) -> CopyTarget:

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import math
+import random
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -169,12 +170,18 @@ def train_smoke(
         if not examples or num_epochs <= 0:
             return
         for epoch in range(num_epochs):
+            # Shuffle training data each epoch with a deterministic seed
+            # so results are reproducible but batch composition varies
+            epoch_rng = random.Random(config.seed + epoch)
+            shuffled = list(examples)
+            epoch_rng.shuffle(shuffled)
+
             model.train()
             total_loss = 0.0
             total_batches = 0
 
-            for batch_start in range(0, len(examples), config.batch_size):
-                batch_examples = examples[batch_start : batch_start + config.batch_size]
+            for batch_start in range(0, len(shuffled), config.batch_size):
+                batch_examples = shuffled[batch_start : batch_start + config.batch_size]
                 batch = collate_batch(batch_examples, vocabulary, device)
 
                 optimizer.zero_grad()

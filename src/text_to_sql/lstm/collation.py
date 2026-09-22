@@ -14,6 +14,7 @@ from ..data.contracts import ExampleRecord
 from .preprocessing import (
     CopyTarget,
     FixedVocabulary,
+    _normalize_token,
     build_copy_target,
     tokenize_example,
 )
@@ -46,8 +47,12 @@ class Batch:
 def _encode_encoder_sequence(
     example: ExampleRecord,
     vocabulary: FixedVocabulary,
-) -> tuple[list[int], CopyTarget]:
-    """Map encoder_tokens to indices and build copy target."""
+) -> tuple[list[int], CopyTarget, tuple[str, ...]]:
+    """Map encoder_tokens to indices and build copy target.
+
+    Returns (indices, copy_target, encoder_tokens) so callers don't
+    need to re-tokenize the same example.
+    """
     tokenized = tokenize_example(example)
     copy_target = build_copy_target(example, vocabulary)
 
@@ -55,7 +60,7 @@ def _encode_encoder_sequence(
     for token in tokenized.encoder_tokens[:MAX_SRC_LEN]:
         idx = vocabulary.get_index(token)
         indices.append(idx if idx is not None else vocabulary.token_to_index.get(UNK_TOKEN, 1))
-    return indices, copy_target
+    return indices, copy_target, tokenized.encoder_tokens
 
 
 def _encode_target_sequence(
@@ -88,14 +93,16 @@ def collate_batch(
     all_src: list[list[int]] = []
     all_tgt: list[list[int]] = []
     all_copy_targets: list[CopyTarget] = []
+    all_encoder_tokens: list[tuple[str, ...]] = []
     example_ids: list[str] = []
 
     for example in examples:
-        src_indices, copy_target = _encode_encoder_sequence(example, vocabulary)
+        src_indices, copy_target, encoder_tokens = _encode_encoder_sequence(example, vocabulary)
         tgt_indices = _encode_target_sequence(example, vocabulary, copy_target)
         all_src.append(src_indices)
         all_tgt.append(tgt_indices)
         all_copy_targets.append(copy_target)
+        all_encoder_tokens.append(encoder_tokens)
         example_ids.append(example.example_id)
 
     # Per-batch extended vocab: union of all extended_tokens lengths
@@ -111,8 +118,8 @@ def collate_batch(
     src_lengths = torch.zeros(len(examples), dtype=torch.long, device=device)
     tgt_lengths = torch.zeros(len(examples), dtype=torch.long, device=device)
 
-    for i, (src_indices, tgt_indices, copy_target) in enumerate(
-        zip(all_src, all_tgt, all_copy_targets)
+    for i, (src_indices, tgt_indices, copy_target, encoder_tokens) in enumerate(
+        zip(all_src, all_tgt, all_copy_targets, all_encoder_tokens)
     ):
         src_len = len(src_indices)
         tgt_len = len(tgt_indices)
@@ -122,10 +129,7 @@ def collate_batch(
         tgt_lengths[i] = tgt_len
 
         # Map each source token position to extended-vocab index
-        tokenized = tokenize_example(examples[i])
-        from .preprocessing import _normalize_token
-
-        for pos, raw_token in enumerate(tokenized.encoder_tokens[:max_src]):
+        for pos, raw_token in enumerate(encoder_tokens[:max_src]):
             normalized = _normalize_token(raw_token)
             ext_idx = copy_target.source_to_index.get(normalized)
             if ext_idx is not None:
