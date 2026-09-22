@@ -14,41 +14,56 @@ repository's source and configuration files.
   private paths or credentials in project code.
 - Store only non-sensitive setup instructions in this document.
 
-## Information still needed
+## Confirmed Cluster Configuration (Updated 2026-09-22)
 
-The currently supplied connection details are:
-
-- Hostname: `hpc.bits-hyderabad.ac.in`
+- Hostname: `hpc.bits-hyderabad.ac.in` (SSH port 22)
 - Username: `csisnlp_20`
 - Private key path: `~/.ssh/csisnlp_20`
-- Port: assumed to be 22 unless the HPC documentation says otherwise
+- Partition: `gpu_rtx_pro_6000_6_csis_hyd`
+- QOS: `gpu_csis_course`
+- Resource limit: `--gres=mps:50` (MPS 50 = max half a card's compute and VRAM)
+- CPUs per task: 4 (`--cpus-per-task=4`)
+- Memory: 80GB (`--mem=80G`)
+- Time limit: 2 hours (`--time=02:00:00`)
+- Remote project directory: `/home/csisnlp_20/Text-to-sql`
+- Remote datasets directory: `/home/csisnlp_20/datasets`
+- HPC documentation & FAQ: <https://sharanga.hpc.bits-hyderabad.ac.in/docs/faq/>
+- HPC Support: <hpc@hyderabad.bits-pilani.ac.in>
 
-Before configuring a local alias, still confirm:
+> [!IMPORTANT]
+> The `gpu_rtx_pro_6000_6_csis_hyd` partition only accepts MPS jobs under the
+> `gpu_csis_course` QOS. Requesting `--gres=gpu:1` or a different QOS will be
+> rejected at submission. Do not change `--qos` or remove `--gres=mps:50`.
 
-- SSH port, if not 22
-- Remote project directory
-- Whether the cluster requires a login node or a scheduler
-- Scheduler type and requested resource format, if applicable
+## Slurm Batch Job Template (`mock_job.sh`)
 
-Do not infer these values from the key filename.
+```bash
+#!/bin/bash
+#SBATCH --job-name=csis_gpu_job
+#SBATCH --partition=gpu_rtx_pro_6000_6_csis_hyd
+#SBATCH --qos=gpu_csis_course
+#SBATCH --gres=mps:50
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=80G
+#SBATCH --time=02:00:00
+#SBATCH --output=%x_%j.log
+
+# Do NOT change --qos or remove --gres=mps:50 — this partition only
+# accepts mps jobs under this QOS. Requesting --gres=gpu:1 or a
+# different QOS here will be rejected at submission.
+
+# Additional script content goes here
+python3 your_script.py
+```
 
 ## Intended workflow
 
-1. Confirm the HPC connection details.
-2. Create a local SSH alias that references the existing key path.
-3. Test a non-destructive SSH connection.
-4. Create or clone the repository on the HPC.
-5. Create the same Python 3.12/`uv` environment where supported.
-6. Run CPU smoke tests before requesting GPU resources.
-7. Submit training through the cluster scheduler rather than running long jobs
-   on a login node.
-8. Keep checkpoints and datasets in approved HPC storage, not Git.
-9. Copy only reproducible metrics and report-ready artifacts back to the local
-   workspace.
-
-The provided connection was tested successfully on 2026-09-21 using a
-non-destructive authentication command. The remote project directory and
-scheduler are still not confirmed.
+1. Connect to login node: `ssh -i ~/.ssh/csisnlp_20 csisnlp_20@hpc.bits-hyderabad.ac.in`
+2. Set up Python virtual environment with PyTorch + CUDA support.
+3. Sync repository and dataset splits to `/home/csisnlp_20/`.
+4. Submit training job using `sbatch scripts/hpc_run_lstm_gpu.sh`.
+5. Monitor job via `squeue -u csisnlp_20` and inspect logs `%x_%j.log`.
+6. Retrieve evaluation summary, manifest, and checkpoint artifacts back to local workspace.
 
 ## Example local-only SSH configuration
 
