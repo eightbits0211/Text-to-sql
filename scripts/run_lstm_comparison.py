@@ -113,6 +113,10 @@ def main() -> int:
                         help="Max Spider train examples (0 = all ~7,000 Spider train examples; default: 0)")
     parser.add_argument("--spider-epochs", type=int, default=0,
                         help="Epochs to train on Spider train split (default: 0)")
+    parser.add_argument("--batch-size", type=int, default=8,
+                        help="Batch size for LSTM training (default: 8; use 64 on GPU)")
+    parser.add_argument("--device", type=str, default=None,
+                        help="Torch device string, e.g. 'cuda' or 'cpu'. Auto-detects if not set.")
     args = parser.parse_args()
 
     selected_device = (
@@ -217,6 +221,8 @@ def main() -> int:
         "smoke_limit": args.smoke_limit,
         "train_limit": args.train_limit,
         "lstm_epochs": args.epochs,
+        "batch_size": args.batch_size,
+        "device": str(selected_device),
         "results": results,
     }
     manifest_path = config.artifact_directory / "comparison_manifest.json"

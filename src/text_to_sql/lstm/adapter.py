@@ -16,6 +16,7 @@ from ..evaluation.metrics import EvaluationReport, Prediction, evaluate_predicti
 from .collation import BOS_TOKEN, EOS_TOKEN, MAX_TGT_LEN, PAD_TOKEN, UNK_TOKEN
 from .model import Seq2SeqLSTM
 from .preprocessing import (
+    CopyTarget,
     FixedVocabulary,
     _normalize_token,
     build_copy_target,
@@ -196,7 +197,7 @@ class LSTMBaseline:
 
         return self._render_tokens(decoded_indices, copy_target)
 
-    def _render_tokens(self, indices: list[int], copy_target: CopyTarget) -> str:  # noqa: F821
+    def _render_tokens(self, indices: list[int], copy_target: CopyTarget) -> str:
         """Convert decoded indices back to a SQL string."""
         extended_tokens = copy_target.extended_tokens
         tokens: list[str] = []

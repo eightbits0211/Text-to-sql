@@ -147,7 +147,7 @@ class PointerGeneratorDecoder(nn.Module):
         decoder_state: tuple[torch.Tensor, torch.Tensor],
         encoder_outputs: torch.Tensor,
         src_mask: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, torch.Tensor, tuple[torch.Tensor, torch.Tensor], torch.Tensor]:
         """Single decoder step.
 
         Returns:
