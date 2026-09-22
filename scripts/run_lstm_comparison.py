@@ -14,6 +14,8 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+import torch
+
 from text_to_sql.baselines import TemplateBaseline
 from text_to_sql.config import Part2Config
 from text_to_sql.data.contracts import DatasetSplit
@@ -101,13 +103,24 @@ def main() -> int:
                         help="LSTM training epochs on the train slice")
     parser.add_argument("--train-limit", type=int, default=200,
                         help="Max WikiSQL train examples for LSTM fitting")
+    parser.add_argument("--batch-size", type=int, default=32,
+                        help="Minibatch size for LSTM training (default: 32)")
+    parser.add_argument("--device", default=None,
+                        help="Compute device (cuda or cpu). Defaults to cuda if available.")
     args = parser.parse_args()
+
+    selected_device = (
+        torch.device(args.device)
+        if args.device
+        else (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"))
+    )
 
     config = _build_config(smoke_limit=args.smoke_limit)
     config.validate()
 
     print(f"\n{'='*60}")
     print(f"  LSTM vs Template comparison  (smoke_limit={args.smoke_limit})")
+    print(f"  Device: {selected_device} | Batch size: {args.batch_size}")
     print(f"{'='*60}\n")
 
     # ----------------------------------------------------------------
@@ -125,7 +138,7 @@ def main() -> int:
     # Fit LSTM on WikiSQL train slice
     # ----------------------------------------------------------------
     print(f"\nFitting LSTM on up to {args.train_limit} WikiSQL train examples "
-          f"({args.epochs} epochs)...")
+          f"({args.epochs} epochs) on {selected_device}...")
     wikisql_train = load_wikisql(
         config.wikisql_source.with_name("train.jsonl"),
         config.wikisql_database_root,
@@ -139,10 +152,11 @@ def main() -> int:
     lstm_checkpoint_dir = config.artifact_directory / "lstm-checkpoint"
     lstm_cfg = TrainingConfig(
         max_epochs=args.epochs,
+        batch_size=args.batch_size,
         smoke_limit=args.train_limit,
         seed=42,
     )
-    lstm_baseline = LSTMBaseline(config=lstm_cfg)
+    lstm_baseline = LSTMBaseline(config=lstm_cfg, device=selected_device)
     lstm_baseline.fit(wikisql_train.records, checkpoint_dir=lstm_checkpoint_dir)
     print("  LSTM fitting complete.")
 
