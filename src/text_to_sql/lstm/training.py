@@ -115,17 +115,12 @@ def train_smoke(
     checkpoint_dir: Path,
     config: TrainingConfig | None = None,
     device: torch.device | None = None,
+    spider_train_records: tuple[ExampleRecord, ...] | None = None,
+    spider_epochs: int = 0,
 ) -> TrainingResult:
     """Train the LSTM on a bounded smoke slice and save a checkpoint.
 
-    Args:
-        train_records: All training examples (will be sliced by config.smoke_limit).
-        checkpoint_dir: Directory to write checkpoint and metadata.
-        config: Training hyperparameters. Defaults to TrainingConfig().
-        device: Torch device. Defaults to CPU.
-
-    Returns:
-        TrainingResult with final loss, losses by epoch, and checkpoint path.
+    Supports sequenced training: WikiSQL warm-up first, then Spider primary training.
     """
     if config is None:
         config = TrainingConfig()
@@ -136,12 +131,15 @@ def train_smoke(
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
     # Slice training examples
-    train_examples = train_records[: config.smoke_limit] if config.smoke_limit else train_records
-    if not train_examples:
+    wikisql_examples = train_records[: config.smoke_limit] if config.smoke_limit else train_records
+    if not wikisql_examples and not spider_train_records:
         raise ValueError("No training examples provided.")
 
-    # Build training-only vocabulary
-    vocabulary = build_training_vocabulary(train_examples, max_size=config.max_vocab_size)
+    # Build unified training vocabulary across both WikiSQL and Spider train splits
+    all_train_for_vocab = list(wikisql_examples)
+    if spider_train_records:
+        all_train_for_vocab.extend(spider_train_records)
+    vocabulary = build_training_vocabulary(all_train_for_vocab, max_size=config.max_vocab_size)
 
     # Save vocabulary alongside checkpoint
     vocab_path = checkpoint_dir / "vocabulary.json"
@@ -161,31 +159,48 @@ def train_smoke(
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
 
     epoch_losses: list[float] = []
-    examples_list = list(train_examples)
 
-    for epoch in range(config.max_epochs):
-        model.train()
-        total_loss = 0.0
-        total_batches = 0
+    def _train_dataset_epochs(
+        dataset_name: str,
+        examples: list[ExampleRecord],
+        num_epochs: int,
+    ) -> None:
+        nonlocal epoch_losses
+        if not examples or num_epochs <= 0:
+            return
+        for epoch in range(num_epochs):
+            model.train()
+            total_loss = 0.0
+            total_batches = 0
 
-        for batch_start in range(0, len(examples_list), config.batch_size):
-            batch_examples = examples_list[batch_start : batch_start + config.batch_size]
-            batch = collate_batch(batch_examples, vocabulary, device)
+            for batch_start in range(0, len(examples), config.batch_size):
+                batch_examples = examples[batch_start : batch_start + config.batch_size]
+                batch = collate_batch(batch_examples, vocabulary, device)
 
-            optimizer.zero_grad()
-            loss = _compute_batch_loss(model, batch, device, config.teacher_forcing_ratio)
-            if not math.isfinite(loss.item()):
-                continue
-            loss.backward()
-            nn.utils.clip_grad_norm_(model.parameters(), config.grad_clip)
-            optimizer.step()
+                optimizer.zero_grad()
+                loss = _compute_batch_loss(model, batch, device, config.teacher_forcing_ratio)
+                if not math.isfinite(loss.item()):
+                    continue
+                loss.backward()
+                nn.utils.clip_grad_norm_(model.parameters(), config.grad_clip)
+                optimizer.step()
 
-            total_loss += loss.item()
-            total_batches += 1
+                total_loss += loss.item()
+                total_batches += 1
 
-        epoch_loss = total_loss / max(total_batches, 1)
-        epoch_losses.append(epoch_loss)
-        print(f"  epoch {epoch + 1}/{config.max_epochs}  loss={epoch_loss:.4f}")
+            epoch_loss = total_loss / max(total_batches, 1)
+            epoch_losses.append(epoch_loss)
+            print(f"  [{dataset_name}] epoch {epoch + 1}/{num_epochs}  loss={epoch_loss:.4f}")
+
+    # Stage 1: WikiSQL warm-up training
+    if wikisql_examples and config.max_epochs > 0:
+        print(f"Starting Stage 1: WikiSQL warm-up training ({len(wikisql_examples)} examples)...")
+        _train_dataset_epochs("WikiSQL", list(wikisql_examples), config.max_epochs)
+
+    # Stage 2: Spider primary training
+    if spider_train_records and spider_epochs > 0:
+        print(f"Starting Stage 2: Spider primary training ({len(spider_train_records)} examples)...")
+        _train_dataset_epochs("Spider", list(spider_train_records), spider_epochs)
 
     # Save checkpoint
     checkpoint_path = checkpoint_dir / "lstm_smoke.pt"
@@ -200,8 +215,9 @@ def train_smoke(
     )
 
     # Save run metadata
+    total_train_count = len(wikisql_examples) + (len(spider_train_records) if spider_train_records else 0)
     meta = {
-        "train_examples": len(train_examples),
+        "train_examples": total_train_count,
         "vocab_size": len(vocabulary),
         "epoch_losses": epoch_losses,
         "final_loss": epoch_losses[-1] if epoch_losses else float("nan"),

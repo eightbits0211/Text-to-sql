@@ -41,11 +41,15 @@ mkdir -p /home/csisnlp_20/artifacts/lstm-gpu-run
 
 cd /home/csisnlp_20/Text-to-sql
 
-# Run full LSTM training on GPU (56,000 WikiSQL train examples, 15 epochs)
-# and evaluate on the ENTIRE Spider dev split (1,034 records) and full WikiSQL dev split
+# Run sequential LSTM training on GPU per project proposal:
+# 1. WikiSQL warm-up training (up to 56,000 examples, 10 epochs)
+# 2. Spider primary training (all ~7,000 examples, 10 epochs)
+# 3. Full evaluation on both complete dev splits (1,034 Spider records, 8,415 WikiSQL records)
 /home/csisnlp_20/venv_nlp/bin/python3 scripts/run_lstm_comparison.py \
     --train-limit 56000 \
-    --epochs 15 \
+    --epochs 10 \
+    --spider-train-limit 7000 \
+    --spider-epochs 10 \
     --batch-size 64 \
     --full-eval \
     --device cuda
