@@ -218,25 +218,21 @@ before ending every work session.
 
 ## Current roadblocks
 
-- GPU training job `359924` ran on `gpunode8` for ~12 minutes. The data loading fixes
-  were completely successful: WikiSQL 56,000 train examples and Spider 7,000 train examples
-  both loaded in seconds without bottleneck.
-- However, during the backward pass (`loss.backward()`) of batch 1 in Stage 1 training,
-  PyTorch routed matrix multiplication via `torch._native.ops.bmm_outer_product.triton_impl`,
-  which invoked Triton JIT compilation (`driver.c`). The compilation failed because
-  Rocky Linux 8.10 on the node lacks `python3.11-devel` headers (`fatal error: Python.h: No such file or directory`).
+- GPU training job **`361487`** (`csis_gpu_lstm`) is submitted and active on Slurm.
+  The Triton native JIT issue was resolved by injecting `TORCH_DISABLE_NATIVE_JIT=1`
+  into the environment and Python training entrypoints, forcing PyTorch to use standard
+  ATen cuBLAS kernels without requiring `Python.h`.
 - Part 2 report drafting (Introduction, Literature Survey, Dataset & Preprocessing,
   Methodology & Baseline Results with Error Analysis) remains to be authored.
-  This is the critical path deliverable for the September 30 deadline.
+  This is the **critical path** deliverable for the September 30 deadline.
 
 ## Next immediate steps
 
-1. Resolve the Triton compilation issue on HPC:
-   - Provide Python 3.11 C headers in user space (e.g. copy/extract `Python.h` to the venv include directory).
-   - Alternatively, configure PyTorch / rewrite the attention tensor operation to prevent invocation of Triton JIT.
-2. Resubmit the LSTM training job on Slurm once verified.
-3. Draft Part 2 report sections (Sections a–d) in LaTeX / Markdown.
-4. Prepare error analysis and rehearsal for `--demo` CLI presentation.
+1. Monitor GPU training job **`361487`** until completion; retrieve checkpoints and
+   evaluation manifest artifacts (`run_lstm_comparison.py --full-eval`).
+2. Draft Part 2 report sections (Sections a–d) in LaTeX / Markdown.
+3. Prepare comparative tables (LSTM vs. Template) and error analysis breakdowns.
+4. Finalize CLI rehearsal (`--demo`) for presentation.
 
 ## Session metadata
 
@@ -246,7 +242,7 @@ before ending every work session.
 | Active branch | `spec/agent-governance-rules` |
 | Primary baseline | Pointer-Generator LSTM Seq2Seq |
 | Fallback baseline | Deterministic Template Parser |
-| Overall estimate | 85% |
-| HPC Job ID | `359924` (FAILED: `Python.h` missing for Triton JIT) |
+| Overall estimate | 88% |
+| HPC Job ID | `361487` (`csis_gpu_lstm` on `gpu_rtx_pro_6000_6_csis_hyd`) |
 | Test suite status | 50 passed, 0 failed, Ruff clean |
-| Next review point | Triton Python.h fix & Part 2 report drafting |
+| Next review point | GPU job completion retrieval & Part 2 report drafting |
