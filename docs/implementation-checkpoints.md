@@ -7,7 +7,7 @@ Checked items have been implemented and verified; unchecked items are pending,
 blocked, or intentionally deferred. Update this file only when a checkpoint
 changes state.
 
-Last checklist update: 2026-09-21
+Last checklist update: 2026-09-24
 
 ## Phase 0 — Governance and repository setup
 
@@ -151,6 +151,8 @@ Last checklist update: 2026-09-21
 - [x] 9.11 Add epoch shuffling with deterministic per-epoch seeded RNG.
 - [x] 9.12 Fix redundant re-tokenization in batch collation.
 - [x] 9.13 Fix CopyTarget type annotation and add empty-vocab warning.
+- [x] 9.14 Cache SQLite schema introspection and optimize WikiSQL/Spider dataset loading.
+- [x] 9.15 Set TORCH_DISABLE_NATIVE_JIT=1 to bypass Triton JIT compilation on Rocky Linux 8 without Python.h.
 
 ## Phase 10 — Modern model
 

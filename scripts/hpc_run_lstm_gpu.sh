@@ -37,6 +37,9 @@ export TEXT2SQL_SPIDER_SCHEMA=/home/csisnlp_20/datasets/spider/spider_data/table
 export TEXT2SQL_SPIDER_DATABASE_ROOT=/home/csisnlp_20/datasets/spider/spider_data/database
 export TEXT2SQL_ARTIFACT_DIRECTORY=/home/csisnlp_20/artifacts/lstm-gpu-run
 export PYTHONUNBUFFERED=1
+# Disable PyTorch 2.14+ Triton JIT compilation for native bmm_outer_product
+# which requires system Python.h headers not present on the Rocky Linux node
+export TORCH_DISABLE_NATIVE_JIT=1
 
 mkdir -p /home/csisnlp_20/artifacts/lstm-gpu-run
 

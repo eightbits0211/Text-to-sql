@@ -11,8 +11,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from datetime import UTC, datetime
 from pathlib import Path
+
+# Disable experimental PyTorch 2.14+ Triton native JIT ops that require system C headers
+os.environ.setdefault("TORCH_DISABLE_NATIVE_JIT", "1")
 
 import torch
 

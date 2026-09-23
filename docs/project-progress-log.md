@@ -503,3 +503,33 @@ When changing this log:
   origin. 50 tests pass in 3.05s; Ruff clean.
 - **Next action:** Retrieve GPU results when job completes; begin Part 2 report.
 
+### 2026-09-23 — WikiSQL loading optimization and Job 359924 submission
+
+- **Diagnosis:** Slurm job `359370` timed out during dataset loading because
+  `sqlite_schema.py` introspected database schemas from disk for every single
+  record (56,000 times), causing a 15-hour bottleneck.
+- **Fix:** Cached schema introspection using `@functools.lru_cache(maxsize=1024)`
+  and verified database paths once per file in `wikisql.py`.
+- **Result:** Reduced WikiSQL 56k dataset loading time to ~12 seconds.
+- **Observability:** Added unbuffered stdout logging (`PYTHONUNBUFFERED=1`, `python3 -u`)
+  and progress reporting every 200 batches in `training.py`.
+- **Resubmission:** Submitted job `359924` to Slurm partition `gpu_rtx_pro_6000_6_csis_hyd`.
+
+### 2026-09-24 — Job 359924 diagnosis: Triton JIT Python.h error and ATen resolution
+
+- **Outcome:** Job `359924` executed for 11 minutes 58 seconds. Full WikiSQL
+  (55,968) and Spider (7,000) train records loaded cleanly in seconds.
+- **Failure Cause:** At Stage 1, batch 1 `loss.backward()`, PyTorch 2.14 dispatched
+  batch matrix multiplication to `torch._native.ops.bmm_outer_product.triton_impl`.
+  Triton attempted to JIT-compile its C CUDA driver via `/usr/bin/gcc`, which failed
+  with `fatal error: Python.h: No such file or directory` because Rocky Linux 8.10
+  on the cluster lacks `python3.11-devel` headers.
+- **Resolution:** Set `TORCH_DISABLE_NATIVE_JIT=1` in `scripts/hpc_run_lstm_gpu.sh`,
+  `scripts/run_lstm_comparison.py`, and `src/text_to_sql/lstm/training.py`. This
+  forces PyTorch to bypass Triton JIT and use standard, compiled ATen cuBLAS
+  CUDA kernels directly, requiring zero C headers at runtime.
+- **Documentation:** Updated `docs/hpc-setup.md`, `state.md`, and this log.
+- **Validation:** 50 tests pass in 3.14s; Ruff clean.
+- **Next action:** Push changes, pull to HPC, and submit the fixed GPU training job.
+
+
