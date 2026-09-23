@@ -22,6 +22,7 @@ from .preprocessing import (
     build_copy_target,
     tokenize_example,
 )
+from .sql_repair import repair_sql
 from .training import TrainingConfig, TrainingResult, load_checkpoint, train_smoke
 
 
@@ -88,7 +89,8 @@ class LSTMBaseline:
         if self._model is None or self._vocabulary is None:
             return ""
         try:
-            return self._greedy_decode(question, schema_text, database_id)
+            raw_sql = self._greedy_decode(question, schema_text, database_id)
+            return repair_sql(raw_sql, schema_text, database_id)
         except Exception:  # noqa: BLE001 — surface all errors as empty predictions
             return ""
 
@@ -187,6 +189,8 @@ class LSTMBaseline:
                 full_dist = model.decoder.compute_output_distribution(
                     combined, embedded, attn_weights, extended_vocab_size, src_ext
                 )
+                full_dist[:, unk_idx] = -float("inf")
+                full_dist[:, pad_idx] = -float("inf")
                 token_idx = full_dist.argmax(-1).item()
                 if token_idx == eos_idx:
                     break

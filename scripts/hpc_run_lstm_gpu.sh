@@ -53,7 +53,7 @@ cd /home/csisnlp_20/Text-to-sql
     --train-limit 56000 \
     --epochs 10 \
     --spider-train-limit 7000 \
-    --spider-epochs 10 \
+    --spider-epochs 25 \
     --batch-size 64 \
     --full-eval \
     --device cuda

@@ -208,6 +208,11 @@ def main() -> int:
     for dataset, result in (("wikisql", wikisql_dev), ("spider", spider_dev)):
         print(f"\n--- {dataset.upper()} ({len(result.records)} examples) ---")
         for model_name, baseline in (("template", template), ("lstm", lstm_baseline)):
+            if model_name == "lstm":
+                ds_ckpt = lstm_checkpoint_dir / f"{dataset}_checkpoint.pt"
+                if ds_ckpt.is_file():
+                    print(f"  Loading dataset-specific checkpoint: {ds_ckpt.name}")
+                    baseline.load(ds_ckpt)
             out_dir = config.artifact_directory / dataset / model_name
             row = _run_baseline(model_name, baseline, result.records, out_dir)
             results.append({"dataset": dataset, **row})
