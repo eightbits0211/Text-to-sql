@@ -8,9 +8,13 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import random
 from dataclasses import dataclass
 from pathlib import Path
+
+# Disable experimental PyTorch 2.14+ Triton native JIT ops that require system C headers
+os.environ.setdefault("TORCH_DISABLE_NATIVE_JIT", "1")
 
 import torch
 from torch import nn

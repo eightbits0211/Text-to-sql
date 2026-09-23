@@ -56,14 +56,21 @@ repository's source and configuration files.
 python3 your_script.py
 ```
 
+## Environment Requirements & Gotchas (Updated 2026-09-24)
+
+- **Rocky Linux 8.10 Python Headers:** The cluster nodes run Rocky Linux 8.10 with Python 3.11 installed without `python3.11-devel`. As a result, `/usr/include/python3.11/Python.h` is not present.
+- **PyTorch 2.14+ Triton Native JIT:** In PyTorch 2.14+, outer-product batch matrix multiplication (`bmm_outer_product`) defaults to a Triton JIT path that requires `gcc` and `Python.h`. On this cluster, this causes runtime compilation failure on the first backward pass.
+- **Resolution:** Set `export TORCH_DISABLE_NATIVE_JIT=1` in all Slurm batch scripts and python run invocations. This bypasses Triton JIT and routes matrix multiplication through standard ATen cuBLAS CUDA kernels without requiring C developer headers.
+
 ## Intended workflow
 
 1. Connect to login node: `ssh -i ~/.ssh/csisnlp_20 csisnlp_20@hpc.bits-hyderabad.ac.in`
 2. Set up Python virtual environment with PyTorch + CUDA support.
 3. Sync repository and dataset splits to `/home/csisnlp_20/`.
-4. Submit training job using `sbatch scripts/hpc_run_lstm_gpu.sh`.
-5. Monitor job via `squeue -u csisnlp_20` and inspect logs `%x_%j.log`.
-6. Retrieve evaluation summary, manifest, and checkpoint artifacts back to local workspace.
+4. Ensure `export TORCH_DISABLE_NATIVE_JIT=1` is set in the job environment.
+5. Submit training job using `sbatch scripts/hpc_run_lstm_gpu.sh`.
+6. Monitor job via `squeue -u csisnlp_20` and inspect logs `%x_%j.log`.
+7. Retrieve evaluation summary, manifest, and checkpoint artifacts back to local workspace.
 
 ## Example local-only SSH configuration
 
