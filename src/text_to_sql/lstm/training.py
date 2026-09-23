@@ -212,16 +212,38 @@ def train_smoke(
             print(f"  [{dataset_name}] epoch {epoch + 1}/{num_epochs}  loss={epoch_loss:.4f}", flush=True)
 
     # Stage 1: WikiSQL warm-up training
+    wikisql_checkpoint_path = checkpoint_dir / "wikisql_checkpoint.pt"
     if wikisql_examples and config.max_epochs > 0:
         print(f"Starting Stage 1: WikiSQL warm-up training ({len(wikisql_examples)} examples)...", flush=True)
         _train_dataset_epochs("WikiSQL", list(wikisql_examples), config.max_epochs)
+        torch.save(
+            {
+                "model_state_dict": model.state_dict(),
+                "config": config.to_dict(),
+                "vocab_size": len(vocabulary),
+                "vocab_tokens": list(vocabulary.tokens),
+            },
+            wikisql_checkpoint_path,
+        )
+        print(f"  Saved WikiSQL checkpoint to {wikisql_checkpoint_path}", flush=True)
 
     # Stage 2: Spider primary training
+    spider_checkpoint_path = checkpoint_dir / "spider_checkpoint.pt"
     if spider_train_records and spider_epochs > 0:
         print(f"Starting Stage 2: Spider primary training ({len(spider_train_records)} examples)...", flush=True)
         _train_dataset_epochs("Spider", list(spider_train_records), spider_epochs)
+        torch.save(
+            {
+                "model_state_dict": model.state_dict(),
+                "config": config.to_dict(),
+                "vocab_size": len(vocabulary),
+                "vocab_tokens": list(vocabulary.tokens),
+            },
+            spider_checkpoint_path,
+        )
+        print(f"  Saved Spider checkpoint to {spider_checkpoint_path}", flush=True)
 
-    # Save checkpoint
+    # Save primary/latest checkpoint
     checkpoint_path = checkpoint_dir / "lstm_smoke.pt"
     torch.save(
         {
