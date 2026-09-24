@@ -605,6 +605,16 @@ When changing this log:
 - **LaTeX Source & Compiled PDF Report (Bonus Marks):** Created `docs/part-2-report.tex` and successfully compiled directly via `pdflatex` to a 9-page publication-quality PDF at `docs/part-2-report.pdf` (250 KB).
 - **Validation:** 63 passed unit tests in 2.97s; Ruff clean. Part 2 deliverables are 100% complete ahead of the September 30 internal freeze.
 
+### 2026-09-24 — Context Agent Formalized & CLI Demo Flow Hardened
+
+- **Context & State Tracking Agent:** Formalized dedicated role in `docs/sub-agent-coordination-plan.md` and Rule 3.15 in `docs/agent-rules.md`. Created live `## In-Flight Execution Ledger` in `state.md` to guarantee seamless execution resumption across token limits, session compaction, and model switches.
+- **CLI Demo Verification:** Delegated verification of interactive demo runner (`text-to-sql-demo --demo`):
+  - Diagnosed `DatabaseSchema` vs `schema_text` mismatch when calling `LSTMBaseline.predict()`; enhanced `predict()` in `src/text_to_sql/lstm/adapter.py` to transparently accept either `DatabaseSchema` or `str`.
+  - Added `@classmethod from_checkpoint()` in `LSTMBaseline` and configured `DEFAULT_CHECKPOINT` in `src/text_to_sql/cli.py`.
+  - Verified both `TemplateBaseline` and `LSTMBaseline` execute all 3 scripted showcase scenarios cleanly against live SQLite databases without unhandled exceptions.
+- **Validation:** 63 passed unit tests in 2.64s; Ruff clean.
+
+
 
 
 

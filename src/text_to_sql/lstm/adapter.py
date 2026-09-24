@@ -12,6 +12,7 @@ from pathlib import Path
 import torch
 
 from ..data.contracts import DatasetSplit, ExampleRecord
+from ..data.schema import DatabaseSchema
 from ..evaluation.metrics import EvaluationReport, Prediction, evaluate_predictions
 from .collation import BOS_TOKEN, EOS_TOKEN, MAX_TGT_LEN, PAD_TOKEN, UNK_TOKEN
 from .model import Seq2SeqLSTM
@@ -76,18 +77,41 @@ class LSTMBaseline:
         self._model, self._vocabulary = load_checkpoint(result.checkpoint_path, self._device)
         return self
 
+    @classmethod
+    def from_checkpoint(
+        cls,
+        checkpoint_path: Path,
+        device: torch.device | None = None,
+    ) -> LSTMBaseline:
+        """Create a new baseline instance loaded from checkpoint."""
+        instance = cls(device=device)
+        instance.load(checkpoint_path)
+        return instance
+
     def load(self, checkpoint_path: Path) -> LSTMBaseline:
         """Load from an existing checkpoint file."""
         self._model, self._vocabulary = load_checkpoint(checkpoint_path, self._device)
         return self
 
-    def predict(self, question: str, schema_text: str, database_id: str = "unknown") -> str:
+    def predict(
+        self,
+        question: str,
+        schema: str | DatabaseSchema,
+        database_id: str = "unknown",
+    ) -> str:
         """Generate one SQL string for a question/schema pair.
 
+        Accepts either serialized schema text or a DatabaseSchema object.
         Returns an empty string if the model is untrained or decoding fails.
         """
         if self._model is None or self._vocabulary is None:
             return ""
+        if not isinstance(schema, str):
+            from ..data.schema import serialize_schema
+
+            schema_text = serialize_schema(schema)
+        else:
+            schema_text = schema
         try:
             raw_sql = self._greedy_decode(question, schema_text, database_id)
             return repair_sql(raw_sql, schema_text, database_id)

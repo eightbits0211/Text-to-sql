@@ -76,6 +76,12 @@ assistant session working in this repository.
     completed work, decisions, current blockers, active branch/PR, validation
     performed, and next immediate steps. Update `state.md` first so the summary
     remains recoverable.
+15. Maintain atomic context continuity: whenever an agent initiates a task,
+    multi-step execution, or sub-agent delegation, record the active in-flight
+    sub-goal, target file, and immediate next action in `state.md`'s In-Flight
+    Execution Ledger. If context windows compact, token limits are reached, or
+    the user switches AI models, the newly instantiated agent must first inspect
+    `state.md` to resume execution without repeating completed actions.
 
 ## 4. NLP/Text-to-SQL rules
 

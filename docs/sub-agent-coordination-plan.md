@@ -47,6 +47,17 @@ invalid-SQL rate, breakdowns, and evaluator tests. Must not change model logic.
 Owns CLI/demo integration, report evidence templates, reproducibility commands,
 and presentation examples. Must not invent metrics or alter experiment outputs.
 
+### Context & state tracking agent
+
+Owns real-time execution checkpointing and continuity preservation across
+sessions, model changes, context compaction, and rate limits.
+- Maintains the live `## In-Flight Execution Ledger` in `state.md`.
+- Records pre-execution and post-execution state for every major command or sub-agent task.
+- Ensures that when a model's context or rate limit is exhausted, the incoming
+  model immediately discovers where execution stopped, which file was being edited,
+  and what exact command or verification step is next.
+- Audits and synchronizes `state.md` with git status and test results.
+
 ### Modern/novelty agent
 
 Starts only after the Part 2 freeze. Owns transformer and novelty experiments
