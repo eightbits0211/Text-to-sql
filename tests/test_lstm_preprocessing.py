@@ -43,7 +43,9 @@ def _example(
 
 def test_questions_sql_and_schema_tokenization_is_deterministic() -> None:
     question = "Which singer names are from the United States?"
-    schema_text = "database: music\ntable: singers\ncolumns:\n  - singer_id [INTEGER]\n  - name [TEXT]"
+    schema_text = (
+        "database: music\ntable: singers\ncolumns:\n  - singer_id [INTEGER]\n  - name [TEXT]"
+    )
     sql = "SELECT name FROM singers WHERE singer_id = 7;"
 
     assert tokenize_question(question) == [
@@ -253,4 +255,3 @@ def test_quoted_identifier_and_literal_resolution() -> None:
     assert res_val.token == "'Foo_Bar'"
     assert res_val.event is None
     assert copy_target.extended_tokens[res_val.index] == "Foo_Bar"
-

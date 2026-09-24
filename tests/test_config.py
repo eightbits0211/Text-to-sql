@@ -35,3 +35,42 @@ def test_config_reports_missing_paths(tmp_path: Path) -> None:
 
     with pytest.raises(FileNotFoundError, match="Configured dataset paths"):
         config.validate()
+
+
+def test_config_seed_default_and_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    values = {
+        "TEXT2SQL_WIKISQL_SOURCE": "wiki.json",
+        "TEXT2SQL_WIKISQL_DATABASE_ROOT": "wiki-db",
+        "TEXT2SQL_SPIDER_SOURCE": "spider.json",
+        "TEXT2SQL_SPIDER_SCHEMA": "tables.json",
+        "TEXT2SQL_SPIDER_DATABASE_ROOT": "spider-db",
+    }
+    for key, value in values.items():
+        monkeypatch.setenv(key, value)
+
+    config_default = Part2Config.from_environment()
+    assert config_default.seed == 42
+
+    monkeypatch.setenv("TEXT2SQL_SEED", "123")
+    config_custom = Part2Config.from_environment()
+    assert config_custom.seed == 123
+
+
+def test_seed_everything_deterministic() -> None:
+    import random
+
+    import torch
+
+    from text_to_sql.config import seed_everything
+
+    seed_everything(42)
+    val1 = random.random()
+    t1 = torch.rand(2)
+
+    seed_everything(42)
+    val2 = random.random()
+    t2 = torch.rand(2)
+
+    assert val1 == val2
+    assert torch.equal(t1, t2)
+

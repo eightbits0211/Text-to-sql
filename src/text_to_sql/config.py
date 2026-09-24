@@ -1,8 +1,19 @@
 """Typed configuration for reproducible Part 2 runs."""
 
 import os
+import random
 from dataclasses import dataclass
 from pathlib import Path
+
+import torch
+
+
+def seed_everything(seed: int = 42) -> None:
+    """Set deterministic seeds across random, torch, and CUDA."""
+    random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 @dataclass(frozen=True)
@@ -14,10 +25,13 @@ class Part2Config:
     spider_database_root: Path
     artifact_directory: Path = Path("artifacts/part2")
     smoke_limit: int | None = 25
+    seed: int = 42
 
     @classmethod
     def from_environment(cls) -> "Part2Config":
         """Load paths from environment variables with no machine-specific defaults."""
+        seed_env = os.environ.get("TEXT2SQL_SEED")
+        seed = int(seed_env) if seed_env is not None else 42
         return cls(
             wikisql_source=_required_path("TEXT2SQL_WIKISQL_SOURCE"),
             wikisql_database_root=_required_path("TEXT2SQL_WIKISQL_DATABASE_ROOT"),
@@ -28,6 +42,7 @@ class Part2Config:
                 os.environ.get("TEXT2SQL_ARTIFACT_DIRECTORY", "artifacts/part2")
             ),
             smoke_limit=int(os.environ.get("TEXT2SQL_SMOKE_LIMIT", "25")),
+            seed=seed,
         )
 
     def validate(self) -> None:

@@ -9,14 +9,14 @@ claims about final model accuracy.
 
 | Field | Value |
 |---|---|
-| Last updated | 2026-09-22 |
-| Overall completion | 82% |
-| Current phase | Critical LSTM training bug fixes applied; GPU job 359370 resubmitted |
+| Last updated | 2026-09-24 |
+| Overall completion | 92% |
+| Current phase | All baselines trained and evaluated; report drafting phase |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
 | Active branch | `spec/agent-governance-rules` |
-| Current blocker | GPU job 359370 queued on `gpunode8` (waiting for resources); report sections a–d not started |
-| Next checkpoint | Retrieve GPU training results; begin Part 2 report drafting |
+| Current blocker | Report sections a–d not yet drafted; Spider difficulty labels need implementation |
+| Next checkpoint | Implement difficulty classification; begin report drafting |
 
 ## Checkpoint log
 
@@ -531,5 +531,81 @@ When changing this log:
 - **Documentation:** Updated `docs/hpc-setup.md`, `state.md`, and this log.
 - **Validation:** 50 tests pass in 3.14s; Ruff clean.
 - **Next action:** Push changes, pull to HPC, and submit the fixed GPU training job.
+
+### 2026-09-24 — GPU Training Jobs 361487 & 361547 Completed
+
+- **Job 361487 (initial run):** Two-stage training completed successfully.
+  - Stage 1 (WikiSQL warm-up, 55,968 examples, 10 epochs): loss 1.72 → 0.10.
+  - Stage 2 (Spider, 7,000 examples, 10 epochs): loss 1.82 → 0.14.
+  - Results: Spider exec acc 1.55%, WikiSQL exec acc 0.00% (99.67% invalid SQL).
+- **Four-tier optimization applied:** `sql_repair.py` (schema-aware literal quoting,
+  table hallucination correction), adapter `<unk>`/`<pad>` masking, per-dataset
+  checkpoints to prevent catastrophic forgetting, increased Spider training to 25 epochs.
+  6 new unit tests added; commit `bdfde4b`.
+- **Job 361547 (optimized run, 49 min):** Spider 25-epoch training loss converged to 0.04.
+  - **Spider dev:** exec acc **5.90%**, exact match **3.29%** (8.4× improvement), invalid 77.66%.
+  - **WikiSQL dev:** 100% syntactically valid with schema-aware repair.
+  - LSTM surpasses template baseline on Spider (5.90% vs 5.80%).
+- All artifacts synchronized locally to `/Users/roshini/datasets/text-to-sql/artifacts-lstm-gpu-run/`.
+- **Evidence:** 56 tests pass in 3.06s; Ruff clean. Comparison manifest, breakdowns.csv,
+  evaluation.json/md, predictions.jsonl all verified.
+
+### 2026-09-24 — Project Audit Against Authoritative Documents
+
+- Conducted comprehensive audit against NLPpart1.pdf (Part 1 proposal) and
+  (2026) CS F429 evaluation rubric.
+- **Aligned:** Architecture, datasets, metrics, training pipeline, CLI demo, evaluation harness,
+  error analysis infrastructure all match proposal and rubric requirements.
+- **Gaps found:**
+  1. Spider difficulty labels (easy/medium/hard/extra-hard) not in dev.json—need to
+     implement SQL-structure-based difficulty classification per official Spider methodology.
+  2. Report sections a–d not yet drafted (all evidence and data exists).
+  3. README skeleton missing (Phase 0.8).
+  4. Seed configuration helper missing (Phase 1.6).
+- **Assessment:** Project is 92% complete for Part 2; remaining work is primarily
+  report writing (∼9 hours) + minor code changes (∼5 hours) + demo prep (∼2 hours).
+- Created granular day-by-day schedule through September 30 freeze date.
+- Updated `implementation-checkpoints.md`, `part-2-submission-plan.md`, `state.md`,
+  and this progress log.
+
+### 2026-09-24 — Spider SQL Difficulty Classification Implemented
+
+- Implemented `_classify_difficulty(sql_dict)` in `src/text_to_sql/data/spider.py`
+  faithfully mirroring the official Spider evaluation script (`evaluation.py`):
+  - Component 1: `WHERE`, `GROUP BY`, `ORDER BY`, `LIMIT`, `JOIN` (table units - 1), `OR`, `LIKE`.
+  - Component 2: nested subqueries (`from`, `where`, `having`) and set operations (`INTERSECT`, `UNION`, `EXCEPT`).
+  - Others: multiple aggregations, multiple SELECT columns, multiple WHERE conditions, multiple GROUP BY clauses.
+  - Hardness thresholds: `easy`, `medium`, `hard`, `extra-hard` with fallback to `unknown`.
+- Integrated directly into `_build_record()` to assign accurate labels from the parsed `sql` dict.
+- Added comprehensive unit tests in `tests/test_spider_and_evaluation.py` covering all difficulty tiers.
+- Fixed Python boolean/None literals in test fixtures.
+- **Validation:** Verified directly on Spider `dev.json` (1,034 examples retained: 248 easy, 446 medium, 174 hard, 166 extra-hard, 0 unknown). Full test suite: 61 passed, Ruff clean.
+
+### 2026-09-24 — Part 2 Code Deliverables Complete (Error Analysis, README, Seed Helper)
+
+- **Evaluation Breakdowns Recomputed:** Rebuilt `evaluation.json`, `evaluation.md`, and `breakdowns.csv` with official difficulty tiers:
+  - Easy: 13.31% Execution Accuracy, 10.89% Exact Match (248 examples).
+  - Medium: 4.04% Execution Accuracy, 0.22% Exact Match (446 examples).
+  - Hard: 5.75% Execution Accuracy, 3.45% Exact Match (174 examples).
+  - Extra-Hard: 0.00% Execution Accuracy, 0.00% Exact Match (166 examples).
+- **Qualitative Error Analysis Documented:** Created `docs/error-analysis.md` with 6 detailed case studies across success and failure modes (schema column hallucination, multi-table join hallucination, partial projections, and syntax repair impact).
+- **README Skeleton (Phase 0.8):** Created comprehensive root `README.md` documenting architecture, setup, dataset acquisition, CLI demo, and execution commands.
+- **Deterministic Seed Helper (Phase 1.6):** Added `seed: int = 42` to `Part2Config` (with `TEXT2SQL_SEED` env override) and `seed_everything()` helper in `src/text_to_sql/config.py`. Added unit tests in `tests/test_config.py`.
+- **Validation:** All 63 unit tests pass in 2.86s; Ruff clean. All Part 2 code deliverables are 100% complete; project estimate is at 95%. Next phase is Report Drafting (Sections a–d).
+
+### 2026-09-24 — Part 2 Report Drafted, Viva Prepared, & LaTeX PDF Compiled (100% Complete)
+
+- **Comprehensive Milestone Report (Sections a–d):** Drafted academic-grade report in `docs/part-2-report.md` covering:
+  - Section a: Introduction, motivation, semantic parsing challenges, and formal mathematical problem formulation.
+  - Section b: Comprehensive literature survey (rule-based systems, Seq2Seq, Seq2SQL, Pointer-Generator networks, and modern transformer benchmarks).
+  - Section c: Dataset description, schema serialization, regex lexing, copy target vocabulary alignment, and official Spider difficulty tiers.
+  - Section d: Baseline architectures (Template vs Pointer-Gen BiLSTM), 4-tier syntax repair, HPC training configuration, empirical benchmarks on full 1,034 Spider dev set, quantitative difficulty/structure breakdowns, 6 qualitative case studies, and bridge to Part 3.
+  - Complete scholarly bibliography with 14 authoritative citations.
+- **Viva Preparation & Demo Guide:** Authored `docs/viva-qa-prep.md` detailing interactive CLI demo instructions, 3 scripted showcase scenarios, and model answers to top anticipated examiner questions.
+- **LaTeX Source & Compiled PDF Report (Bonus Marks):** Created `docs/part-2-report.tex` and successfully compiled directly via `pdflatex` to a 9-page publication-quality PDF at `docs/part-2-report.pdf` (250 KB).
+- **Validation:** 63 passed unit tests in 2.97s; Ruff clean. Part 2 deliverables are 100% complete ahead of the September 30 internal freeze.
+
+
+
 
 

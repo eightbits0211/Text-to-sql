@@ -75,8 +75,7 @@ class TemplateBaseline:
             expressions = ["COUNT(*)"]
         elif aggregates:
             expressions = [
-                f"{function}({self._quote(column.name)})"
-                for function, column in aggregates
+                f"{function}({self._quote(column.name)})" for function, column in aggregates
             ]
         else:
             expressions = [self._quote(column.name) for column in columns]
@@ -154,7 +153,9 @@ class TemplateBaseline:
             )
             for table in schema.tables
         ]
-        return max(choices, key=lambda choice: (choice.score, -schema.tables.index(choice.table))).table
+        return max(
+            choices, key=lambda choice: (choice.score, -schema.tables.index(choice.table))
+        ).table
 
     @classmethod
     def _choose_column(cls, question: str, table: TableSpec) -> ColumnSpec:
@@ -188,19 +189,19 @@ class TemplateBaseline:
         positive.sort(reverse=True)
         # A conjunction in the answer phrase is a reliable WikiSQL cue for
         # projecting more than one column.  Do not include predicate columns.
-        answer_words = re.split(
-            r"\b(?:where|whose|that|with)\b", question, 1, flags=re.IGNORECASE
-        )[0]
-        selected = [
-            column for score, _, column in positive
-            if re.search(
-                rf"\b{re.escape(column.name)}\b", answer_words, re.IGNORECASE
-            )
-            or cls._column_match_score(column.name, set(re.findall(r"[a-z0-9_]+", answer_words.lower())), answer_words) >= 3
+        answer_words = re.split(r"\b(?:where|whose|that|with)\b", question, 1, flags=re.IGNORECASE)[
+            0
         ]
-        if len(selected) < 2 or not re.search(
-            r"\band\b|,", answer_words, re.IGNORECASE
-        ):
+        selected = [
+            column
+            for score, _, column in positive
+            if re.search(rf"\b{re.escape(column.name)}\b", answer_words, re.IGNORECASE)
+            or cls._column_match_score(
+                column.name, set(re.findall(r"[a-z0-9_]+", answer_words.lower())), answer_words
+            )
+            >= 3
+        ]
+        if len(selected) < 2 or not re.search(r"\band\b|,", answer_words, re.IGNORECASE):
             return [positive[0][2]]
         return sorted(
             set(selected),
@@ -214,16 +215,12 @@ class TemplateBaseline:
     def _column_mention_position(column_name: str, question: str) -> int:
         aliases = (column_name, column_name.replace("_", " "))
         positions = [
-            position
-            for alias in aliases
-            if (position := question.lower().find(alias.lower())) >= 0
+            position for alias in aliases if (position := question.lower().find(alias.lower())) >= 0
         ]
         return min(positions, default=len(question))
 
     @staticmethod
-    def _column_match_score(
-        column_name: str, question_words: set[str], question: str = ""
-    ) -> int:
+    def _column_match_score(column_name: str, question_words: set[str], question: str = "") -> int:
         normalized = column_name.lower().replace("_", " ")
         tokens = normalized.split()
         if normalized in question_words:
@@ -270,7 +267,7 @@ class TemplateBaseline:
             return []
         result = []
         for index, function in found:
-            context = lowered[max(0, index - 50): index + 80]
+            context = lowered[max(0, index - 50) : index + 80]
             column = cls._choose_column(context, table)
             result.append((function, column))
         return result or [(found[0][1], columns[0])]
@@ -301,7 +298,7 @@ class TemplateBaseline:
             )
             if direction_match:
                 direction = "DESC" if direction_match.group(1).lower().startswith("desc") else "ASC"
-                column_text = column_text[:direction_match.start()]
+                column_text = column_text[: direction_match.start()]
             else:
                 range_match = re.search(
                     r"\bfrom\s+(?:the\s+)?(oldest|youngest|earliest|latest)\s+to\s+"
@@ -311,19 +308,19 @@ class TemplateBaseline:
                 )
                 if range_match:
                     direction = (
-                        "DESC"
-                        if range_match.group(1).lower() in {"oldest", "latest"}
-                        else "ASC"
+                        "DESC" if range_match.group(1).lower() in {"oldest", "latest"} else "ASC"
                     )
-                    column_text = column_text[:range_match.start()]
+                    column_text = column_text[: range_match.start()]
             column = cls._choose_column(column_text, table)
             return column, direction, cls._extract_limit(question)
-        match = re.search(
-            r"\b(highest|largest|lowest|smallest)\b", question, re.IGNORECASE
-        )
+        match = re.search(r"\b(highest|largest|lowest|smallest)\b", question, re.IGNORECASE)
         if match:
             direction = "DESC" if match.group(1).lower() in {"highest", "largest"} else "ASC"
-            return cls._choose_column(question[:match.start()] or question, table), direction, cls._extract_limit(question)
+            return (
+                cls._choose_column(question[: match.start()] or question, table),
+                direction,
+                cls._extract_limit(question),
+            )
         match = re.search(
             r"\b(oldest|youngest|earliest|latest)\b"
             r"(?:\s+\w+){0,3}\s+\b(to|through|until)\b\s+"
@@ -338,9 +335,7 @@ class TemplateBaseline:
         return None
 
     @classmethod
-    def _extract_conditions(
-        cls, question: str, table: TableSpec
-    ) -> list[tuple[str, str, str]]:
+    def _extract_conditions(cls, question: str, table: TableSpec) -> list[tuple[str, str, str]]:
         """Extract the small comparison vocabulary used by WikiSQL questions."""
         if re.search(r"\bor\b", question, re.IGNORECASE):
             # OR requires parenthesized boolean logic; dropping all predicates
@@ -396,9 +391,7 @@ class TemplateBaseline:
                 if match:
                     value = match.group("value").strip().strip("\"'")
                     if value:
-                        conditions.append(
-                            (match.start(), column.name, operator, value)
-                        )
+                        conditions.append((match.start(), column.name, operator, value))
                     break
         # Questions such as "what team is Amir Johnson on?" omit an explicit
         # equality operator.  The subject noun still provides a safe link.
@@ -425,7 +418,8 @@ class TemplateBaseline:
                 break
         if any(name.lower() in {"no.", "no"} for _, name, _, _ in conditions):
             conditions = [
-                item for item in conditions
+                item
+                for item in conditions
                 if not re.search(r"\b(?:player|person)\s+number\b", item[3], re.IGNORECASE)
             ]
         conditions.sort(key=lambda item: item[0])

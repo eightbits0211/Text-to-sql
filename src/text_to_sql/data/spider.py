@@ -114,14 +114,7 @@ def _build_record(
         sqlite_schema = load_sqlite_schema(database_path, database_id)
     except (OSError, ValueError, KeyError, TypeError) as error:
         raise _Excluded(ExclusionReason.SCHEMA_UNREADABLE, str(error)) from error
-    difficulty = QueryDifficulty(
-        {
-            "easy": "easy",
-            "medium": "medium",
-            "hard": "hard",
-            "extra": "extra-hard",
-        }.get(_text(source_record.get("hardness")), "unknown")
-    )
+    difficulty = _classify_difficulty(source_record.get("sql"))
     return ExampleRecord(
         example_id=example_id,
         dataset="spider",
@@ -165,6 +158,153 @@ def _schema_from_metadata(record: dict[str, Any], database_id: str) -> DatabaseS
         for source, target in record.get("foreign_keys", [])
     )
     return DatabaseSchema(database_id, tables, foreign_keys)
+
+
+# ---------------------------------------------------------------------------
+# Official Spider difficulty classification
+# ---------------------------------------------------------------------------
+# Reimplements the eval_hardness logic from the official Spider evaluation
+# script (https://github.com/taoyds/spider/blob/master/evaluation.py).
+# Uses the parsed ``sql`` dict shipped in the Spider JSON files.
+# ---------------------------------------------------------------------------
+
+_COMP1_KEYWORDS = frozenset({"where", "group", "order", "limit", "join", "or", "like"})
+_COMP2_KEYWORDS = frozenset({"except", "union", "intersect"})
+_WHERE_OPS = (
+    "not",
+    "between",
+    "=",
+    ">",
+    "<",
+    ">=",
+    "<=",
+    "!=",
+    "in",
+    "like",
+    "is",
+    "exists",
+)
+
+
+def _has_agg(unit: list) -> bool:
+    """Return True if a select/val unit uses an aggregate (index != 0 = 'none')."""
+    return bool(unit and unit[0] != 0)
+
+
+def _count_agg(units: list) -> int:
+    return sum(1 for unit in units if _has_agg(unit))
+
+
+def _count_component1(sql_dict: dict[str, Any]) -> int:
+    """Count component-1 features: where, group, order, limit, join, or, like."""
+    count = 0
+    if len(sql_dict.get("where", [])) > 0:
+        count += 1
+    if len(sql_dict.get("groupBy", [])) > 0:
+        count += 1
+    if len(sql_dict.get("orderBy", [])) > 0:
+        count += 1
+    if sql_dict.get("limit") is not None:
+        count += 1
+    table_units = sql_dict.get("from", {}).get("table_units", [])
+    if len(table_units) > 0:
+        count += len(table_units) - 1
+
+    from_conds = sql_dict.get("from", {}).get("conds", [])
+    where_conds = sql_dict.get("where", [])
+    having_conds = sql_dict.get("having", [])
+    all_and_ors = from_conds[1::2] + where_conds[1::2] + having_conds[1::2]
+    count += sum(1 for token in all_and_ors if token == "or")
+
+    like_idx = _WHERE_OPS.index("like")
+    cond_units = from_conds[::2] + where_conds[::2] + having_conds[::2]
+    count += sum(1 for cu in cond_units if len(cu) > 1 and cu[1] == like_idx)
+    return count
+
+
+def _get_nested_sql(sql_dict: dict[str, Any]) -> list[dict[str, Any]]:
+    nested: list[dict[str, Any]] = []
+    from_conds = sql_dict.get("from", {}).get("conds", [])
+    where_conds = sql_dict.get("where", [])
+    having_conds = sql_dict.get("having", [])
+    for cond_unit in from_conds[::2] + where_conds[::2] + having_conds[::2]:
+        if len(cond_unit) > 3 and isinstance(cond_unit[3], dict):
+            nested.append(cond_unit[3])
+        if len(cond_unit) > 4 and isinstance(cond_unit[4], dict):
+            nested.append(cond_unit[4])
+    for key in ("intersect", "except", "union"):
+        val = sql_dict.get(key)
+        if val is not None:
+            nested.append(val)
+    return nested
+
+
+def _count_component2(sql_dict: dict[str, Any]) -> int:
+    """Count component-2 features: nested subqueries and set ops."""
+    return len(_get_nested_sql(sql_dict))
+
+
+def _count_others(sql_dict: dict[str, Any]) -> int:
+    """Count 'other' complexity indicators: aggregations, select columns,
+    multiple where conditions, multiple group by clauses."""
+    count = 0
+    select_items = sql_dict.get("select", [False, []])[1]
+    where_units = sql_dict.get("where", [])[::2]
+    group_units = sql_dict.get("groupBy", [])
+    order_items = sql_dict.get("orderBy", [])
+    order_units: list = []
+    if len(order_items) > 1 and isinstance(order_items[1], list):
+        for unit in order_items[1]:
+            if len(unit) > 1 and unit[1]:
+                order_units.append(unit[1])
+            if len(unit) > 2 and unit[2]:
+                order_units.append(unit[2])
+    having_units = sql_dict.get("having", [])
+
+    agg_count = _count_agg(select_items)
+    agg_count += _count_agg(where_units)
+    agg_count += _count_agg(group_units)
+    agg_count += _count_agg(order_units)
+    agg_count += _count_agg(having_units)
+    if agg_count > 1:
+        count += 1
+
+    if len(select_items) > 1:
+        count += 1
+    if len(sql_dict.get("where", [])) > 1:
+        count += 1
+    if len(sql_dict.get("groupBy", [])) > 1:
+        count += 1
+    return count
+
+
+def _classify_difficulty(sql_dict: dict | None) -> QueryDifficulty:
+    """Classify a Spider example's difficulty from its parsed SQL dict.
+
+    Reimplements the official Spider ``eval_hardness`` logic.
+    Falls back to UNKNOWN if no parsed SQL dict is available.
+    """
+    if not sql_dict or not isinstance(sql_dict, dict):
+        return QueryDifficulty.UNKNOWN
+
+    try:
+        comp1 = _count_component1(sql_dict)
+        comp2 = _count_component2(sql_dict)
+        others = _count_others(sql_dict)
+    except (KeyError, TypeError, IndexError):
+        return QueryDifficulty.UNKNOWN
+
+    if comp1 <= 1 and others == 0 and comp2 == 0:
+        return QueryDifficulty.EASY
+    if (others <= 2 and comp1 <= 1 and comp2 == 0) or (comp1 <= 2 and others < 2 and comp2 == 0):
+        return QueryDifficulty.MEDIUM
+    if (
+        (others > 2 and comp1 <= 2 and comp2 == 0)
+        or (2 < comp1 <= 3 and others <= 2 and comp2 == 0)
+        or (comp1 <= 1 and others == 0 and comp2 <= 1)
+    ):
+        return QueryDifficulty.HARD
+    return QueryDifficulty.EXTRA_HARD
 
 
 def _query_structure(query: str) -> QueryStructure:

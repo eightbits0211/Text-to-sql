@@ -65,7 +65,9 @@ class Encoder(nn.Module):
         # h_n: (2*num_layers, batch, hidden_dim//2) — reshape to (num_layers, batch, hidden_dim)
         batch_size = src.size(0)
         h_n = h_n.view(self.num_layers, 2, batch_size, self.hidden_dim // 2)
-        h_n = torch.cat([h_n[:, 0, :, :], h_n[:, 1, :, :]], dim=-1)  # (num_layers, batch, hidden_dim)
+        h_n = torch.cat(
+            [h_n[:, 0, :, :], h_n[:, 1, :, :]], dim=-1
+        )  # (num_layers, batch, hidden_dim)
         c_n = c_n.view(self.num_layers, 2, batch_size, self.hidden_dim // 2)
         c_n = torch.cat([c_n[:, 0, :, :], c_n[:, 1, :, :]], dim=-1)
 
@@ -99,9 +101,7 @@ class AdditiveAttention(nn.Module):
             attention_weights: (batch, src_len)
         """
         energy = self.v(
-            torch.tanh(
-                self.W_enc(encoder_outputs) + self.W_dec(decoder_hidden).unsqueeze(1)
-            )
+            torch.tanh(self.W_enc(encoder_outputs) + self.W_dec(decoder_hidden).unsqueeze(1))
         ).squeeze(-1)  # (batch, src_len)
         energy = energy.masked_fill(src_mask, float("-inf"))
         attention_weights = F.softmax(energy, dim=-1)
@@ -277,6 +277,8 @@ class Seq2SeqLSTM(nn.Module):
             outputs.append(full_dist.unsqueeze(1))
 
             use_teacher = torch.rand(1).item() < teacher_forcing_ratio
-            prev_token = tgt[:, t] if use_teacher else full_dist.argmax(-1).clamp(max=self.vocab_size - 1)
+            prev_token = (
+                tgt[:, t] if use_teacher else full_dist.argmax(-1).clamp(max=self.vocab_size - 1)
+            )
 
         return torch.cat(outputs, dim=1)  # (batch, tgt_len-1, extended_vocab_size)

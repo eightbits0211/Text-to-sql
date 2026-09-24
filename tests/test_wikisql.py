@@ -78,7 +78,9 @@ def test_load_wikisql_rejects_join_query(tmp_path: Path) -> None:
                 {
                     "question": "Join two tables",
                     "table": {"id": "people", "header": ["id"]},
-                    "sql": {"query": "SELECT p.id FROM people p JOIN visits v ON p.id = v.person_id"},
+                    "sql": {
+                        "query": "SELECT p.id FROM people p JOIN visits v ON p.id = v.person_id"
+                    },
                 }
             ]
         ),

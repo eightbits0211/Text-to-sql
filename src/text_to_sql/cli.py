@@ -101,10 +101,13 @@ def format_table(columns: tuple[str, ...], rows: list[tuple[object, ...]]) -> st
     header = " | ".join(col.ljust(col_widths[i]) for i, col in enumerate(columns))
     divider = "-+-".join("-" * col_widths[i] for i in range(len(columns)))
     row_lines = [
-        " | ".join(str(val).ljust(col_widths[i]) for i, val in enumerate(row))
-        for row in rows
+        " | ".join(str(val).ljust(col_widths[i]) for i, val in enumerate(row)) for row in rows
     ]
-    return f"{header}\n{divider}\n" + "\n".join(row_lines) if row_lines else f"{header}\n{divider}\n(0 rows)"
+    return (
+        f"{header}\n{divider}\n" + "\n".join(row_lines)
+        if row_lines
+        else f"{header}\n{divider}\n(0 rows)"
+    )
 
 
 def run_query(
@@ -120,6 +123,7 @@ def run_query(
         sql = baseline.predict(question, schema)
     elif model_name == "lstm":
         from .lstm.adapter import LSTMBaseline
+
         if checkpoint_path is not None and checkpoint_path.is_file():
             baseline = LSTMBaseline.load(checkpoint_path)
         else:
@@ -165,7 +169,7 @@ def run_scripted_demo(
     for case in SCRIPTED_DEMO_CASES:
         print(f"\n--- {case.name} [{case.category.upper()}] ---")
         print(f"Purpose : {case.description}")
-        print(f"Question: \"{case.question}\"")
+        print(f'Question: "{case.question}"')
         sql, success, display = run_query(
             case.question,
             schema,

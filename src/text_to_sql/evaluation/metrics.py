@@ -108,7 +108,9 @@ def evaluate_predictions(
     return EvaluationReport(
         evaluated_count=count,
         exact_match_accuracy=sum(item.exact_match for item in evaluated) / count if count else 0.0,
-        execution_accuracy=sum(item.execution_match for item in evaluated) / count if count else 0.0,
+        execution_accuracy=sum(item.execution_match for item in evaluated) / count
+        if count
+        else 0.0,
         invalid_sql_rate=sum(item.invalid_sql for item in evaluated) / count if count else 0.0,
         examples=tuple(evaluated),
     )

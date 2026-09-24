@@ -20,7 +20,9 @@ from text_to_sql.lstm.training import TrainingConfig, load_checkpoint, train_smo
 def _make_db(path: Path) -> None:
     conn = sqlite3.connect(path)
     try:
-        conn.execute("CREATE TABLE singers (singer_id INTEGER PRIMARY KEY, name TEXT, country TEXT)")
+        conn.execute(
+            "CREATE TABLE singers (singer_id INTEGER PRIMARY KEY, name TEXT, country TEXT)"
+        )
         conn.executemany(
             "INSERT INTO singers VALUES (?,?,?)",
             [(1, "Ada", "USA"), (2, "Grace", "USA"), (3, "Turing", "UK")],
@@ -167,7 +169,10 @@ def test_lstm_adapter_fit_and_predict(
     baseline = LSTMBaseline(config=config)
     baseline.fit(smoke_examples, checkpoint_dir=tmp_path / "ckpt")
 
-    sql = baseline.predict("What are the names?", "database: singers\ntable: singers\ncolumns:\n  - name [TEXT]\nforeign_keys:")
+    sql = baseline.predict(
+        "What are the names?",
+        "database: singers\ntable: singers\ncolumns:\n  - name [TEXT]\nforeign_keys:",
+    )
     assert isinstance(sql, str)  # must return a string, even if empty
 
 
@@ -200,7 +205,9 @@ def test_lstm_adapter_evaluate_uses_shared_harness(
 def test_untrained_lstm_adapter_returns_empty_string() -> None:
     """An untrained adapter must return an empty string, not raise."""
     baseline = LSTMBaseline()
-    result = baseline.predict("Any question?", "database: x\ntable: t\ncolumns:\n  - id [INTEGER]\nforeign_keys:")
+    result = baseline.predict(
+        "Any question?", "database: x\ntable: t\ncolumns:\n  - id [INTEGER]\nforeign_keys:"
+    )
     assert result == ""
 
 

@@ -50,9 +50,30 @@ SQL_KEYWORDS = {
     "ASC",
     "DESC",
 }
-SQL_OPERATORS = ("(", ")", ",", ".", ";", ":", "=", "<", ">", "<=", ">=", "!=", "<>", "+", "-", "*", "/", "%")
+SQL_OPERATORS = (
+    "(",
+    ")",
+    ",",
+    ".",
+    ";",
+    ":",
+    "=",
+    "<",
+    ">",
+    "<=",
+    ">=",
+    "!=",
+    "<>",
+    "+",
+    "-",
+    "*",
+    "/",
+    "%",
+)
 QUESTION_SCHEMA_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*|[0-9]+(?:\.[0-9]+)?")
-SQL_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*|[0-9]+(?:\.[0-9]+)?|<=|>=|!=|<>|[=<>+/*%\-(),.;:]|'[^']*'|\"[^\"]*\"")
+SQL_TOKEN_RE = re.compile(
+    r"[A-Za-z_][A-Za-z0-9_]*|[0-9]+(?:\.[0-9]+)?|<=|>=|!=|<>|[=<>+/*%\-(),.;:]|'[^']*'|\"[^\"]*\""
+)
 
 
 def _normalize_token(token: str) -> str:
@@ -73,12 +94,18 @@ def _iter_surface_tokens(text: str, pattern: re.Pattern[str]) -> list[str]:
 
 def tokenize_question(question: str) -> list[str]:
     """Return deterministic question tokens in a stable, lowercase canonical form."""
-    return [_normalize_token(token) for token in _iter_surface_tokens(question, QUESTION_SCHEMA_TOKEN_RE)]
+    return [
+        _normalize_token(token)
+        for token in _iter_surface_tokens(question, QUESTION_SCHEMA_TOKEN_RE)
+    ]
 
 
 def tokenize_schema(schema_text: str) -> list[str]:
     """Deterministically tokenize the existing schema serialization."""
-    return [_normalize_token(token) for token in _iter_surface_tokens(schema_text, QUESTION_SCHEMA_TOKEN_RE)]
+    return [
+        _normalize_token(token)
+        for token in _iter_surface_tokens(schema_text, QUESTION_SCHEMA_TOKEN_RE)
+    ]
 
 
 def tokenize_sql(sql: str) -> list[str]:

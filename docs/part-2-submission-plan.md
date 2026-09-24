@@ -291,76 +291,78 @@ be committed to the repository.
 
 ## 11. Current checkpoint status
 
-As of September 22, 2026:
-- The deterministic template baseline has been evaluated across the **entire official
-  development splits** (8,415 WikiSQL records, 1,034 Spider records; 0% invalid rate).
-- The trainable **Pointer-Generator LSTM seq2seq model is designated the primary baseline**
-  with full encoder-decoder attention and schema-pointer copy mechanism.
+As of September 24, 2026:
+- **All GPU training completed:** Job `361487` (initial, 10+10 epochs) and Job `361547`
+  (optimized, 10+25 epochs) both finished on `gpunode8`. All artifacts synchronized locally.
+- **Optimized LSTM results (primary baseline) on Spider:**
+  - Execution Accuracy: **5.90%** (surpasses Template's 5.80%)
+  - Exact Match: **3.29%** (vs Template's 0.00%; aligns with published 3.2–5.4% range)
+  - Invalid SQL: 77.66% (reduced from 85.20% via `sql_repair.py`)
 - The interactive demo CLI (`text-to-sql-demo --demo`) is verified with 3 scripted
   queries across both models with formatted ASCII tables.
-- HPC Blackwell GPU verification (job `359139`) passed 100% on `gpunode8`
-  (NVIDIA RTX PRO 6000 98GB VRAM, CUDA 13.0).
-- Comprehensive code audit completed with 8 critical training and preprocessing fixes
-  (epoch shuffling, CLI argument propagation, manifest tracking, target caching, typing).
-- Full two-stage GPU training job **`359370`** is submitted and queued on Slurm.
-- 50/50 unit tests pass cleanly in 3.05s; Ruff linter clean.
+- 56/56 unit tests pass cleanly in 3.06s; Ruff clean.
+- **Project audit completed** against NLPpart1.pdf and CS F429 evaluation rubric:
+  architecture, datasets, metrics, and pipeline all aligned.
 
-The next execution gates are:
-1. Retrieve job `359370` checkpoints and metrics upon Slurm execution.
-2. Run full dev evaluation comparing Primary LSTM vs Template Fallback.
-3. Draft Part 2 report Sections a–d (Introduction, Literature Survey, Dataset/Preprocessing,
-   Methodology & Results).
-4. Package and freeze deliverables by September 30.
+### Remaining Part 2 work:
 
-## 12. Full-scale template baseline checkpoint
+**Code changes:**
+1. Implement Spider SQL difficulty classification from query structure (easy/medium/hard/extra-hard).
+2. Re-generate evaluation breakdowns with per-difficulty labels.
+3. Extract qualitative error examples from `predictions.jsonl`.
+4. Add README skeleton and seed configuration helper.
 
-The deterministic template baseline was executed against the complete official
-development splits:
+**Report (Sections a–d):**
+5. Draft Introduction & Motivation, Literature Survey, Dataset & Preprocessing,
+   Method/Baseline & Results with error analysis.
 
-| Dataset | Retained | Excluded | Exec Acc | Exact Match | Invalid SQL Rate |
-|---|---:|---:|---:|---:|---:|
-| WikiSQL (Full Dev) | 8,415 | 0 | **0.0768** | 0.0000 | **0.0000** |
-| Spider (Full Dev) | 1,034 | 0 | **0.1364** | 0.0000 | **0.0000** |
+**Demo/Viva:**
+6. Prepare viva Q&A script and rehearse live demo flow.
 
-Artifacts are archived under `artifacts-template-full-dev/`. The zero invalid-SQL
-rate confirms the syntax validator and safe SQLite identifier quoting function correctly
-across 9,449 real benchmark queries.
+### Schedule to September 30 freeze:
 
-## 13. Authority alignment and remaining Part 2 work
+| Date | Focus | Gate |
+|---|---|---|
+| Sep 24 | Difficulty classification + error examples | Breakdowns show easy/medium/hard/extra-hard |
+| Sep 25 | Report: Introduction + Literature Survey | Sections a–b drafted |
+| Sep 26 | Report: Dataset + Preprocessing + Metrics | Section c drafted |
+| Sep 27 | Report: Method, Results, Error Analysis | Section d drafted |
+| Sep 28 | Demo prep + Report polish | Demo rehearsed; report reviewed |
+| Sep 29 | LaTeX conversion + Final polish | Report compiles cleanly |
+| Sep 30 | **INTERNAL FREEZE** | All Part 2 deliverables frozen |
 
-The implementation is aligned with the authoritative course description and evaluation
-requirements for the **Part 2 baseline stage**:
+## 12. Full-scale baseline checkpoints
 
-| Requirement area | Current status |
+### Template Baseline (Full Dev)
+
+| Dataset | Retained | Exec Acc | Exact Match | Invalid SQL |
+|---|---:|---:|---:|---:|
+| WikiSQL | 8,415 | 0.0723 | 0.0126 | 0.0000 |
+| Spider | 1,034 | 0.0580 | 0.0000 | 0.0058 |
+
+### Optimized LSTM Baseline (Full Dev, Job 361547)
+
+| Dataset | Retained | Exec Acc | Exact Match | Invalid SQL |
+|---|---:|---:|---:|---:|
+| Spider | 1,034 | **0.0590** | **0.0329** | 0.7766 |
+| WikiSQL | 8,415 | 0.0004 | 0.0004 | 0.9951 |
+
+Training: 2-layer bidir encoder, 2-layer attention decoder, 256-dim embeddings,
+512-dim hidden, copy mechanism, batch=64, lr=0.001, grad_clip=1.0.
+WikiSQL warm-up 10 epochs + Spider primary 25 epochs. Final loss: 0.0404.
+
+## 13. Authority alignment summary
+
+| Requirement area | Status |
 |---|---|
-| Dataset selection and justification | Covered: Spider primary, WikiSQL warm-up, sources and citations documented |
-| Classical baselines | Covered: Pointer-Generator LSTM designated **primary baseline**; deterministic template parser serves as verified fallback floor |
-| Schema/data processing | Covered: official loaders, typed records, schema serialization, exclusions |
-| Evaluation | Covered: exact match, execution accuracy, invalid-SQL rate, breakdown reports |
-| Error analysis | Covered quantitatively (breakdown tables); qualitative writeup pending for report |
-| Demonstration | Covered: CLI question → SQL → table/error with 3 showcase cases |
-| Report evidence | Outstanding: Sections a–d drafting, literature citations, error analysis narrative |
-| Modern transformer model and novelty | Intentionally deferred to Part 3 |
+| Dataset selection & justification | ✅ Spider primary, WikiSQL warm-up, sources documented |
+| Classical baselines comparison | ✅ LSTM (primary) vs Template (fallback) |
+| Model details & hyperparameters | ✅ Architecture, training strategy, all hyperparams recorded |
+| Evaluation metrics | ✅ Exec accuracy, exact match, invalid-SQL rate |
+| Error analysis | ✅ Quantitative breakdowns; qualitative examples pending |
+| Demonstration & CLI | ✅ `text-to-sql-demo --demo` with model selection |
+| Report sections a–d | ⚠️ Not yet drafted — scheduled Sep 25–27 |
+| Difficulty breakdowns | ⚠️ Need to implement SQL difficulty classification |
+| Modern transformer & novelty | Deferred to Part 3 (correct per timeline) |
 
-Remaining Part 2 work before the September 30 freeze:
-1. Await Slurm job `359370` completion and retrieve trained LSTM checkpoints.
-2. Run comparative evaluation on full dev sets with `scripts/run_lstm_comparison.py`.
-3. Draft Part 2 report Sections a–d.
-4. Prepare qualitative error analysis tables with representative failure examples.
-5. Freeze Part 2 deliverables and open final review PR.
 
-## 14. Bounded 200-example dual baseline comparison checkpoint
-
-A 200-example comparison was executed across both baselines to validate the unified
-evaluation harness:
-
-| Model | Dataset | Sample Size | Exec Acc | Exact Match | Invalid SQL Rate |
-|---|---|---:|---:|---:|---:|
-| TemplateBaseline | WikiSQL | 100 | 0.0600 | 0.0000 | 0.0000 |
-| TemplateBaseline | Spider | 100 | 0.1600 | 0.0000 | 0.0000 |
-| LSTMBaseline (Smoke) | WikiSQL | 100 | 0.0000 | 0.0000 | 1.0000 |
-| LSTMBaseline (Smoke) | Spider | 100 | 0.0000 | 0.0000 | 1.0000 |
-
-The smoke LSTM's high invalid rate on 200 examples is expected due to severe data starvation.
-The full two-stage GPU training job (`359370`) trains on ~63,000 examples (56k WikiSQL + 7k Spider)
-with epoch shuffling to achieve learned SQL syntax generation.

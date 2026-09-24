@@ -105,22 +105,51 @@ def _run_baseline(name: str, baseline: object, records: tuple, output_dir: Path)
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--smoke-limit", type=int, default=200,
-                        help="Max examples to evaluate from dev splits (0 for full evaluation; default: 200)")
-    parser.add_argument("--full-eval", action="store_true", default=False,
-                        help="Evaluate on complete dev splits (all 8,415 WikiSQL and 1,034 Spider records)")
-    parser.add_argument("--epochs", type=int, default=5,
-                        help="LSTM training epochs on the train slice")
-    parser.add_argument("--train-limit", type=int, default=200,
-                        help="Max WikiSQL train examples for LSTM fitting (e.g. 56000 for full split)")
-    parser.add_argument("--spider-train-limit", type=int, default=0,
-                        help="Max Spider train examples (0 = all ~7,000 Spider train examples; default: 0)")
-    parser.add_argument("--spider-epochs", type=int, default=0,
-                        help="Epochs to train on Spider train split (default: 0)")
-    parser.add_argument("--batch-size", type=int, default=8,
-                        help="Batch size for LSTM training (default: 8; use 64 on GPU)")
-    parser.add_argument("--device", type=str, default=None,
-                        help="Torch device string, e.g. 'cuda' or 'cpu'. Auto-detects if not set.")
+    parser.add_argument(
+        "--smoke-limit",
+        type=int,
+        default=200,
+        help="Max examples to evaluate from dev splits (0 for full evaluation; default: 200)",
+    )
+    parser.add_argument(
+        "--full-eval",
+        action="store_true",
+        default=False,
+        help="Evaluate on complete dev splits (all 8,415 WikiSQL and 1,034 Spider records)",
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=5, help="LSTM training epochs on the train slice"
+    )
+    parser.add_argument(
+        "--train-limit",
+        type=int,
+        default=200,
+        help="Max WikiSQL train examples for LSTM fitting (e.g. 56000 for full split)",
+    )
+    parser.add_argument(
+        "--spider-train-limit",
+        type=int,
+        default=0,
+        help="Max Spider train examples (0 = all ~7,000 Spider train examples; default: 0)",
+    )
+    parser.add_argument(
+        "--spider-epochs",
+        type=int,
+        default=0,
+        help="Epochs to train on Spider train split (default: 0)",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=8,
+        help="Batch size for LSTM training (default: 8; use 64 on GPU)",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default=None,
+        help="Torch device string, e.g. 'cuda' or 'cpu'. Auto-detects if not set.",
+    )
     args = parser.parse_args()
 
     selected_device = (
@@ -134,12 +163,12 @@ def main() -> int:
     config.validate()
 
     eval_label = "FULL DATASET" if eval_limit is None else f"limit={eval_limit}"
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  LSTM vs Template comparison  ({eval_label})")
     print(f"  Device: {selected_device} | Batch size: {args.batch_size}")
     print(f"  WikiSQL Train: limit={args.train_limit}, epochs={args.epochs}")
     print(f"  Spider Train : limit={args.spider_train_limit}, epochs={args.spider_epochs}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # ----------------------------------------------------------------
     # Load dev slices
@@ -241,9 +270,9 @@ def main() -> int:
     # ----------------------------------------------------------------
     # Side-by-side summary
     # ----------------------------------------------------------------
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  COMPARISON SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"{'Dataset':<10} {'Model':<12} {'Exec Acc':>10} {'Exact':>8} {'Invalid':>9}")
     print("-" * 55)
     for row in results:
@@ -253,7 +282,7 @@ def main() -> int:
             f"{row['exact_match_accuracy']:>8.4f} "
             f"{row['invalid_sql_rate']:>9.4f}"
         )
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
     return 0
 
 

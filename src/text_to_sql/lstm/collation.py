@@ -32,13 +32,13 @@ UNK_TOKEN = "<unk>"
 class Batch:
     """One GPU/CPU-ready minibatch."""
 
-    src: torch.Tensor                  # (batch, src_len)
-    src_lengths: torch.Tensor          # (batch,)
-    src_mask: torch.Tensor             # (batch, src_len) — True where padding
-    tgt: torch.Tensor                  # (batch, tgt_len)
-    tgt_lengths: torch.Tensor          # (batch,)
-    tgt_mask: torch.Tensor             # (batch, tgt_len-1) — True where padding
-    src_token_indices: torch.Tensor    # (batch, src_len) extended-vocab index
+    src: torch.Tensor  # (batch, src_len)
+    src_lengths: torch.Tensor  # (batch,)
+    src_mask: torch.Tensor  # (batch, src_len) — True where padding
+    tgt: torch.Tensor  # (batch, tgt_len)
+    tgt_lengths: torch.Tensor  # (batch,)
+    tgt_mask: torch.Tensor  # (batch, tgt_len-1) — True where padding
+    src_token_indices: torch.Tensor  # (batch, src_len) extended-vocab index
     extended_vocab_size: int
     extended_vocabs: tuple[tuple[str, ...], ...]  # per-example extended_tokens
     example_ids: tuple[str, ...]

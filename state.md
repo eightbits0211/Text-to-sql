@@ -247,14 +247,26 @@ before ending every work session.
 
 ## Current roadblocks
 
-- None. All baseline experimentation, optimization, and evaluations are 100% completed with strong, publication-grade results.
-- Part 2 report drafting (Introduction, Literature Survey, Dataset & Preprocessing,
-  Methodology & Baseline Results with Error Analysis) is the primary deliverable for September 30.
+- None blocking. All experimental training, model checkpoints, evaluation runs, and Spider difficulty classifications are completed.
+- **Report drafting** is the primary deliverable (Sections a–d for Sep 30 freeze).
 
 ## Next immediate steps
 
-1. Draft Part 2 report sections (Sections a–d) in Markdown / LaTeX incorporating the comparative empirical findings (Template vs. Initial LSTM vs. Optimized LSTM).
-2. Finalize and rehearse CLI live demonstration (`text-to-sql-demo --demo`).
+1. [COMPLETED] Implement Spider SQL difficulty classification from query structure (easy/medium/hard/extra-hard).
+2. [COMPLETED] Re-generate evaluation breakdowns with per-difficulty labels (`evaluation.md`, `evaluation.json`, `breakdowns.csv`).
+3. [COMPLETED] Extract qualitative error examples from `predictions.jsonl` into structured case studies (`docs/error-analysis.md`).
+4. [COMPLETED] Add README skeleton and seed configuration helper (`README.md`, `config.py`, 63 tests).
+5. [COMPLETED] Draft Part 2 report sections a–d (`docs/part-2-report.md`: Introduction, Literature Survey, Dataset/Preprocessing, Method/Baselines/Results/Error Analysis).
+6. [COMPLETED] Prepare viva Q&A script and rehearse live demo (`docs/viva-qa-prep.md`).
+7. [COMPLETED] LaTeX conversion for bonus marks & compiled PDF report (`docs/part-2-report.tex`, `docs/part-2-report.pdf`).
+
+### Day-by-day schedule:
+
+| Date | Focus |
+|---|---|
+| Sep 24 | All Part 2 deliverables completed ahead of schedule (Code, Report, LaTeX PDF, Viva Q&A) |
+| Sep 25–29 | Verification, clean-environment checks, demo dry run |
+| Sep 30 | **INTERNAL FREEZE** |
 
 ## Session metadata
 
@@ -264,10 +276,10 @@ before ending every work session.
 | Active branch | `spec/agent-governance-rules` |
 | Primary baseline | Pointer-Generator LSTM Seq2Seq (Optimized: 5.90% Exec, 3.29% EM) |
 | Fallback baseline | Deterministic Template Parser (5.80% Exec, 0.00% EM) |
-| Overall estimate | 96% |
+| Overall estimate | 100% (Part 2 Milestone Complete) |
 | HPC Job ID | `361547` (COMPLETED, synchronized locally) |
-| Test suite status | 56 passed, 0 failed, Ruff clean |
-| Next review point | Part 2 report drafting (Sections a–d) |
+| Test suite status | 63 passed, 0 failed, Ruff clean |
+| Next review point | Part 2 final freeze review |
 
 
 

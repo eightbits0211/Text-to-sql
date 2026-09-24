@@ -101,11 +101,15 @@ def write_evaluation_reports(
         "invalid_sql_rate": report.invalid_sql_rate,
         "examples": [asdict(item) for item in report.examples],
         "breakdowns": {
-            name: [asdict(item) | {
-                "exact_match_accuracy": item.exact_match_accuracy,
-                "execution_accuracy": item.execution_accuracy,
-                "invalid_sql_rate": item.invalid_sql_rate,
-            } for item in items]
+            name: [
+                asdict(item)
+                | {
+                    "exact_match_accuracy": item.exact_match_accuracy,
+                    "execution_accuracy": item.execution_accuracy,
+                    "invalid_sql_rate": item.invalid_sql_rate,
+                }
+                for item in items
+            ]
             for name, items in breakdowns.items()
         },
     }
@@ -142,7 +146,14 @@ def write_evaluation_reports(
         "",
     ]
     for name, items in breakdowns.items():
-        lines.extend([f"## {name.replace('_', ' ').title()}", "", "| Category | Count | EM | Exec | Invalid |", "|---|---:|---:|---:|---:|"])
+        lines.extend(
+            [
+                f"## {name.replace('_', ' ').title()}",
+                "",
+                "| Category | Count | EM | Exec | Invalid |",
+                "|---|---:|---:|---:|---:|",
+            ]
+        )
         lines.extend(
             f"| {item.category} | {item.evaluated_count} | "
             f"{item.exact_match_accuracy:.4f} | {item.execution_accuracy:.4f} | "
