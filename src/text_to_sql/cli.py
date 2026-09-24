@@ -15,6 +15,9 @@ from .evaluation.metrics import execute_read_only
 DEFAULT_DEMO_DB = Path(
     "/Users/roshini/datasets/text-to-sql/spider/spider_data/database/concert_singer/concert_singer.sqlite"
 )
+DEFAULT_CHECKPOINT = Path(
+    "/Users/roshini/datasets/text-to-sql/artifacts-lstm-gpu-run/lstm-checkpoint/lstm_smoke.pt"
+)
 
 
 @dataclass(frozen=True)
@@ -113,22 +116,27 @@ def format_table(columns: tuple[str, ...], rows: list[tuple[object, ...]]) -> st
 def run_query(
     question: str,
     schema: DatabaseSchema,
-    db_path: Path,
+    db_path: Path | str,
     model_name: str = "template",
-    checkpoint_path: Path | None = None,
+    checkpoint_path: Path | str | None = None,
 ) -> tuple[str, bool, str]:
     """Generate SQL, validate, and execute. Returns (sql, is_success, output_display)."""
+    db_path = Path(db_path)
+    if checkpoint_path is not None:
+        checkpoint_path = Path(checkpoint_path)
     if model_name == "template":
         baseline = TemplateBaseline()
         sql = baseline.predict(question, schema)
     elif model_name == "lstm":
         from .lstm.adapter import LSTMBaseline
 
-        if checkpoint_path is not None and checkpoint_path.is_file():
-            baseline = LSTMBaseline.load(checkpoint_path)
+        target_ckpt = checkpoint_path or DEFAULT_CHECKPOINT
+        if target_ckpt is not None and Path(target_ckpt).is_file():
+            baseline = LSTMBaseline.from_checkpoint(Path(target_ckpt))
         else:
             baseline = LSTMBaseline()
-        sql = baseline.predict(question, schema)
+        db_id = getattr(schema, "database_id", "unknown")
+        sql = baseline.predict(question, schema, database_id=db_id)
     else:
         raise ValueError(f"Unsupported model: {model_name}")
 
@@ -149,12 +157,15 @@ def run_query(
 
 
 def run_scripted_demo(
-    db_path: Path,
+    db_path: Path | str = DEFAULT_DEMO_DB,
     database_id: str = "concert_singer",
     model_name: str = "template",
-    checkpoint_path: Path | None = None,
+    checkpoint_path: Path | str | None = None,
 ) -> int:
     """Execute the scripted 3-case demonstration required by Part 2."""
+    db_path = Path(db_path)
+    if checkpoint_path is not None:
+        checkpoint_path = Path(checkpoint_path)
     if not db_path.is_file():
         print(f"Error: Demo database file not found at {db_path}", file=sys.stderr)
         return 1

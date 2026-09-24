@@ -3,6 +3,14 @@
 This file is the persistent end-of-session handoff. The agent must update it
 before ending every work session.
 
+## In-Flight Execution Ledger (Context Continuity)
+- **Active Role:** Context & State Tracking Agent / Lead Agent
+- **Current Milestone:** Part 2 Complete (Verification, CLI Hardening & Sub-Agent Protocol Gate)
+- **Active Task:** Formalize context sub-agent, harden interactive CLI, commit and push to remote branch
+- **Last Completed Action:** Implemented Rule 3.15, added Context Sub-Agent to `docs/sub-agent-coordination-plan.md`, enhanced `LSTMBaseline.predict` and `cli.py`, verified 63 unit tests pass and Ruff checks pass
+- **Immediate Next Action:** Commit staged changes, push to `spec/agent-governance-rules`, and review final Part 2 submission package against rubric
+- **Resumption Invariant:** If session compacts, token limits expire, or models switch, inspect this ledger first to resume seamlessly.
+
 ## What was completed
 
 - Created the project PRD.
