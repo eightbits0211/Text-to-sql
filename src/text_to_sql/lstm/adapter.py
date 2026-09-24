@@ -98,9 +98,7 @@ class LSTMBaseline:
         return Prediction(
             example_id=example.example_id,
             model_name=self.name,
-            predicted_sql=self.predict(
-                example.question, example.schema_text, example.database_id
-            ),
+            predicted_sql=self.predict(example.question, example.schema_text, example.database_id),
         )
 
     def predict_records(self, examples: Iterable[ExampleRecord]) -> tuple[Prediction, ...]:

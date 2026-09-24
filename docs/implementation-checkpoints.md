@@ -7,7 +7,7 @@ Checked items have been implemented and verified; unchecked items are pending,
 blocked, or intentionally deferred. Update this file only when a checkpoint
 changes state.
 
-Last checklist update: 2026-09-24
+Last checklist update: 2026-09-24 (post-audit refresh)
 
 ## Phase 0 — Governance and repository setup
 
@@ -18,7 +18,7 @@ Last checklist update: 2026-09-24
 - [x] 0.5 Inspect existing files and classify tracked versus generated content.
 - [x] 0.6 Add `.gitignore` for datasets, checkpoints, caches, secrets, and artifacts.
 - [x] 0.7 Decide which existing documents belong in the initial repository baseline.
-- [ ] 0.8 Create README skeleton with setup and planned commands.
+- [x] 0.8 Create README skeleton with setup and planned commands.
 - [x] 0.9 Create issue/task labels or an equivalent checkpoint tracking method.
 - [x] 0.10 Record the initial repository status in the progress log.
 
@@ -29,7 +29,7 @@ Last checklist update: 2026-09-24
 - [x] 1.3 Add reproducible environment setup instructions.
 - [x] 1.4 Add typed configuration model.
 - [x] 1.5 Add environment-variable and CLI overrides for paths.
-- [ ] 1.6 Add seed configuration and deterministic seed helper.
+- [x] 1.6 Add seed configuration and deterministic seed helper.
 - [x] 1.7 Add run-name and artifact-directory resolution.
 - [x] 1.8 Add `--help` output for each planned entry point.
 - [x] 1.9 Run a clean-environment import smoke test.
@@ -153,6 +153,12 @@ Last checklist update: 2026-09-24
 - [x] 9.13 Fix CopyTarget type annotation and add empty-vocab warning.
 - [x] 9.14 Cache SQLite schema introspection and optimize WikiSQL/Spider dataset loading.
 - [x] 9.15 Set TORCH_DISABLE_NATIVE_JIT=1 to bypass Triton JIT compilation on Rocky Linux 8 without Python.h.
+- [x] 9.16 Complete full two-stage GPU training on HPC (Job 361487: 10 WikiSQL + 10 Spider epochs).
+- [x] 9.17 Implement four-tier SQL repair optimization (sql_repair.py, adapter masking, per-dataset checkpoints).
+- [x] 9.18 Complete optimized GPU training on HPC (Job 361547: 10 WikiSQL + 25 Spider epochs, 49 min).
+- [x] 9.19 Synchronize all artifacts (checkpoints, predictions, evaluations) locally.
+- [ ] 9.20 Implement Spider SQL difficulty classification (easy/medium/hard/extra-hard) from query structure.
+- [ ] 9.21 Re-generate evaluation breakdowns with per-difficulty labels.
 
 ## Phase 10 — Modern model
 
@@ -193,27 +199,27 @@ Last checklist update: 2026-09-24
 
 ## Current Part 2 gate
 
-Part 2 implementation is approximately **85% complete**.
-- The Pointer-Generator LSTM seq2seq model is now the **primary** Part 2
-  baseline, per user direction. The deterministic template parser serves as
-  the fallback/comparison baseline.
-- Critical training quality bugs were identified and fixed on 2026-09-22:
-  epoch shuffling, missing argparse args (--device, --batch-size), redundant
-  re-tokenization, and CopyTarget type annotation.
-- Old GPU job `359338` was cancelled and replaced by **job 359370** with the
-  fixed code (commit `7976d6f`).
+Part 2 implementation is approximately **92% complete**.
+- All GPU training completed: Job `361487` (initial) and Job `361547` (optimized)
+  both finished successfully on `gpunode8`. All artifacts synchronized locally.
+- **Optimized LSTM results on Spider:** 5.90% exec accuracy, 3.29% exact match
+  (surpassing template baseline's 5.80% exec, 0.00% EM).
 - Interactive demo CLI with 3 scripted showcase cases supports both models
-  (`--model template|lstm`). 50/50 unit tests pass in 3.05s; Ruff clean.
-- Remaining Part 2 deliverables:
-  1. Retrieve GPU training results (job 359370) and run full comparative evaluation.
-  2. Part 2 Report Draft (Sections a–d: Introduction, Literature Survey,
+  (`--model template|lstm`). 56/56 unit tests pass in 3.06s; Ruff clean.
+- Part 2 code deliverables:
+  1. [x] Implement Spider SQL difficulty classification (C1–C3) — DONE.
+  2. [x] Extract qualitative error examples from predictions (C4) — DONE (`docs/error-analysis.md`).
+  3. [x] Add README skeleton and seed helper (C5–C6) — DONE (`README.md`, `config.py`).
+- Remaining Part 2 deliverables (report & viva):
+  1. Part 2 Report Draft (Sections a–d: Introduction, Literature Survey,
      Dataset/Preprocessing, Methodology & Comparative Baseline Results).
-  3. Error analysis tables with representative examples.
-  4. Rehearse final demo and freeze scope by September 30.
-
-The report-ready template evaluation uses the complete official development
-splits: 8,415 retained WikiSQL records and 1,034 Spider records. LSTM GPU
-results are pending.
+  2. Error analysis tables with representative examples.
+  3. Metrics justification and reproducibility sections.
+- Remaining Part 2 deliverables (demo/viva):
+  1. Viva Q&A preparation script.
+  2. Final demo rehearsal.
+  3. Optional LaTeX conversion (bonus marks).
+- Freeze scope by September 30.
 
 The modern transformer and novelty tracks remain Part 3 work and are not
 required to close the Part 2 gate.

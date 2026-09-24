@@ -13,16 +13,50 @@ from __future__ import annotations
 import re
 
 SQL_KEYWORDS = {
-    "SELECT", "FROM", "WHERE", "AND", "OR", "NOT", "IN", "LIKE", "BETWEEN",
-    "JOIN", "ON", "AS", "GROUP", "BY", "ORDER", "ASC", "DESC", "LIMIT",
-    "HAVING", "COUNT", "AVG", "SUM", "MIN", "MAX", "DISTINCT", "NULL", "TRUE",
-    "FALSE", "UNION", "INTERSECT", "EXCEPT", "CASE", "WHEN", "THEN", "ELSE", "END",
+    "SELECT",
+    "FROM",
+    "WHERE",
+    "AND",
+    "OR",
+    "NOT",
+    "IN",
+    "LIKE",
+    "BETWEEN",
+    "JOIN",
+    "ON",
+    "AS",
+    "GROUP",
+    "BY",
+    "ORDER",
+    "ASC",
+    "DESC",
+    "LIMIT",
+    "HAVING",
+    "COUNT",
+    "AVG",
+    "SUM",
+    "MIN",
+    "MAX",
+    "DISTINCT",
+    "NULL",
+    "TRUE",
+    "FALSE",
+    "UNION",
+    "INTERSECT",
+    "EXCEPT",
+    "CASE",
+    "WHEN",
+    "THEN",
+    "ELSE",
+    "END",
 }
 
 COMPARISON_OPERATORS = ("=", "!=", "<>", ">", "<", ">=", "<=", "LIKE")
 
 
-def parse_schema_identifiers(schema_text: str) -> tuple[set[str], dict[str, str], dict[str, list[str]]]:
+def parse_schema_identifiers(
+    schema_text: str,
+) -> tuple[set[str], dict[str, str], dict[str, list[str]]]:
     """Extract tables and columns from serialized schema text.
 
     Returns:
@@ -137,7 +171,7 @@ def repair_sql(sql: str, schema_text: str, database_id: str = "") -> str:
         if tok in COMPARISON_OPERATORS and idx + 1 < len(tokens):
             val = tokens[idx + 1]
             clean_val = val.rstrip(",;")
-            trailing = val[len(clean_val):]
+            trailing = val[len(clean_val) :]
 
             is_numeric = False
             try:
@@ -146,17 +180,21 @@ def repair_sql(sql: str, schema_text: str, database_id: str = "") -> str:
             except ValueError:
                 pass
 
-            is_col = (
-                clean_val.lower() in all_columns
-                or any(clean_val.lower().endswith("." + c) for c in all_columns)
+            is_col = clean_val.lower() in all_columns or any(
+                clean_val.lower().endswith("." + c) for c in all_columns
             )
             is_keyword = clean_val.upper() in SQL_KEYWORDS
-            is_already_quoted = (
-                (clean_val.startswith("'") and clean_val.endswith("'"))
-                or (clean_val.startswith('"') and clean_val.endswith('"'))
+            is_already_quoted = (clean_val.startswith("'") and clean_val.endswith("'")) or (
+                clean_val.startswith('"') and clean_val.endswith('"')
             )
 
-            if not is_numeric and not is_col and not is_keyword and not is_already_quoted and not clean_val.startswith("("):
+            if (
+                not is_numeric
+                and not is_col
+                and not is_keyword
+                and not is_already_quoted
+                and not clean_val.startswith("(")
+            ):
                 val = f"'{clean_val}'" + trailing
 
             repaired_tokens.append(val)
@@ -168,7 +206,11 @@ def repair_sql(sql: str, schema_text: str, database_id: str = "") -> str:
 
     # 6. Double-quote multi-word column names that appear unquoted
     for col_raw in all_columns.values():
-        if (" " in col_raw or "/" in col_raw or "-" in col_raw) and col_raw in repaired and f'"{col_raw}"' not in repaired:
+        if (
+            (" " in col_raw or "/" in col_raw or "-" in col_raw)
+            and col_raw in repaired
+            and f'"{col_raw}"' not in repaired
+        ):
             repaired = re.sub(rf"\b{re.escape(col_raw)}\b", f'"{col_raw}"', repaired)
 
     # 7. Balance unmatched parentheses

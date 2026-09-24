@@ -34,7 +34,9 @@ def _create_sample_db(db_path: Path) -> None:
 
 def test_build_parser_options() -> None:
     parser = build_parser()
-    args = parser.parse_args(["--database", "test.db", "--question", "Show names", "--model", "template"])
+    args = parser.parse_args(
+        ["--database", "test.db", "--question", "Show names", "--model", "template"]
+    )
     assert args.database == Path("test.db")
     assert args.question == "Show names"
     assert args.model == "template"
@@ -61,7 +63,7 @@ def test_run_query_success(tmp_path: Path) -> None:
         model_name="template",
     )
     assert success is True
-    assert 'WHERE "Country" = \'France\'' in sql
+    assert "WHERE \"Country\" = 'France'" in sql
     assert "Alice Martin" in display
     assert "Chloe Dubois" in display
 

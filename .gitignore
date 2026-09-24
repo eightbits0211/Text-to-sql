@@ -27,4 +27,9 @@ checkpoints/
 *.docx
 *.tex
 *.log
+*.aux
+*.out
+*.toc
+!docs/part-2-report.tex
+!docs/part-2-report.pdf
 .kiro/

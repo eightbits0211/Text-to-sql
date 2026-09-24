@@ -209,12 +209,18 @@ def train_smoke(
 
             epoch_loss = total_loss / max(total_batches, 1)
             epoch_losses.append(epoch_loss)
-            print(f"  [{dataset_name}] epoch {epoch + 1}/{num_epochs}  loss={epoch_loss:.4f}", flush=True)
+            print(
+                f"  [{dataset_name}] epoch {epoch + 1}/{num_epochs}  loss={epoch_loss:.4f}",
+                flush=True,
+            )
 
     # Stage 1: WikiSQL warm-up training
     wikisql_checkpoint_path = checkpoint_dir / "wikisql_checkpoint.pt"
     if wikisql_examples and config.max_epochs > 0:
-        print(f"Starting Stage 1: WikiSQL warm-up training ({len(wikisql_examples)} examples)...", flush=True)
+        print(
+            f"Starting Stage 1: WikiSQL warm-up training ({len(wikisql_examples)} examples)...",
+            flush=True,
+        )
         _train_dataset_epochs("WikiSQL", list(wikisql_examples), config.max_epochs)
         torch.save(
             {
@@ -230,7 +236,10 @@ def train_smoke(
     # Stage 2: Spider primary training
     spider_checkpoint_path = checkpoint_dir / "spider_checkpoint.pt"
     if spider_train_records and spider_epochs > 0:
-        print(f"Starting Stage 2: Spider primary training ({len(spider_train_records)} examples)...", flush=True)
+        print(
+            f"Starting Stage 2: Spider primary training ({len(spider_train_records)} examples)...",
+            flush=True,
+        )
         _train_dataset_epochs("Spider", list(spider_train_records), spider_epochs)
         torch.save(
             {
@@ -256,7 +265,9 @@ def train_smoke(
     )
 
     # Save run metadata
-    total_train_count = len(wikisql_examples) + (len(spider_train_records) if spider_train_records else 0)
+    total_train_count = len(wikisql_examples) + (
+        len(spider_train_records) if spider_train_records else 0
+    )
     meta = {
         "train_examples": total_train_count,
         "vocab_size": len(vocabulary),
@@ -265,9 +276,7 @@ def train_smoke(
         "config": config.to_dict(),
         "checkpoint": str(checkpoint_path),
     }
-    (checkpoint_dir / "training_meta.json").write_text(
-        json.dumps(meta, indent=2), encoding="utf-8"
-    )
+    (checkpoint_dir / "training_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
     return TrainingResult(
         final_loss=epoch_losses[-1] if epoch_losses else float("nan"),
@@ -296,7 +305,9 @@ def load_checkpoint(
 
     state = torch.load(checkpoint_path, map_location=device, weights_only=True)
     cfg_dict = state["config"]
-    config = TrainingConfig(**{k: v for k, v in cfg_dict.items() if k in TrainingConfig.__dataclass_fields__})
+    config = TrainingConfig(
+        **{k: v for k, v in cfg_dict.items() if k in TrainingConfig.__dataclass_fields__}
+    )
 
     tokens = tuple(state["vocab_tokens"])
     vocabulary = FixedVocabulary(
