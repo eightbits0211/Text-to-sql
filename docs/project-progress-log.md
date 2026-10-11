@@ -730,3 +730,28 @@ When changing this log:
   - Evaluated the complete codebase, documentation, and artifacts against the official CS F429 Part 2 rubric: estimated score 16.5 – 17.5 / 20.
   - Confirmed all Part 2 checklist items are complete and ready for submission.
 
+
+
+### 2026-10-11 — Critical-review remediation
+
+- **Trigger:** An internal critical review scored the Part 2 metrics 4/10. It cited a one-query "win",
+  a nonstandard EM, an untested forgetting claim, no CIs or ablations, tuning on dev, and report inconsistencies.
+- **Evidence gathered:**
+  - The Job 361547 log shows WikiSQL was scored with `wikisql_checkpoint.pt` (Stage 1), which refutes forgetting.
+  - Spider-dev invalid SQL: 708/798 are `no such column`; the bare type token `text` appears in 278 predictions.
+  - The template's 0% EM is caused by its double-quoted identifiers.
+  - Two gold queries crashed on non-UTF-8 text.
+  - The report's hyper-parameters (vocabulary 1,402, dropout 0.3, LR 5e-4 with warm-up/cosine, 512 per direction) did not match the code.
+  - Yu et al. (2018) Table 2 does not contain a "3.2–5.4%" band.
+- **Changes:**
+  - Harness: lenient UTF-8 decoding, error classes, official-semantics EX.
+  - New `statistics.py` (bootstrap, Wilson, McNemar).
+  - Inference: `rendering.py`, a schema-markup mask, literal-aware repair, `DecodeOptions`.
+  - Scripts: `run_ablation.py`, `run_official_spider_eval.py`, `analyze_part2.py`, `build_report.sh`.
+  - Training: seed flag, per-epoch dev NLL, epoch-10 checkpoint.
+  - The CLI now loads the evaluated checkpoint.
+- **Results:**
+  - Spider test: LSTM final 7.2% official EX / 5.5% EM; template 9.5% / 0.0% (6.7% EM unquoted).
+  - The fixes are significant on test (8 vs 1 discordant, p = 0.039). LSTM vs template is a tie (p = 0.45).
+- **HPC:** Seed jobs 389817 (done), 389818 and 389819; WikiSQL decode 389954; seed decode 389932.
+- **Next:** Sync the HPC outputs, fill the report, rebuild the PDF.

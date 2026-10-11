@@ -242,8 +242,13 @@ class Seq2SeqLSTM(nn.Module):
         src_token_indices: torch.Tensor,
         extended_vocab_size: int,
         teacher_forcing_ratio: float = 1.0,
+        unk_index: int | None = None,
     ) -> torch.Tensor:
         """Teacher-forced forward pass.
+
+        ``unk_index``: when given, gold decoder inputs that are copy-only
+        (extended) indices are fed back as ``<unk>``. Training data never
+        contains such indices; held-out (dev) loss evaluation does.
 
         Args:
             src: (batch, src_len) encoder input indices
@@ -280,5 +285,11 @@ class Seq2SeqLSTM(nn.Module):
             prev_token = (
                 tgt[:, t] if use_teacher else full_dist.argmax(-1).clamp(max=self.vocab_size - 1)
             )
+            if unk_index is not None:
+                prev_token = torch.where(
+                    prev_token >= self.vocab_size,
+                    torch.full_like(prev_token, unk_index),
+                    prev_token,
+                )
 
         return torch.cat(outputs, dim=1)  # (batch, tgt_len-1, extended_vocab_size)

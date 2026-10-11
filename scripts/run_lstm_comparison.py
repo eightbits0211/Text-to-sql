@@ -150,6 +150,25 @@ def main() -> int:
         default=None,
         help="Torch device string, e.g. 'cuda' or 'cpu'. Auto-detects if not set.",
     )
+    parser.add_argument("--seed", type=int, default=42, help="Training seed (default: 42)")
+    parser.add_argument(
+        "--skip-eval",
+        action="store_true",
+        default=False,
+        help="Train and save checkpoints only; skip dev decoding/evaluation",
+    )
+    parser.add_argument(
+        "--save-spider-epochs",
+        type=str,
+        default="",
+        help="Comma-separated Stage 2 epochs after which to save extra checkpoints (e.g. '10')",
+    )
+    parser.add_argument(
+        "--track-dev-loss",
+        action="store_true",
+        default=False,
+        help="Log teacher-forced Spider dev NLL after every Stage 2 epoch",
+    )
     args = parser.parse_args()
 
     selected_device = (
@@ -217,7 +236,7 @@ def main() -> int:
         max_epochs=args.epochs,
         batch_size=args.batch_size,
         smoke_limit=args.train_limit if args.train_limit > 0 else None,
-        seed=42,
+        seed=args.seed,
     )
     lstm_baseline = LSTMBaseline(config=lstm_cfg, device=selected_device)
     lstm_baseline.fit(
@@ -225,8 +244,14 @@ def main() -> int:
         checkpoint_dir=lstm_checkpoint_dir,
         spider_examples=spider_train_records,
         spider_epochs=args.spider_epochs,
+        spider_dev_examples=spider_dev.records if args.track_dev_loss else None,
+        save_spider_epochs=tuple(
+            int(epoch) for epoch in args.save_spider_epochs.split(",") if epoch.strip()
+        ),
     )
     print("  LSTM fitting complete.")
+    if args.skip_eval:
+        return 0
 
     # ----------------------------------------------------------------
     # Evaluate both baselines on both dev splits
@@ -259,6 +284,8 @@ def main() -> int:
         "smoke_limit": args.smoke_limit,
         "train_limit": args.train_limit,
         "lstm_epochs": args.epochs,
+        "spider_epochs": args.spider_epochs,
+        "seed": args.seed,
         "batch_size": args.batch_size,
         "device": str(selected_device),
         "results": results,

@@ -25,6 +25,10 @@ TRAINING_META = Path(
 
 OUTPUT_DIR = Path("/Users/roshini/NLPproject/docs")
 
+# training_meta.json files from the multi-seed replication runs
+# (scripts/hpc_run_lstm_seed.sh), which also log per-epoch Spider-dev NLL.
+SEED_META_GLOB = "/Users/roshini/datasets/text-to-sql/artifacts-seeds/seed-*/training_meta.json"
+
 
 def main() -> None:
     if TRAINING_META.is_file():
@@ -107,7 +111,7 @@ def main() -> None:
     ax1.annotate(
         f"{wikisql_losses[0]:.2f}",
         xy=(1, wikisql_losses[0]),
-        xytext=(2, wikisql_losses[0] + 0.1),
+        xytext=(1.4, wikisql_losses[0] - 0.05),
         fontsize=8,
         color=wiki_color,
     )
@@ -130,10 +134,30 @@ def main() -> None:
         markersize=4,
         markerfacecolor="white",
         markeredgewidth=1.5,
-        label="Spider Primary",
+        label="Spider train NLL (Job 361547)",
     )
+    import glob
+
+    dev_colors = ("#7C3AED", "#059669", "#D97706")
+    for color, meta_path in zip(dev_colors, sorted(glob.glob(SEED_META_GLOB)), strict=False):
+        seed_meta = json.loads(Path(meta_path).read_text(encoding="utf-8"))
+        dev_losses = seed_meta.get("spider_dev_losses") or []
+        if not dev_losses:
+            continue
+        seed = seed_meta["config"]["seed"]
+        ax2.plot(
+            range(1, len(dev_losses) + 1),
+            dev_losses,
+            "--",
+            color=color,
+            linewidth=1.6,
+            label=f"Spider dev NLL (seed {seed})",
+        )
+        best = min(range(len(dev_losses)), key=dev_losses.__getitem__)
+        ax2.plot(best + 1, dev_losses[best], "v", color=color, markersize=7)
+    ax2.legend(fontsize=8, loc="upper right")
     ax2.set_xlabel("Epoch", fontsize=11)
-    ax2.set_ylabel("Training Loss (NLL)", fontsize=11)
+    ax2.set_ylabel("NLL", fontsize=11)
     ax2.set_title(
         "Stage 2: Spider Primary Training\n(7,000 examples, 25 epochs)",
         fontsize=11,
@@ -161,7 +185,8 @@ def main() -> None:
     fig.text(
         0.5,
         0.02,
-        "Stage transition: WikiSQL checkpoint loaded → Spider fine-tuning begins (loss resets to 1.84)",
+        "Solid: training NLL, Job 361547. Dashed: teacher-forced Spider-dev NLL from the "
+        "replication runs (triangle = minimum).",
         ha="center",
         fontsize=9,
         fontstyle="italic",

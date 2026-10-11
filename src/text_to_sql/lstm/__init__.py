@@ -1,6 +1,6 @@
 """LSTM seq2seq baseline package."""
 
-from .adapter import LSTMBaseline
+from .adapter import AS_SUBMITTED_DECODING, RAW_DECODING, DecodeOptions, LSTMBaseline
 from .preprocessing import (
     CopyTarget,
     FixedVocabulary,
@@ -18,7 +18,10 @@ from .preprocessing import (
 from .training import TrainingConfig, TrainingResult, load_checkpoint, train_smoke
 
 __all__ = [
+    "AS_SUBMITTED_DECODING",
+    "RAW_DECODING",
     "CopyTarget",
+    "DecodeOptions",
     "FixedVocabulary",
     "LSTMBaseline",
     "PreprocessingEvent",

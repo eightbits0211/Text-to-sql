@@ -16,7 +16,7 @@ DEFAULT_DEMO_DB = Path(
     "/Users/roshini/datasets/text-to-sql/spider/spider_data/database/concert_singer/concert_singer.sqlite"
 )
 DEFAULT_CHECKPOINT = Path(
-    "/Users/roshini/datasets/text-to-sql/artifacts-lstm-gpu-run/lstm-checkpoint/lstm_smoke.pt"
+    "/Users/roshini/datasets/text-to-sql/artifacts-lstm-gpu-run/lstm-checkpoint/spider_checkpoint.pt"
 )
 
 

@@ -83,6 +83,11 @@ def build_breakdowns(
             )
             for _, item in values()
         ),
+        "invalid_sql_error_class": summarize(
+            (item.error_class or "other", item.exact_match, item.execution_match, item.invalid_sql)
+            for _, item in values()
+            if item.invalid_sql
+        ),
     }
 
 
@@ -99,6 +104,7 @@ def write_evaluation_reports(
         "exact_match_accuracy": report.exact_match_accuracy,
         "execution_accuracy": report.execution_accuracy,
         "invalid_sql_rate": report.invalid_sql_rate,
+        "execution_accuracy_official": report.execution_accuracy_official,
         "examples": [asdict(item) for item in report.examples],
         "breakdowns": {
             name: [
@@ -140,8 +146,9 @@ def write_evaluation_reports(
         "# Evaluation report",
         "",
         f"- Evaluated examples: {report.evaluated_count}",
-        f"- Exact-match accuracy: {report.exact_match_accuracy:.4f}",
-        f"- Execution accuracy: {report.execution_accuracy:.4f}",
+        f"- Normalized string-match accuracy: {report.exact_match_accuracy:.4f}",
+        f"- Execution accuracy (strict): {report.execution_accuracy:.4f}",
+        f"- Execution accuracy (official semantics): {report.execution_accuracy_official:.4f}",
         f"- Invalid-SQL rate: {report.invalid_sql_rate:.4f}",
         "",
     ]
@@ -150,7 +157,7 @@ def write_evaluation_reports(
             [
                 f"## {name.replace('_', ' ').title()}",
                 "",
-                "| Category | Count | EM | Exec | Invalid |",
+                "| Category | Count | SM | Exec | Invalid |",
                 "|---|---:|---:|---:|---:|",
             ]
         )

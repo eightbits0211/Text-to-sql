@@ -5,7 +5,7 @@ from pathlib import Path
 
 from text_to_sql.data.contracts import DatasetSplit
 from text_to_sql.data.spider import load_spider
-from text_to_sql.evaluation.metrics import Prediction, evaluate_predictions
+from text_to_sql.evaluation.metrics import Prediction, evaluate_predictions, execute_read_only
 
 
 def _create_spider_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
@@ -163,6 +163,59 @@ def test_evaluation_counts_missing_prediction_as_invalid(tmp_path: Path) -> None
     assert report.evaluated_count == 1
     assert report.invalid_sql_rate == 1.0
     assert report.examples[0].failure_category == "empty_prediction"
+
+
+def _evaluate_one(tmp_path: Path, gold_sql: str, predicted_sql: str):
+    source_path, schema_path, database_root = _create_spider_fixture(tmp_path)
+    loaded = load_spider(source_path, schema_path, database_root, split=DatasetSplit.DEV)
+    example = replace(loaded.records[0], gold_sql=gold_sql)
+    prediction = Prediction(example.example_id, "fixture", predicted_sql)
+    return evaluate_predictions((example,), (prediction,)).examples[0]
+
+
+def test_evaluation_classifies_sqlite_error(tmp_path: Path) -> None:
+    item = _evaluate_one(tmp_path, "SELECT name FROM customers", "SELECT text FROM customers")
+
+    assert item.invalid_sql
+    assert item.error_class == "no_such_column"
+    assert item.error_message == "no such column: text"
+
+
+def test_official_execution_ignores_row_order_and_labels_without_order_by(
+    tmp_path: Path,
+) -> None:
+    item = _evaluate_one(
+        tmp_path,
+        "SELECT id FROM orders UNION SELECT id FROM customers",
+        "SELECT id AS x FROM customers UNION SELECT id FROM orders ORDER BY x DESC",
+    )
+
+    assert not item.execution_match
+    assert item.execution_match_official
+
+
+def test_official_execution_respects_gold_order_by(tmp_path: Path) -> None:
+    item = _evaluate_one(
+        tmp_path,
+        "SELECT id FROM orders UNION SELECT id FROM customers ORDER BY id",
+        "SELECT id FROM orders UNION SELECT id FROM customers ORDER BY id DESC",
+    )
+
+    assert not item.execution_match_official
+
+
+def test_execution_decodes_non_utf8_text(tmp_path: Path) -> None:
+    _, _, database_root = _create_spider_fixture(tmp_path)
+    database_path = database_root / "shop" / "shop.sqlite"
+    connection = sqlite3.connect(database_path)
+    connection.execute("INSERT INTO customers VALUES (2, CAST(X'416CE9' AS TEXT))")
+    connection.commit()
+    connection.close()
+
+    result = execute_read_only("SELECT name FROM customers", database_path)
+
+    assert result.status == "success"
+    assert result.rows[1][0].startswith("Al")
 
 
 # ---------------------------------------------------------------------------
