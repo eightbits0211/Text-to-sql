@@ -1,10 +1,9 @@
 ---
-title: "CS F429 Natural Language Processing — Part 2 Report"
+title: "**CS F429 Natural Language Processing — Part 2 Report**"
 subtitle: "Robust Natural Language to SQL Translation Across Single- and Multi-Table Relational Databases"
 author:
   - "Course: CS F429 Natural Language Processing, BITS Pilani"
   - "Name: Roshini Kotte | ID Number: 2024A7PS0048H"
-date: "October 11, 2026"
 abstract: |
   We formulate cross-domain Text-to-SQL and build an execution-based evaluation harness for Spider (multi-table, unseen databases) and WikiSQL (single-table). Two classical baselines are compared: a deterministic template parser and a two-stage pointer-generator BiLSTM sequence-to-sequence model. The headline comparisons use the official Spider evaluator (exact-set match and execution accuracy) with database-clustered 95% confidence intervals, paired McNemar tests and Holm correction. Our own harness supplies the diagnostic breakdowns. Every inference fix was developed on Spider dev and frozen before a single run on the held-out Spider test set (2,147 questions, 40 databases disjoint from train and dev).
 
