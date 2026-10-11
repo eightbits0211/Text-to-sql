@@ -755,3 +755,14 @@ When changing this log:
   - The fixes are significant on test (8 vs 1 discordant, p = 0.039). LSTM vs template is a tie (p = 0.45).
 - **HPC:** Seed jobs 389817 (done), 389818 and 389819; WikiSQL decode 389954; seed decode 389932.
 - **Next:** Sync the HPC outputs, fill the report, rebuild the PDF.
+
+
+### 2026-10-11 — WikiSQL harness defect found and fixed; demo additions
+
+- A gold-answer sanity check (gold must return real rows) found that WikiSQL gold SQL used header names
+  while the official `dev.db` stores `col0..colN`. SQLite read those names as string literals, so 6,007/8,415
+  gold queries were empty. Fixed with a per-example TEMP VIEW (`ExampleRecord.execution_prelude`,
+  `wikisql.header_view_sql`), plus a regression test.
+- Re-scored full WikiSQL dev (HPC job 389954 decode): LSTM Stage-1 final 17.15% strict EX vs template 2.65%.
+- Added `--train-demo` (live CPU training), `scripts/show_preprocessing.py`, and Spider-metadata schemas in the CLI.
+- Report: paper-style layout; §4.13 removed; results stated directly, without draft-correction framing.

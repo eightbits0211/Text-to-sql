@@ -99,7 +99,9 @@ def _rows_match_official(gold: ExecutionResult, predicted: ExecutionResult, orde
     return Counter(map(repr, gold.rows)) == Counter(map(repr, predicted.rows))
 
 
-def execute_read_only(sql: str, database_path: Path) -> ExecutionResult:
+def execute_read_only(
+    sql: str, database_path: Path, prelude: tuple[str, ...] = ()
+) -> ExecutionResult:
     if not sql.strip():
         return ExecutionResult(status="invalid_sql", error="SQL is empty")
     if not re.match(r"^\s*(select|with)\b", sql, flags=re.IGNORECASE):
@@ -112,6 +114,8 @@ def execute_read_only(sql: str, database_path: Path) -> ExecutionResult:
     # decode leniently so gold and predicted queries are compared, not crashed.
     connection.text_factory = lambda value: value.decode("utf-8", errors="replace")
     try:
+        for statement in prelude:
+            connection.execute(statement)
         cursor = connection.execute(sql)
         rows = tuple(tuple(row) for row in cursor.fetchall())
         columns = tuple(description[0] for description in cursor.description or ())
@@ -136,8 +140,12 @@ def evaluate_predictions(
         exact_match = bool(predicted_sql.strip()) and normalize_sql(predicted_sql) == normalize_sql(
             example.gold_sql
         )
-        gold_result = execute_read_only(example.gold_sql, example.database_path)
-        predicted_result = execute_read_only(predicted_sql, example.database_path)
+        gold_result = execute_read_only(
+            example.gold_sql, example.database_path, example.execution_prelude
+        )
+        predicted_result = execute_read_only(
+            predicted_sql, example.database_path, example.execution_prelude
+        )
         execution_match = (
             gold_result.status == "success"
             and predicted_result.status == "success"

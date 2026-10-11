@@ -147,7 +147,9 @@ def analyze_model(
                 for f in error_flags(gold, pred, record.gold_sql, prediction.predicted_sql, names)
                 if f not in ("value_case_only_mismatch", "projection_count_mismatch")
             ]
-            result = execute_read_only(record.gold_sql, record.database_path)
+            result = execute_read_only(
+                record.gold_sql, record.database_path, record.execution_prelude
+            )
             if not structural:
                 ex_hits_without_sm["equivalent_structure"] += 1
             elif not result.rows or result.rows in (((0,),), ((None,),)):

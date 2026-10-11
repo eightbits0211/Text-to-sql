@@ -130,7 +130,7 @@ walkthroughs and use the final question to demonstrate safe failure handling.
 
 ### Q4: Why was the LSTM so poor on WikiSQL? Isn't that catastrophic forgetting?
 **Answer:**
-> *"No. Our earlier draft claimed that, and we withdrew it once we checked the run log. Job 361547 scored WikiSQL with the Stage-1 checkpoint, saved before any Spider training, so nothing could have been forgotten. Reading the predictions showed the real cause: they were sensible SQL in an unexecutable surface form. For example, `WHERE no.= 42` should be `WHERE "No." = 42`. Multi-word column names were unquoted and lower-cased, and multi-word literals were split. Fixing the rendering, with no retraining, raises WikiSQL EX substantially (report §4.11)."*
+> *"No. Two things were wrong, and neither was the model. First, our evaluation harness: the official WikiSQL database stores columns as `col0…colN`, but our gold SQL used header names. SQLite silently treats an unknown double-quoted name as a string, so 71% of gold queries returned nothing, and 'empty matches empty' counted as correct. We found this by checking that gold queries return real answers, not just that gold matches gold. Second, rendering: multi-word column names came out unquoted. The run log also shows WikiSQL was scored with the Stage-1 checkpoint, before any Spider training, so forgetting is impossible. With both fixed, the same Stage-1 weights reach 17.2% EX against the template's 2.7%."*
 
 ---
 

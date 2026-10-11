@@ -49,6 +49,9 @@ class ExampleRecord:
     difficulty: QueryDifficulty
     query_structure: QueryStructure
     source_index: int | None = None
+    # SQL run on the read-only connection before gold/predicted queries, e.g.
+    # WikiSQL TEMP VIEWs that expose the stored col0..colN under header names.
+    execution_prelude: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for field_name in (

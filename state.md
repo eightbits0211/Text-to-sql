@@ -19,6 +19,10 @@ before ending every work session.
 - Final Spider test (2,147, run once): LSTM final 7.2% official EX / 5.5% official EM; as submitted 6.8% / 5.2%;
   template 9.5% / 0.0% (6.7% EM with identifier quotes stripped). Fixed vs as submitted on strict EX: McNemar p = 0.039.
 - Dev: final LSTM vs template strict EX, p = 0.58. Seed-42 replication dev NLL is minimal at epoch 3 (0.888) and reaches 1.535 at epoch 25.
+- WikiSQL harness bug fixed: gold SQL used header names while `dev.db` stores `col0..colN`, so 6,007/8,415 gold
+  queries returned nothing. Fixed via per-example TEMP VIEW `execution_prelude`. Corrected WikiSQL dev: LSTM
+  Stage-1 final 17.15% strict EX (base 5.76%), template 2.65%.
+- Live training demo: `uv run text-to-sql-demo --train-demo` (soccer_2, 60 epochs, ~2.5 min CPU).
 - Results live outside Git: `/Users/roshini/datasets/text-to-sql/{ablation,analysis,artifacts-seeds}/`;
   official evaluator in `/Users/roshini/datasets/text-to-sql/tools/`.
 - Report: `docs/part-2-report.md` is the single source; build with `scripts/build_report.sh` (pandoc + xelatex).
