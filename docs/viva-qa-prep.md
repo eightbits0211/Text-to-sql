@@ -14,7 +14,7 @@
    ```bash
    cd ~/viva/Text-to-SQL-Part2
    uv sync                 # installs the exact environment (needs internet the first time)
-   uv run pytest -q        # expect: 83 passed
+   uv run pytest -q        # expect: 87 passed
    ```
 3. Keep `~/datasets/text-to-sql` where it is; the code reads data and checkpoints from there.
 4. Run every command below once, so nothing surprises you.

@@ -167,6 +167,9 @@ Last checklist update: 2026-10-11 (Part 2 complete — report, loss curves, and 
 - [x] 9.27 Inference fixes (schema-markup mask, surface-form rendering, literal-aware repair) and ablation runner.
 - [x] 9.28 Harness fixes: lenient UTF-8 decoding, SQLite error classes, official-semantics EX.
 - [x] 9.29 Multi-seed replication with a per-epoch Spider-dev NLL curve and epoch-10 checkpoints (HPC).
+- [x] 9.30 Official-metric significance (per-question official scores, clustered bootstrap, McNemar, Holm).
+- [x] 9.31 Template quoting fix; copy-gate measurement; root-cause taxonomy; execution timeout.
+- [x] 9.32 Live CPU training demo; preprocessing walkthrough; LMS bundle; final report check against the rubric.
 
 ## Phase 10 — Modern model
 

@@ -51,7 +51,7 @@ become valid but still wrong, because the model picks another wrong column.
 Most syntax errors in the as-submitted output came from repair v1 splitting multi-word
 literals (`= 'united' states`). Rendering now keeps each literal as one quoted value.
 
-## 4. Structural error taxonomy (Spider dev, final LSTM, 968 failures)
+## 4. Structural error flags (Spider dev, final LSTM, 968 failures; multi-label)
 
 Each failure is compared with its gold query on literal-stripped signatures. A failure can
 carry several labels.
@@ -78,19 +78,31 @@ the wrong schema element, not SQL syntax.
 
 | Slice | n | LSTM final | Template |
 |---|---:|---:|---:|
-| Easy | 248 | 14.9% [11.0, 19.9] | 18.1% [13.8, 23.4] |
-| Medium | 446 | 4.3% [2.7, 6.6] | 2.7% [1.5, 4.6] |
+| Easy | 248 | 14.9% [11.0, 19.9] | 21.4% [16.7, 26.9] |
+| Medium | 446 | 4.3% [2.7, 6.6] | 3.8% [2.4, 6.0] |
 | Hard | 174 | 5.7% [3.2, 10.3] | 0.0% [0.0, 2.2] |
 | Extra-hard | 166 | 0.0% [0.0, 2.3] | 1.8% [0.6, 5.2] |
-| Single-table | 544 | 10.3% [8.0, 13.1] | 10.3% [8.0, 13.1] |
+| Single-table | 544 | 10.3% [8.0, 13.1] | 12.7% [10.1, 15.7] |
 | Multi-table (join or set op) | 438 | 1.8% [0.9, 3.6] | 0.9% [0.4, 2.3] |
 | Nested (other) | 52 | 3.8% [1.1, 13.0] | 0.0% [0.0, 6.9] |
 
-The medium/hard non-monotonicity sits inside overlapping intervals and should not be
-interpreted. Structure categories are defined in `data/spider.py::_query_structure`.
-A query containing `JOIN`, `UNION`, `INTERSECT` or `EXCEPT` counts as multi-table, so set
-operations land there even over a single table. Otherwise, more than one `SELECT` counts
-as nested.
+The template column uses the current template, after the identifier-quoting fix. The medium/hard
+non-monotonicity sits inside overlapping intervals and should not be interpreted.
+
+## 5a. Root cause (one label per failure: the first failing component)
+
+| Root cause | LSTM final | Template |
+|---|---:|---:|
+| Invalid SQL (or abstention) | 746 | 92 |
+| Wrong table set | 167 | 592 |
+| Wrong columns | 51 | 242 |
+| Wrong clause structure | 3 | 29 |
+| Wrong aggregation | 0 | 3 |
+| Wrong projection count | 1 | 1 |
+| Wrong literal values | 0 | 1 |
+| Other | 0 | 1 |
+
+Labels are assigned automatically from literal-stripped SQL signatures (`scripts/analyze_part2.py`).
 
 ## 6. Template audit
 
