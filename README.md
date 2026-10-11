@@ -37,11 +37,10 @@ Both baselines are weak on multi-table queries; the LSTM and the template are st
 ## 2. Repository Layout
 
 ```text
-├── docs/                             # Authoritative documentation and reports
-│   ├── error-analysis.md             # Detailed quantitative & qualitative error case studies
-│   ├── implementation-checkpoints.md # Granular progress tracking
-│   ├── part-2-submission-plan.md     # Rubric and submission roadmap
-│   └── project-progress-log.md       # Chronological engineering log
+├── docs/                             # Report and documentation
+│   ├── part-2-report.{pdf,tex,md}    # Part 2 report (Sections a-d); md is the source
+│   ├── error-analysis.md             # Quantitative and qualitative error analysis
+│   └── *-design.md, system-architecture.md, tech-stack.md, text-to-sql-prd.md
 ├── scripts/                          # Execution and Slurm submission scripts
 │   ├── hpc_run_lstm_gpu.sh           # HPC two-stage GPU training script (Job 361547)
 │   ├── hpc_run_lstm_seed.sh          # Multi-seed replication (+ dev-loss curve, epoch-10 checkpoint)
@@ -52,6 +51,8 @@ Both baselines are weak on multi-table queries; the LSTM and the template are st
 │   ├── run_official_spider_eval.py   # Official Spider evaluator wrapper (exact-set match, EX)
 │   ├── analyze_part2.py              # CIs, McNemar, error taxonomy, schema linking, gold sanity check
 │   ├── generate_loss_plot.py         # Training / dev NLL figure
+│   ├── show_preprocessing.py         # Preprocessing walkthrough and corpus statistics
+│   ├── build_report.sh               # Markdown -> LaTeX -> PDF report build
 │   └── run_part2_smoke.py            # Bounded smoke test runner
 ├── src/text_to_sql/                  # Core package
 │   ├── baselines/                    # Deterministic template baseline
