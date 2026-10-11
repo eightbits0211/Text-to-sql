@@ -176,7 +176,9 @@ The final pipeline is decode, then render, then repair. All steps operate on the
 3. **Schema-aware repair** (`lstm/sql_repair.py`, unchanged in substance). It normalises spacing, re-quotes leftover bare literals, replaces hallucinated `FROM` tables with the schema table sharing the most columns, collapses single-table WikiSQL queries to the sole table, and balances parentheses. It now leaves the inside of quoted literals untouched.
 
 ## Evaluation protocol
-**Official metrics.** Spider is scored with the official evaluator (`taoyds/test-suite-sql-eval`, `evaluation.py --etype all`) on Spider's own databases. *Exact-set match* (EM) compares SQL component by component and ignores literal values. *Execution accuracy* (EX) compares result multisets, and row order matters only when the gold query has `ORDER BY`. Test-suite accuracy (Zhong et al., 2020) needs a separate ~1 GB set of distilled databases, covering Spider dev only. Its official download was over its quota at the time of writing, so it is deferred to Part 3. Execution accuracy can therefore still contain coincidental matches; §d.9 shows one.** Our own harness (`evaluation/metrics.py`) records four per-example outcomes for every dataset:
+**Official metrics.** Spider is scored with the official evaluator (`taoyds/test-suite-sql-eval`, `evaluation.py --etype all`) on Spider's own databases. *Exact-set match* (EM) compares SQL component by component and ignores literal values. *Execution accuracy* (EX) compares result multisets, and row order matters only when the gold query has `ORDER BY`. Test-suite accuracy (Zhong et al., 2020) needs a separate ~1 GB set of distilled databases, covering Spider dev only. Its official download was over its quota at the time of writing, so it is deferred to Part 3. Execution accuracy can therefore still contain coincidental matches; §d.9 shows one.
+
+**Harness metrics.** Our own harness (`evaluation/metrics.py`) records four per-example outcomes for every dataset:
 
 - *Strict EX* requires result-column labels (case-insensitive) and row order to agree as well.
 - *EX with official semantics* ignores labels and compares rows as multisets.
@@ -322,12 +324,12 @@ Table: Numeric targets for Part 3 (Spider test unless stated).
 
 | Goal | Metric | Best Part 2 result | Part 3 target | Reference point |
 |---|---|---:|---:|---|
-| Modern baseline works | Official EX (dev) | 9.9% (template) | ≥ 45% | T5-Base, schema only: 57.9% dev EX (Scholak et al., 2021, Table 1), trained far longer (up to 3,072 epochs, batch 2,048) |
-| Classical → modern gain | Official EX | 9.5% (template); 7.2% (LSTM) | ≥ 35%, McNemar p < 0.05 vs template | — |
-| Multi-table queries | Strict EX, 908 multi-table questions | 0.7% (LSTM); 0.3% (template) | ≥ 25% | — |
+| Modern baseline works | Official EX (dev) | 9.9% (template) | $\geq$ 45% | T5-Base, schema only: 57.9% dev EX (Scholak et al., 2021, Table 1), trained far longer (up to 3,072 epochs, batch 2,048) |
+| Classical → modern gain | Official EX | 9.5% (template); 7.2% (LSTM) | $\geq$ 35%, McNemar p < 0.05 vs template | — |
+| Multi-table queries | Strict EX, 908 multi-table questions | 0.7% (LSTM); 0.3% (template) | $\geq$ 25% | — |
 | Novelty beats T5 baseline | Official EX | — | Gain with McNemar p < 0.05 in every seed | PICARD: T5-Base 57.9% → 68.4% dev EX (Scholak et al., 2021) |
-| Valid SQL | Invalid-SQL rate | 72.7% (LSTM) | ≤ 5% | PICARD: T5-3B invalid predictions 12% → 2% on dev |
-| Schema linking | Identifier recall | 45.1% (LSTM) | ≥ 75% | — |
+| Valid SQL | Invalid-SQL rate | 72.7% (LSTM) | $\leq$ 5% | PICARD: T5-3B invalid predictions 12% → 2% on dev |
+| Schema linking | Identifier recall | 45.1% (LSTM) | $\geq$ 75% | — |
 
 We will also report test-suite accuracy (Zhong et al., 2020) on Spider dev once the distilled test-suite databases can be obtained; the official download was over its quota at the time of writing.
 

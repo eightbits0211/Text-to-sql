@@ -703,7 +703,9 @@ multisets, and row order matters only when the gold query has
 separate \textasciitilde1 GB set of distilled databases, covering Spider
 dev only. Its official download was over its quota at the time of
 writing, so it is deferred to Part 3. Execution accuracy can therefore
-still contain coincidental matches; §d.9 shows one.** Our own harness
+still contain coincidental matches; §d.9 shows one.
+
+\textbf{Harness metrics.} Our own harness
 (\texttt{evaluation/metrics.py}) records four per-example outcomes for
 every dataset:
 
@@ -1286,19 +1288,20 @@ Reference point
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-Modern baseline works & Official EX (dev) & 9.9\% (template) & ≥ 45\% &
-T5-Base, schema only: 57.9\% dev EX (Scholak et al., 2021, Table 1),
-trained far longer (up to 3,072 epochs, batch 2,048) \\
+Modern baseline works & Official EX (dev) & 9.9\% (template) & \(\geq\)
+45\% & T5-Base, schema only: 57.9\% dev EX (Scholak et al., 2021, Table
+1), trained far longer (up to 3,072 epochs, batch 2,048) \\
 Classical → modern gain & Official EX & 9.5\% (template); 7.2\% (LSTM) &
-≥ 35\%, McNemar p \textless{} 0.05 vs template & --- \\
+\(\geq\) 35\%, McNemar p \textless{} 0.05 vs template & --- \\
 Multi-table queries & Strict EX, 908 multi-table questions & 0.7\%
-(LSTM); 0.3\% (template) & ≥ 25\% & --- \\
+(LSTM); 0.3\% (template) & \(\geq\) 25\% & --- \\
 Novelty beats T5 baseline & Official EX & --- & Gain with McNemar p
 \textless{} 0.05 in every seed & PICARD: T5-Base 57.9\% → 68.4\% dev EX
 (Scholak et al., 2021) \\
-Valid SQL & Invalid-SQL rate & 72.7\% (LSTM) & ≤ 5\% & PICARD: T5-3B
-invalid predictions 12\% → 2\% on dev \\
-Schema linking & Identifier recall & 45.1\% (LSTM) & ≥ 75\% & --- \\
+Valid SQL & Invalid-SQL rate & 72.7\% (LSTM) & \(\leq\) 5\% & PICARD:
+T5-3B invalid predictions 12\% → 2\% on dev \\
+Schema linking & Identifier recall & 45.1\% (LSTM) & \(\geq\) 75\% &
+--- \\
 \end{longtable}
 
 We will also report test-suite accuracy (Zhong et al., 2020) on Spider
