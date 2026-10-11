@@ -73,4 +73,3 @@ def test_seed_everything_deterministic() -> None:
 
     assert val1 == val2
     assert torch.equal(t1, t2)
-

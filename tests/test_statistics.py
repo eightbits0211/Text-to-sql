@@ -44,3 +44,35 @@ def test_mean_and_std_uses_sample_deviation() -> None:
     mean, std = mean_and_std([1.0, 2.0, 3.0])
     assert mean == pytest.approx(2.0)
     assert std == pytest.approx(1.0)
+
+
+def test_cluster_bootstrap_is_wider_than_example_bootstrap_for_clustered_data() -> None:
+    from text_to_sql.evaluation.statistics import cluster_bootstrap_interval
+
+    # 10 databases: half all-correct, half all-wrong -> strong within-cluster correlation.
+    outcomes = [i < 50 for i in range(100)]
+    clusters = [f"db{i // 10}" for i in range(100)]
+    clustered = cluster_bootstrap_interval(outcomes, clusters, resamples=2000)
+    naive = bootstrap_interval(outcomes, resamples=2000)
+
+    assert clustered.estimate == pytest.approx(0.5)
+    assert (clustered.upper - clustered.lower) > (naive.upper - naive.lower)
+
+
+def test_paired_cluster_difference_detects_consistent_gain() -> None:
+    from text_to_sql.evaluation.statistics import paired_cluster_bootstrap_difference
+
+    a = [True] * 30 + [False] * 70
+    b = [False] * 100
+    clusters = [f"db{i % 10}" for i in range(100)]
+    interval, p_value = paired_cluster_bootstrap_difference(a, b, clusters, resamples=2000)
+
+    assert interval.estimate == pytest.approx(0.3)
+    assert interval.lower > 0
+    assert p_value < 0.01
+
+
+def test_holm_adjust_matches_hand_computation() -> None:
+    from text_to_sql.evaluation.statistics import holm_adjust
+
+    assert holm_adjust([0.01, 0.04, 0.03]) == pytest.approx([0.03, 0.06, 0.06])

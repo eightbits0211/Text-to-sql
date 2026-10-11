@@ -221,7 +221,11 @@ walkthroughs and use the final question to demonstrate safe failure handling.
 
 ### Q8: Why both a template and a learned baseline? Which is better?
 **Answer:**
-> *"They fail differently. The template is a conservative rule system. It never joins, abstains on about 9% of questions, and is the stronger system on official execution accuracy: 9.5% vs 7.2% on Spider test. The LSTM accepts any question and attempts joins and nesting, but it mislinks the schema. Once the template's identifier quoting is normalised, the template also leads on exact-set match (6.7% vs 5.5% on test). On strict EX the two are statistically tied (McNemar p = 0.45 on test). Our earlier claim that the LSTM 'surpassed' the template rested on a one-query difference, so we withdrew it."*
+> *"They fail differently. On Spider the template is the better baseline: 9.5% vs 7.2% official execution accuracy on the held-out test set. That lead is significant by McNemar, but only borderline once we cluster questions by database, so I'd call it probable rather than decisive. On exact-set match they're statistically tied. On WikiSQL it reverses: the LSTM reaches 17.2% vs the template's 2.7%. Both fail on multi-table queries, and the LSTM's main problem is schema linking."*
+
+### Q9: Does the copy mechanism actually work?
+**Answer:**
+> *"We measured it. When the gold token can only be copied from the input, the gate switches to copy mode 96% of the time, so it knows when to copy. But it puts only 17% probability on the correct input token, against 82% for normal vocabulary tokens. So it knows when to copy, but not what to copy, which is the same schema-linking problem again."*
 
 ---
 

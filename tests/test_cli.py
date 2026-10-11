@@ -63,7 +63,7 @@ def test_run_query_success(tmp_path: Path) -> None:
         model_name="template",
     )
     assert success is True
-    assert "WHERE \"Country\" = 'France'" in sql
+    assert "WHERE Country = 'France'" in sql
     assert "Alice Martin" in display
     assert "Chloe Dubois" in display
 

@@ -123,6 +123,21 @@ def main() -> int:
         print(completed.stderr[-2000:])
         return completed.returncode
     scores = parse_scores(completed.stdout)
+    per_example = args.output_dir / "official_per_example.jsonl"
+    subprocess.run(
+        [
+            str(args.python),
+            str(Path(__file__).resolve().parent / "official_per_example.py"),
+            str(gold_path.resolve()),
+            str(args.output_dir.resolve() / "pred.txt"),
+            str(database_dir),
+            str(table_path),
+            str(per_example.resolve()),
+        ],
+        cwd=args.evaluator,
+        check=True,
+        capture_output=True,
+    )
     payload = {
         "split": args.split,
         "database_dir": str(database_dir),

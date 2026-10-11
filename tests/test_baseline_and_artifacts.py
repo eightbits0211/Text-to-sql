@@ -45,7 +45,7 @@ def test_template_baseline_selects_table_and_count() -> None:
     baseline = TemplateBaseline()
 
     assert baseline.predict("How many customers are there?", _schema()) == (
-        'SELECT COUNT(*) FROM "customers"'
+        "SELECT COUNT(*) FROM customers"
     )
 
 
@@ -87,7 +87,7 @@ def test_template_baseline_matches_plural_table_name() -> None:
                 ),
             ),
         )
-        == 'SELECT COUNT(*) FROM "singer"'
+        == "SELECT COUNT(*) FROM singer"
     )
 
 
@@ -107,7 +107,7 @@ def test_template_baseline_selects_projection_column() -> None:
     )
 
     assert TemplateBaseline().predict("What is the full name of each person?", schema) == (
-        'SELECT "full name" FROM "people"'
+        'SELECT "full name" FROM people'
     )
 
 
@@ -127,7 +127,7 @@ def test_template_baseline_prefers_name_over_identifier_for_name_question() -> N
     )
 
     assert TemplateBaseline().predict("What are the names of all singers?", schema) == (
-        'SELECT "Name" FROM "singer"'
+        "SELECT Name FROM singer"
     )
 
 
@@ -147,7 +147,7 @@ def test_template_baseline_extracts_numeric_condition() -> None:
 
     assert (
         TemplateBaseline().predict("Which name belongs to a person older than 30?", schema)
-        == 'SELECT "name" FROM "people" WHERE "age" > 30'
+        == "SELECT name FROM people WHERE age > 30"
     )
 
 
@@ -168,7 +168,7 @@ def test_template_baseline_extracts_string_and_multiple_conditions() -> None:
 
     assert TemplateBaseline().predict(
         "List the name where country is India and age is at least 18.", schema
-    ) == ('SELECT "name" FROM "people" WHERE "country" = \'India\' AND "age" >= 18')
+    ) == ("SELECT name FROM people WHERE country = 'India' AND age >= 18")
 
 
 def test_template_baseline_aggregates_selected_column_with_condition() -> None:
@@ -188,7 +188,7 @@ def test_template_baseline_aggregates_selected_column_with_condition() -> None:
 
     assert (
         TemplateBaseline().predict("What is the average salary for people from India?", schema)
-        == 'SELECT AVG("salary") FROM "people" WHERE "country" = \'India\''
+        == "SELECT AVG(salary) FROM people WHERE country = 'India'"
     )
 
 
@@ -207,7 +207,7 @@ def test_template_baseline_supports_distinct_multi_column_projection() -> None:
     )
 
     assert TemplateBaseline().predict("List the distinct names and countries.", schema) == (
-        'SELECT DISTINCT "name", "country" FROM "people"'
+        "SELECT DISTINCT name, country FROM people"
     )
 
 
@@ -230,7 +230,7 @@ def test_template_baseline_supports_multiple_aggregates_and_order_limit() -> Non
             "What are the average and maximum salary, ordered by salary descending, top 2?",
             schema,
         )
-        == 'SELECT AVG("salary"), MAX("salary") FROM "people" ORDER BY "salary" DESC LIMIT 2'
+        == "SELECT AVG(salary), MAX(salary) FROM people ORDER BY salary DESC LIMIT 2"
     )
 
 
@@ -251,7 +251,7 @@ def test_template_baseline_preserves_question_projection_order() -> None:
 
     assert (
         TemplateBaseline().predict("Show name, country, age for every singer.", schema)
-        == 'SELECT "name", "country", "age" FROM "singer"'
+        == "SELECT name, country, age FROM singer"
     )
 
 
@@ -274,7 +274,7 @@ def test_template_baseline_maps_oldest_to_youngest_to_descending() -> None:
             "Show name and age ordered by age from the oldest to the youngest.",
             schema,
         )
-        == 'SELECT "name", "age" FROM "singer" ORDER BY "age" DESC'
+        == "SELECT name, age FROM singer ORDER BY age DESC"
     )
 
 
@@ -295,7 +295,7 @@ def test_template_baseline_links_number_alias_and_quoted_value() -> None:
 
     assert (
         TemplateBaseline().predict("What team is player number 42 on?", schema)
-        == 'SELECT "Team" FROM "players" WHERE "No." = 42'
+        == 'SELECT Team FROM players WHERE "No." = 42'
     )
 
 
