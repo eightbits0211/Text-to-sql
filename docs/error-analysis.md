@@ -94,7 +94,7 @@ Across all 1,034 Spider validation examples:
 
 ### Case 6: Schema-Aware Syntax Repair in Action
 * **WikiSQL Single-Table Queries:** In the initial run (Job `361487`), 99.67% of WikiSQL predictions failed execution due to unquoted string literals (e.g. `WHERE player = John`) and imaginary table aliases (`FROM table_1 AS t1 JOIN table_2`).
-* **Post-Processing Impact:** With `sql_repair.py`, single-table queries are canonicalized, imaginary joins are pruned, and string literals are automatically quoted (`WHERE player = 'John'`). This achieved **100% syntactic validity** across the entire WikiSQL validation set.
+* **Post-Processing Impact:** With `sql_repair.py`, single-table queries are canonicalized, imaginary joins are pruned, and string literals are automatically quoted (`WHERE player = 'John'`). In the final recorded full-dev LSTM run (Job `361547`), WikiSQL still shows a **99.51% invalid-SQL rate** (8,374/8,415 invalid predictions), so this repair step mitigates specific failure patterns but does not yet stabilize end-to-end LSTM decoding.
 
 ---
 

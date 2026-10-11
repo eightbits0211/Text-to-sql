@@ -5,10 +5,10 @@ before ending every work session.
 
 ## In-Flight Execution Ledger (Context Continuity)
 - **Active Role:** Context & State Tracking Agent / Lead Agent
-- **Current Milestone:** Part 2 Complete (Verification, CLI Hardening & Sub-Agent Protocol Gate)
-- **Active Task:** Formalize context sub-agent, harden interactive CLI, commit and push to remote branch
-- **Last Completed Action:** Implemented Rule 3.15, added Context Sub-Agent to `docs/sub-agent-coordination-plan.md`, enhanced `LSTMBaseline.predict` and `cli.py`, verified 63 unit tests pass and Ruff checks pass
-- **Immediate Next Action:** Commit staged changes, push to `spec/agent-governance-rules`, and review final Part 2 submission package against rubric
+- **Current Milestone:** Part 2 Final QA and Submission Decision
+- **Active Task:** Finalize the evidence-backed report, demo, and rubric checklist without changing trained baseline metrics
+- **Last Completed Action:** Completed a bounded pointer-generator invalid-rate experiment; rejected the change because fixed-slice Spider execution accuracy regressed and WikiSQL remained invalid
+- **Immediate Next Action:** Freeze the truthful baseline and finish the final Part 2 rubric checklist, viva preparation, and submission packaging
 - **Resumption Invariant:** If session compacts, token limits expire, or models switch, inspect this ledger first to resume seamlessly.
 
 ## What was completed
@@ -288,6 +288,3 @@ before ending every work session.
 | HPC Job ID | `361547` (COMPLETED, synchronized locally) |
 | Test suite status | 63 passed, 0 failed, Ruff clean |
 | Next review point | Part 2 final freeze review |
-
-
-

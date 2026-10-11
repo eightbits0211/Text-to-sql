@@ -2,15 +2,17 @@
 
 **Title:** Robust Natural Language to SQL Translation Across Single- and Multi-Table Relational Databases  
 **Course:** CS F429 Natural Language Processing, BITS Pilani  
-**Component:** Part 2 Milestone Report (Classical Baselines, Empirical Benchmarks, & Error Analysis)  
-**Date:** September 24, 2026  
-**Status:** Frozen Baseline Implementation (Phase 2 Deliverable)  
+**Name:** Roshini Kotte
+**ID Number:** 2024A7PS0048H
+**Component:** Part 2 Report (Classical Baselines, Empirical Benchmarks, & Error Analysis)
+**Date:** October 11, 2026
+**Status:** Final Part 2 Draft — pending submission packaging
 
 ---
 
 ## Abstract
 
-Natural Language to SQL (Text-to-SQL) translation bridges the communication gap between non-technical domain users and relational databases. In this Part 2 milestone, we formulate the cross-domain semantic parsing task and construct an end-to-end evaluation harness for both single-table ([WikiSQL](https://github.com/salesforce/WikiSQL)) and complex multi-table relational databases ([Spider](https://yale-lily.github.io/spider)). We implement and empirically compare two classical baseline architectures: (1) a deterministic rule-based template parser and (2) a dual-stage Pointer-Generator BiLSTM sequence-to-sequence neural network equipped with Bahdanau attention, dynamic vocabulary copying, and schema-aware post-processing syntax repair. Evaluated across all 1,034 held-out Spider validation examples across 20 unseen database schemas, our optimized Pointer-Generator LSTM achieves **5.90% Execution Accuracy** and **3.29% Exact Match**, outperforming the deterministic template baseline (5.80% Execution Accuracy, 0.00% Exact Match) and falling directly within the canonical baseline band (3.2%–5.4% Exact Match) established in the seminal Yale Spider benchmark (*Yu et al., 2018*). On single-table queries, the model achieves **9.38% Execution Accuracy** and **5.88% Exact Match**, while achieving **100% syntactic validity** on WikiSQL. We present extensive quantitative breakdowns across official difficulty tiers (Easy: 13.31%, Medium: 4.04%, Hard: 5.75%, Extra-Hard: 0.00%) and six detailed qualitative error case studies, establishing a clear diagnostic foundation for modern schema-linking transformer architectures in Part 3.
+Natural Language to SQL (Text-to-SQL) translation bridges the communication gap between non-technical domain users and relational databases. In this Part 2 milestone, we formulate the cross-domain semantic parsing task and construct an end-to-end evaluation harness for both single-table ([WikiSQL](https://github.com/salesforce/WikiSQL)) and complex multi-table relational databases ([Spider](https://yale-lily.github.io/spider)). We implement and empirically compare two classical baseline architectures: (1) a deterministic rule-based template parser and (2) a dual-stage Pointer-Generator BiLSTM sequence-to-sequence neural network equipped with Bahdanau attention, dynamic vocabulary copying, and schema-aware post-processing syntax repair. Evaluated across all 1,034 held-out Spider validation examples across 20 unseen database schemas, our optimized Pointer-Generator LSTM achieves **5.90% Execution Accuracy** and **3.29% Exact Match**, outperforming the deterministic template baseline (5.80% Execution Accuracy, 0.00% Exact Match) and falling directly within the canonical baseline band (3.2%–5.4% Exact Match) established in the seminal Yale Spider benchmark (*Yu et al., 2018*). On Spider single-table queries, the model achieves **9.38% Execution Accuracy** and **5.88% Exact Match**. On full WikiSQL dev evaluation (8,415 examples), the recorded LSTM invalid-SQL rate is **99.51%**, while the template baseline remains syntactically valid (**0.00% invalid-SQL**). We present extensive quantitative breakdowns across official difficulty tiers (Easy: 13.31%, Medium: 4.04%, Hard: 5.75%, Extra-Hard: 0.00%) and six detailed qualitative error case studies, establishing a clear diagnostic foundation for modern schema-linking transformer architectures in Part 3.
 
 ---
 
@@ -213,11 +215,17 @@ Raw seq2seq outputs frequently suffer from superficial formatting flaws that cau
 
 ### 4.4 Training Strategy & Compute Environment
 Training was executed on the BITS Pilani HPC cluster (`gpunode8`) under Slurm Job ID **`361547`**:
-- **Hardware:** 1$\times$ NVIDIA A100-PCIE-80GB GPU, 8 CPU cores, 32GB RAM.
+- **Hardware:** NVIDIA RTX PRO 6000 Blackwell Server Edition allocation; the
+  exact CPU/RAM allocation is recorded in the Slurm job log rather than
+  inferred from the evaluation artifact.
 - **Curriculum Training Strategy:**
   - **Stage 1 (WikiSQL Warm-up):** 55,968 examples, 10 epochs (8,740 optimization steps), batch size 64, Adam optimizer, initial learning rate $\eta = 10^{-3}$, linear warmup over 500 steps with cosine decay, gradient clipping at $\|\mathbf{g}\|_2 \le 1.0$. Training loss converged from $1.72 \to 0.10$. Saved as `wikisql_checkpoint.pt`.
   - **Stage 2 (Spider Primary):** 7,000 examples, 25 epochs (2,750 optimization steps), batch size 64, learning rate $\eta = 5 \times 10^{-4}$ with epoch-based deterministic seed shuffling ($42 + \text{epoch}$). Training loss converged from $1.82 \to 0.0404$. Saved as `spider_checkpoint.pt`.
   - **Total Training Time:** 49 minutes.
+
+### Training Loss Convergence
+
+![Two-stage curriculum training loss convergence (HPC Job 361547). Left: WikiSQL warm-up (55,968 examples, 10 epochs) converging 1.72 → 0.10. Right: Spider primary training (7,000 examples, 25 epochs) converging 1.84 → 0.0404.](/Users/roshini/NLPproject/docs/training_loss_curve.png)
 
 ---
 
@@ -235,6 +243,28 @@ We evaluated all baseline variants on the complete, held-out Spider validation s
 1. **Surpasses Deterministic Baseline:** The Optimized LSTM achieves **5.90% Execution Accuracy**, surpassing the Template Baseline (5.80%) while delivering **3.29% Exact Match** (where the template baseline achieved 0.00%).
 2. **Alignment with Yale Spider Benchmark Literature:** In the seminal Spider paper (*Yu et al., EMNLP 2018*, Table 4), standard Seq2Seq baselines without schema graphs achieved **3.2% to 5.4% Exact Match**. Our baseline result of **3.29%** aligns directly with this established literature baseline.
 3. **8.4$\times$ Exact Match Surge:** Extending Spider training to 25 epochs and applying syntax repair increased exact match from 0.39% to 3.29% (+743% relative improvement).
+
+### WikiSQL Full-Development Results
+
+The same evaluation harness was run on all 8,415 retained WikiSQL development
+examples. The template baseline is the reliable single-table reference. The
+recorded LSTM checkpoint was trained with the two-stage pipeline, but its
+WikiSQL decoding remains unstable despite post-processing; this result is
+reported rather than hidden.
+
+| Model / Baseline Configuration | Exact Match (EM) | Execution Accuracy | Invalid SQL Rate |
+|---|---:|---:|---:|
+| **Deterministic Template Parser** | **1.26%** (106/8415) | **7.23%** (608/8415) | **0.00%** (0/8415) |
+| **Optimized Pointer-Gen LSTM (Job 361547)** | **0.04%** (3/8415) | **0.04%** (3/8415) | **99.51%** (8374/8415) |
+
+The contrast indicates that the current LSTM checkpoint is not a useful
+WikiSQL production baseline, while the template parser provides a stable
+single-table reference. The Spider results above remain the primary
+cross-domain LSTM result for this milestone.
+
+#### Analysis of WikiSQL Performance Collapse
+
+The stark disparity between the LSTM's Spider performance (5.90% execution accuracy) and its WikiSQL performance (0.04% execution accuracy, 99.51% invalid SQL) is a classic instance of **catastrophic forgetting** in sequential fine-tuning. During Stage 2 Spider training, the model's weights are optimized over 25 epochs on 7,000 multi-table Spider examples with different schema serialization formats, complex JOIN/GROUP BY structures, and cross-table column references. This extended fine-tuning overwrites the single-table query patterns learned during Stage 1 WikiSQL warm-up, causing the model to emit multi-table SQL constructs (table aliases, JOINs) even when evaluated on single-table WikiSQL inputs. Standard mitigation strategies include experience replay (interleaving WikiSQL mini-batches during Spider training), Elastic Weight Consolidation (EWC) to penalize drift in important WikiSQL-specific parameters, or multi-task training with a shared encoder. These strategies are noted for exploration in Part 3.
 
 ---
 
@@ -306,7 +336,7 @@ Across the 1,034 validation queries, 803 resulted in SQLite execution errors, 17
 
 ### Case Study 6: Syntax Repair Impact on WikiSQL
 - **WikiSQL Dev Execution:** In initial runs, 99.67% of WikiSQL predictions failed due to unquoted string literals (`WHERE player = John`).
-- **Post-Processing Impact:** With `sql_repair.py`, single-table queries are canonicalized, imaginary multi-table joins are pruned, and string literals are automatically enclosed in quotes (`WHERE player = 'John'`). This achieved **100% syntactic validity** across the entire WikiSQL validation set.
+- **Post-Processing Impact:** With `sql_repair.py`, single-table queries are canonicalized, imaginary multi-table joins are pruned, and string literals are automatically enclosed in quotes (`WHERE player = 'John'`). In the final recorded full-dev LSTM run (Job `361547`), WikiSQL still shows a **99.51% invalid-SQL rate** (8,374/8,415 invalid predictions), indicating that the repair layer improves specific failure patterns but does not by itself stabilize end-to-end LSTM decoding on WikiSQL.
 
 ---
 
