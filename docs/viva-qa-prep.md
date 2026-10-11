@@ -6,6 +6,67 @@
 
 ---
 
+## 0. Viva Run Sheet (print this page)
+
+### Before the viva (once, at home)
+1. Download `Text-to-SQL-Part2-code.zip` from LMS and unzip it, for example to `~/viva/Text-to-SQL-Part2`.
+2. In a terminal:
+   ```bash
+   cd ~/viva/Text-to-SQL-Part2
+   uv sync                 # installs the exact environment (needs internet the first time)
+   uv run pytest -q        # expect: 83 passed
+   ```
+3. Keep `~/datasets/text-to-sql` where it is; the code reads data and checkpoints from there.
+4. Run every command below once, so nothing surprises you.
+
+### During the viva (in this order)
+| # | Command | Time | What you are showing |
+|---|---|---|---|
+| 1 | `uv run text-to-sql-demo --train-demo` | ~3 min | **Training, live** (the rubric asks for this): loss falling, before/after output, train vs held-out accuracy |
+| 2 | `uv run text-to-sql-demo --demo --model template` | 5 s | Rule baseline: 2 successes + 1 safe refusal |
+| 3 | `uv run text-to-sql-demo --demo --model lstm` | 30 s | The full HPC-trained LSTM on the same 3 questions |
+| 4 | `uv run text-to-sql-demo --model lstm --question "How many singers do we have?"` | 20 s | Any question you or the examiner types |
+| 5 | `uv run python -m scripts.show_preprocessing --no-stats` | 10 s | Preprocessing: question → tokens → schema → target tokens (vocab vs copy) |
+| 6 | Open `docs/part-2-report.pdf` | — | Results tables (Section d.6), ablation (d.7), errors (d.9), loss curve (d.3) |
+
+While command 1 runs (about 3 minutes), talk through the code tour below.
+
+### If something goes wrong
+- `uv: command not found` → `curl -LsSf https://astral.sh/uv/install.sh | sh`, then open a new terminal.
+- "database not found" or "checkpoint not found" → the data folder moved. Run `export TEXT2SQL_DATA_ROOT=/path/to/text-to-sql`, then rerun.
+- The training demo is slow → `uv run text-to-sql-demo --train-demo --epochs 20` (about 1 minute; the loss still drops clearly).
+- An LSTM answer is wrong → that's expected and matches the report: the model mislinks columns (Section d.9). Say so.
+
+---
+
+## 0.1 Code Tour (how to explain the code in 5 minutes)
+
+**One sentence:** *a question and a database schema go in; SQL comes out; we execute it on SQLite and compare the result with the gold query's result.*
+
+Follow one example through the pipeline and open each file as you go:
+
+| Step | File → function | What to say |
+|---|---|---|
+| 1. Load data | `src/text_to_sql/data/spider.py` → `load_spider()` | Reads Spider JSON, attaches each question's database file and schema, labels difficulty with the official Spider rules (`_classify_difficulty`), and records why any example is excluded. `wikisql.py` does the same for WikiSQL. |
+| 2. Describe the schema | `data/schema.py` → `serialize_schema()` | Turns tables, columns, types and foreign keys into text the model can read (`table: singer / - Age [number] …`). |
+| 3. Tokenise | `lstm/preprocessing.py` → `tokenize_example()`, `build_training_vocabulary()`, `build_copy_target()` | Splits the question, schema and SQL into tokens. Builds the vocabulary from *training* data only. For every example, adds its unseen words as copyable tokens (the pointer mechanism). |
+| 4. Model | `lstm/model.py` → `Encoder`, `AdditiveAttention`, `PointerGeneratorDecoder.compute_output_distribution()` | The BiLSTM encoder reads question + schema. At each step the decoder attends over the input and mixes two distributions: *generate* a word from the vocabulary, or *copy* one from the input (the `p_gen` gate). |
+| 5. Train | `lstm/training.py` → `train_smoke()` | Stage 1 on WikiSQL, Stage 2 on Spider, teacher-forced cross-entropy (NLL), Adam lr 1e-3, gradient clipping 1.0, checkpoints after each stage. `evaluate_nll()` gives the held-out loss curve. |
+| 6. Decode | `lstm/adapter.py` → `decode_tokens()`, `postprocess()` | Greedy decoding with schema-type words masked out (`DecodeOptions`), then `rendering.py → render_sql()` restores spelling and quoting, then `sql_repair.py → repair_sql()` fixes syntax slips. |
+| 7. Rule baseline | `baselines/template.py` → `TemplateBaseline.predict()` | Matches question words to columns, detects numbers, comparisons and aggregates, fills a single-table template, and refuses joins. |
+| 8. Evaluate | `evaluation/metrics.py` → `execute_read_only()`, `evaluate_predictions()` | Runs gold and predicted SQL read-only on SQLite and compares the results: strict EX, official-style EX, string match, invalid rate with an error class. `statistics.py` adds CIs and McNemar tests. The official Spider evaluator gives exact-set match. |
+| 9. Demo | `cli.py` → `main()`, `run_query()`; `lstm/train_demo.py` → `run_training_demo()` | The CLI you are running. |
+
+**Likely "show me" questions:**
+- *"Where is attention?"* → `model.py`, class `AdditiveAttention`, `forward()`: `v^T tanh(W_enc h + W_dec s)`, then softmax.
+- *"Where is the copy mechanism?"* → `model.py`, `compute_output_distribution()`: `p_gen * P_vocab`, plus `(1 - p_gen) * attention` scattered onto the source-token ids (`scatter_add_`).
+- *"Where is the loss?"* → `training.py`, `_compute_batch_loss()`: the negative log-probability of each gold token, averaged over non-padding positions.
+- *"Where are the hyperparameters?"* → `training.py`, `TrainingConfig` (embedding 256, hidden 512, 2 layers, dropout 0.2, lr 1e-3, batch 64 on the HPC).
+- *"How do you know the evaluation is correct?"* → the gold SQL scores 100% against itself; gold queries return real answers (this check caught the WikiSQL bug, report d.11); and the official Spider evaluator is used.
+- *"What does your preprocessing do?"* → run command 5. Point out lower-casing, `'France'` becoming `france`, and that the copy mechanism never receives a training signal (report c.5).
+
+---
+
 ## 1. Live Demonstration Workflow
 
 ### Step-by-Step CLI Execution
