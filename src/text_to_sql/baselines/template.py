@@ -8,6 +8,51 @@ from ..data.contracts import ExampleRecord
 from ..data.schema import ColumnSpec, DatabaseSchema, TableSpec
 from ..evaluation.metrics import EvaluationReport, Prediction, evaluate_predictions
 
+_SQL_RESERVED = frozenset(
+    {
+        "SELECT",
+        "FROM",
+        "WHERE",
+        "GROUP",
+        "ORDER",
+        "BY",
+        "LIMIT",
+        "HAVING",
+        "JOIN",
+        "ON",
+        "AS",
+        "AND",
+        "OR",
+        "NOT",
+        "IN",
+        "IS",
+        "NULL",
+        "LIKE",
+        "UNION",
+        "INTERSECT",
+        "EXCEPT",
+        "DISTINCT",
+        "TABLE",
+        "INDEX",
+        "CASE",
+        "WHEN",
+        "THEN",
+        "ELSE",
+        "END",
+        "ASC",
+        "DESC",
+        "VALUES",
+        "SET",
+        "DEFAULT",
+        "CHECK",
+        "PRIMARY",
+        "KEY",
+        "REFERENCES",
+        "TO",
+        "ALL",
+    }
+)
+
 
 @dataclass(frozen=True)
 class _TableChoice:
@@ -455,6 +500,13 @@ class TemplateBaseline:
 
     @staticmethod
     def _quote(identifier: str) -> str:
+        # Quote only when needed: the official Spider evaluator parses a
+        # double-quoted token as a string value, so quoting plain identifiers
+        # made every template prediction unparseable for exact-set match.
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", identifier) and (
+            identifier.upper() not in _SQL_RESERVED
+        ):
+            return identifier
         return '"' + identifier.replace('"', '""') + '"'
 
     @staticmethod

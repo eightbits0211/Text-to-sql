@@ -28,9 +28,11 @@ We implement and evaluate two classical baseline architectures in Part 2:
 |---|---:|---:|
 | LSTM, final inference | 7.2% | 5.5% |
 | LSTM, as submitted (Job 361547) | 6.8% | 5.2% |
-| Template parser | 9.5% | 0.0% (6.7% with identifier quotes removed) |
+| Template parser | 9.5% | 6.7% |
 
-Both baselines are weak on multi-table queries; the LSTM and the template are statistically tied on strict execution accuracy (McNemar p = 0.45 on test).
+On Spider the template is the stronger baseline (significant by McNemar; borderline under a
+database-clustered bootstrap). On WikiSQL the LSTM is far stronger (17.2% vs 2.7% EX). Both
+fail on multi-table queries; the dominant error is schema linking.
 
 ---
 

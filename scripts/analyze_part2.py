@@ -103,6 +103,48 @@ def error_flags(
     return flags
 
 
+ROOT_CAUSE_ORDER = (
+    "invalid_sql",
+    "wrong_table_set",
+    "wrong_columns",
+    "wrong_clause_structure",
+    "wrong_aggregation",
+    "wrong_projection_count",
+    "wrong_values",
+    "other_same_signature",
+)
+
+
+def root_cause(flags: list[str], invalid: bool) -> str:
+    """First failing component, checked in a fixed priority order (one label per failure)."""
+    if invalid:
+        return "invalid_sql"
+    present = set(flags)
+    if "wrong_table_set" in present:
+        return "wrong_table_set"
+    if "column_mismatch" in present:
+        return "wrong_columns"
+    structure = {
+        "join_count_mismatch",
+        "where_mismatch",
+        "group_mismatch",
+        "having_mismatch",
+        "order_mismatch",
+        "limit_mismatch",
+        "nested_mismatch",
+        "set_op_mismatch",
+    }
+    if present & structure:
+        return "wrong_clause_structure"
+    if "aggregation_mismatch" in present:
+        return "wrong_aggregation"
+    if "projection_count_mismatch" in present:
+        return "wrong_projection_count"
+    if present & {"value_mismatch", "value_case_only_mismatch"}:
+        return "wrong_values"
+    return "other_same_signature"
+
+
 def schema_linking(gold: dict, pred: dict) -> tuple[int, int, int]:
     """(true positives, predicted, gold) over referenced schema identifiers."""
     g, p = gold["identifiers"], pred["identifiers"]
@@ -119,6 +161,8 @@ def analyze_model(
     )
     report = evaluate_predictions(records, predictions)
     flags_counter: Counter[str] = Counter()
+    root_causes: Counter[str] = Counter()
+    root_by_difficulty: dict[str, Counter[str]] = {}
     error_classes: Counter[str] = Counter()
     link_tp = link_pred = link_gold = 0
     table_tp = table_pred = table_gold = 0
@@ -139,8 +183,12 @@ def analyze_model(
         if item.invalid_sql:
             error_classes[item.error_class or "other"] += 1
         if not item.execution_match:
-            for flag in error_flags(gold, pred, record.gold_sql, prediction.predicted_sql, names):
+            flags = error_flags(gold, pred, record.gold_sql, prediction.predicted_sql, names)
+            for flag in flags:
                 flags_counter[flag] += 1
+            cause = root_cause(flags, item.invalid_sql)
+            root_causes[cause] += 1
+            root_by_difficulty.setdefault(record.difficulty.value, Counter())[cause] += 1
         elif not item.exact_match:
             structural = [
                 f
@@ -178,6 +226,11 @@ def analyze_model(
         "empty_predictions": sum(1 for p in predictions if not p.predicted_sql.strip()),
         "invalid_sql_error_classes": dict(error_classes.most_common()),
         "failure_flags": {"failures": failures, **dict(flags_counter.most_common())},
+        "root_cause": {k: root_causes.get(k, 0) for k in ROOT_CAUSE_ORDER},
+        "root_cause_by_difficulty": {
+            level: {k: counts.get(k, 0) for k in ROOT_CAUSE_ORDER}
+            for level, counts in sorted(root_by_difficulty.items())
+        },
         "execution_hits_without_string_match": dict(ex_hits_without_sm),
         "schema_linking": {
             "identifier_precision": link_tp / link_pred if link_pred else 0.0,

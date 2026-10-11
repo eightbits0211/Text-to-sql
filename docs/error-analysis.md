@@ -94,16 +94,23 @@ as nested.
 
 ## 6. Template audit
 
-- **Abstentions:** the current template code returns an empty prediction for 92/1,034
-  dev questions. The Job 361547 revision of the template never abstained, and its
-  strict EX was the same (60).
-- **0% SM and 0% official EM are formatting artefacts.** The template double-quotes every
-  identifier (`FROM "singer"`), which the official parser reads as a string literal. With
-  identifier quotes removed, its official EM is 5.9% on dev and 6.7% on test.
-- **Its 60 strict-EX hits without SM:** 43 structurally equivalent to gold, 11 coincidental
-  with a gold clause missing, and 6 coincidental where the gold result is empty or zero.
-  Example: `SELECT DISTINCT "Country" FROM "singer"` matches gold `... WHERE age > 20` only
-  because every singer in the database is older than 20.
+- **Abstentions:** the template returns an empty prediction for 92 of 1,034 dev questions and
+  208 of 2,147 test questions. Every abstention counts as invalid SQL.
+- **Quoting fix:** the template used to double-quote every identifier (`FROM "singer"`). The
+  official parser reads that as a string value, so the template scored 0% official EM. It now
+  quotes only when necessary. Its real official EM is 5.9% on dev and 6.7% on test, and its
+  official EX is unchanged at 9.9% and 9.5%.
+- **Execution-match audit:** execution hits without a string match are classified automatically
+  from signatures; see the report, section d.9.
+
+## 6a. Copy gate (measured, `scripts/measure_copy_gate.py`)
+
+No training target *requires* copying, because every Spider-train token is in the vocabulary.
+The copy gate still learns, since copying an in-vocabulary source token also produces the
+correct token. On 200 dev questions (teacher-forced), at copy-only gold positions the gate
+chooses to copy 96% of the time (mean p_gen 0.04). But it puts only 0.17 probability on the
+correct source token, versus 0.82 for in-vocabulary targets. So the model knows *when* to copy,
+but not *what*: a schema-linking failure.
 
 ## 7. WikiSQL: a harness defect, then a rendering defect
 
