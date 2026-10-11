@@ -6,7 +6,7 @@ cd "$(dirname "$0")/../docs"
 pandoc part-2-report.md \
   --from markdown+tex_math_dollars+pipe_tables+implicit_figures+table_captions \
   --standalone --number-sections --pdf-engine=xelatex \
-  -V documentclass=article -V fontsize=11pt -V geometry:margin=1in \
+  -V documentclass=article -V fontsize=10pt -V geometry:margin=1in \
   -V colorlinks=true -V linkcolor=blue!60!black -V urlcolor=blue!60!black \
   -V header-includes='\usepackage{float}\floatplacement{figure}{H}\renewcommand{\thesection}{\alph{section}}' \
   -o part-2-report.tex

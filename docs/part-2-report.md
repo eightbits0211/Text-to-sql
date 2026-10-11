@@ -195,24 +195,24 @@ The final pipeline is decode, then render, then repair. All steps operate on the
 
 Table: Main results on Spider test (held out; run once after freezing the configuration). Official metrics with database-clustered 95% CIs. "EM-confirmed EX" counts questions correct under both EX and EM, which excludes coincidental execution matches.
 
-| System | Official EX | Official EM | EM-confirmed EX | Strict EX | Invalid |
-|------------------------------|--------------:|--------------:|-----:|-----:|-----:|
+| System | Official EX | Official EM | EM-conf. EX | Strict EX | Invalid |
+|--------------------------|----------------------:|----------------------:|-------:|-------:|------:|
 | **LSTM, final decoding** | 7.2% [5.0%, 10.0%] | 5.5% [3.6%, 7.9%] | 5.2% | 6.52% | 72.7% |
-| LSTM, base decoding (Job 361547) | 6.8% [4.6%, 9.4%] | 5.2% [3.4%, 7.6%] | 4.8% | 6.19% | 76.3% |
+| LSTM, base decoding | 6.8% [4.6%, 9.4%] | 5.2% [3.4%, 7.6%] | 4.8% | 6.19% | 76.3% |
 | Template parser | 9.5% [7.8%, 11.5%] | 6.7% [5.1%, 8.5%] | 6.6% | 7.69% | 9.7% |
 
 Table: Results on Spider dev (development set; all fixes were chosen here).
 
-| System | Official EX | Official EM | EM-confirmed EX | Strict EX | Invalid |
-|------------------------------|--------------:|--------------:|-----:|-----:|-----:|
+| System | Official EX | Official EM | EM-conf. EX | Strict EX | Invalid |
+|--------------------------|----------------------:|----------------------:|-------:|-------:|------:|
 | **LSTM, final decoding** | 8.1% [5.0%, 12.1%] | 5.0% [3.0%, 7.8%] | 5.0% | 6.38% | 72.1% |
-| LSTM, base decoding (Job 361547) | 7.4% [4.2%, 11.4%] | 4.9% [3.0%, 7.7%] | 4.6% | 5.90% | 77.2% |
+| LSTM, base decoding | 7.4% [4.2%, 11.4%] | 4.9% [3.0%, 7.7%] | 4.6% | 5.90% | 77.2% |
 | Template parser | 9.9% [6.5%, 13.7%] | 5.9% [3.9%, 8.4%] | 5.9% | 7.06% | 8.9% |
 
 Table: Paired comparisons on the official metrics (difference in points, database-clustered 95% CI; p-values Holm-adjusted within each split).
 
 | Split | Comparison | Metric | Difference | McNemar p | Clustered p |
-|---|---|---|---:|---:|---:|
+|-----|------------------------|-----|------------------:|--------:|--------:|
 | test | LSTM final − LSTM base | EX | +0.4 [+0.2, +0.7] | 0.047 | 0.004 |
 | test | LSTM final − LSTM base | EM | +0.3 [+0.0, +0.6] | 0.089 | 0.126 |
 | test | LSTM final − template | EX | -2.3 [-4.3, -0.1] | 0.008 | 0.136 |
@@ -248,7 +248,7 @@ Table: Inference ablation on one checkpoint (Spider dev).
 | Configuration | Strict EX | Official EX | Official EM | Invalid |
 |------------------------------------------|------:|------:|------:|------:|
 | Raw greedy tokens, no repair | 1.45% | 5.4% | 4.4% | 84.0% |
-| + repair (**base decoding**, Job 361547) | 5.90% | 7.4% | 4.9% | 77.2% |
+| + repair (**base decoding**) | 5.90% | 7.4% | 4.9% | 77.2% |
 | + surface-form rendering | 6.19% | 7.6% | 4.9% | 76.8% |
 | base + schema-markup mask | 6.09% | 7.7% | 5.0% | 72.6% |
 | **+ mask + rendering (final)** | 6.38% | 8.1% | 5.0% | 72.1% |
@@ -328,7 +328,7 @@ Table: WikiSQL dev (all 8,415 examples, corrected harness), Stage-1 checkpoint.
 | System | Strict EX (95% CI) | SM | Invalid |
 |---|---:|---:|---:|
 | LSTM Stage-1, raw greedy | 3.11% [2.8%, 3.5%] | 0.00% | 89.5% |
-| LSTM Stage-1, base decoding (Job 361547) | 5.76% [5.3%, 6.3%] | 0.04% | 81.1% |
+| LSTM Stage-1, base decoding | 5.76% [5.3%, 6.3%] | 0.04% | 81.1% |
 | **LSTM Stage-1, final decoding** | 17.15% [16.4%, 18.0%] | 1.84% | 32.5% |
 | Template parser | 2.65% [2.3%, 3.0%] | 1.26% | 0.0% |
 
