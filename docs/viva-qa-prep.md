@@ -19,6 +19,36 @@ uv sync
 uv run text-to-sql-demo --model template --demo
 ```
 
+### Live Training Demonstration (rubric: "training of the model to be shown")
+
+Run this first. It takes about 2–3 minutes on the laptop CPU:
+
+```bash
+uv run text-to-sql-demo --train-demo
+```
+
+What it shows, and what to say:
+1. **Before training:** a probe question decoded by randomly initialised weights produces garbage (`pID pID …`).
+2. **Training:** the per-epoch training and held-out NLL print live; training NLL falls from about 4.9 to about 0.1. *"This is the same pointer-generator architecture and training loop as our HPC model, just smaller (embedding 128, hidden 256) and on one database (95 questions), so it fits in the viva."*
+3. **After training:** the same probe now produces sensible SQL (`SELECT AVG(HS) … FROM Player`).
+4. **Memorisation vs generalisation:** about 15/20 correct on questions it trained on, about 0/11 on held-out questions. *"That gap is exactly what the full model shows on Spider: training NLL 0.04, but dev NLL rising after epoch 3."*
+5. Query the model you just trained:
+   ```bash
+   uv run text-to-sql-demo --model lstm --checkpoint artifacts/train-demo/spider_checkpoint.pt \
+     --database /Users/roshini/datasets/text-to-sql/spider/spider_data/database/soccer_2/soccer_2.sqlite \
+     --question "What is the average training hours of all players?"
+   ```
+
+If asked about the real training run: it ran on the HPC (Slurm job 361547, RTX PRO 6000, 50 min); the logs and loss curves are in the report (§4.3). The same script, `scripts/hpc_run_lstm_seed.sh`, reproduces it.
+
+### Preprocessing Walkthrough (rubric: "examples of preprocessing output")
+
+```bash
+uv run python -m scripts.show_preprocessing --example spider-dev-4 --no-stats
+```
+
+This prints the raw question, its tokens, the serialised schema, the encoder input and the target SQL tokens, each marked as generated from the vocabulary or copied. Talking point: on Spider train, 100% of target tokens are in the vocabulary, so the copy mechanism never receives a training signal. On dev, 8.7% of target tokens can only be copied.
+
 ### Three Scripted Showcase Scenarios
 
 | Scenario | Model | Database | Query / Question | Expected Behavior / Explanation |

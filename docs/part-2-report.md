@@ -79,7 +79,7 @@ These numbers come from the original 2018 release and evaluator, which ignored l
 | Split | Source | Retained | Excluded (reason) |
 |---|---:|---:|---|
 | WikiSQL train | 56,355 | 55,968 used in Stage 1 | first 56,000 rows loaded (`--train-limit 56000`); 32 excluded |
-| WikiSQL dev | 8,421 | 8,415 | 6 (`database_not_found`: table missing from `dev.db`) |
+| WikiSQL dev | 8,421 | 8,415 | 6 (`unsupported_query_structure`: the loader's single-table filter rejected them) |
 | Spider train | 7,000 | 7,000 | 0 |
 | Spider dev | 1,034 | 1,034 | 0 |
 | Spider test | 2,147 | 2,147 | 0 |
@@ -109,6 +109,46 @@ The encoder input is `<bos> question <schema_sep> schema <eos>`, where both part
 - **Vocabulary.** Every token in the Stage-1 and Stage-2 *training* questions, schemas and SQL, with no frequency threshold: **102,463 types** (`training_meta.json`). Dev and test are never read when building the vocabulary.
 - **Copy targets.** Each example extends the vocabulary with its out-of-vocabulary source tokens. A gold SQL token resolves to the fixed vocabulary first, then to a source copy, else to `<unk>`.
 
+### 3.4 Worked preprocessing example
+This is the output of `scripts/show_preprocessing.py`, which runs the real pipeline on dev example `spider-dev-4`:
+
+```text
+Question : What is the average, minimum, and maximum age of all singers from France?
+Tokens   : what is the average minimum and maximum age of all singers from france   (13)
+Schema   : database: concert_singer / table: concert / columns: - Stadium_ID [text] ...
+           (34 lines, 4 tables)
+Encoder  : <bos> what is ... france <schema_sep> database concert_singer table concert
+           columns ... <eos>   (93 tokens)
+Gold SQL : SELECT avg(age) , min(age) , max(age) FROM singer WHERE country = 'France'
+Target   : SELECT AVG ( age ) , MIN ( age ) , MAX ( age ) FROM singer WHERE country = france
+           (every token resolves to the fixed vocabulary; 6 source tokens are copy-only)
+```
+
+Three effects are visible. Punctuation is dropped from the question. The literal `'France'` loses its quotes and its case: it becomes the token `france`, so the decoder can only emit `france`. That is why §4.4 restores the surface form from the question at inference. The schema's column *types* (`text`) sit in the encoder input right next to the column names.
+
+### 3.5 Corpus statistics (as tokenised for the model)
+
+| Split | Examples | DBs | Question tokens | SQL tokens | Encoder tokens (max; > 256) | Tables / columns per schema | Target tokens: vocab / copy / unk |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Train | 7,000 | 140 | 12.8 | 21.7 | 136 (899; 556) | 6.0 / 32.5 | 100.0% / 0.0% / 0.0% |
+| Dev | 1,034 | 20 | 12.4 | 21.5 | 104 (242; 0) | 4.5 / 24.8 | 90.9% / 8.7% / 0.4% |
+| Test | 2,147 | 40 | 12.5 | 22.6 | 100 (278; 99) | 4.9 / 20.9 | 91.8% / 7.7% / 0.5% |
+
+**The key observation is that the copy mechanism is never trained.** The vocabulary contains every training token, so on Spider train *every* target token can be generated from the fixed vocabulary, and the copy path receives no supervision. On dev and test, 8.7% and 7.7% of target tokens can *only* be produced by copying: unseen table names, column names and values. The model therefore meets the exact case the pointer mechanism exists for only at test time, which helps explain the schema-linking failures in §4.9. The Part 3 remedy is to keep schema identifiers out of the fixed vocabulary, or apply a frequency threshold, so that copying is learned.
+
+### 3.6 Dataset limitations
+- **Spider.**
+  - *Paraphrase pairs:* most queries appear with two phrasings, which inflates in-domain accuracy. Our dev and test splits are database-disjoint, so this does not leak across splits.
+  - *Coverage:* the data is English only and concentrated in college, business and entertainment schemas. Dev has only 20 databases, so per-database variance is high.
+  - *Small databases:* these allow coincidental execution matches; §4.9 shows a template example.
+  - *Annotation conventions:* gold SQL uses inconsistent quoting (`"blues"` vs `'France'`), stray trailing semicolons and mixed identifier case. These break string match but not execution or exact-set match.
+  - *Data quality:* one database (`wta_1`) stores non-UTF-8 text.
+  - *Difficulty imbalance:* 43% of dev is medium, and extra-hard is only 16%.
+- **WikiSQL.**
+  - Single-table only, with one aggregate and `AND`-only conditions.
+  - Values are stored as text, column names contain spaces and punctuation, and it is known to contain noisy annotations.
+  - It therefore checks pipeline mechanics, not compositional parsing.
+
 ---
 
 ## Section (d): Methods, Evaluation Protocol, Results and Error Analysis
@@ -119,14 +159,14 @@ The encoder input is `<bos> question <schema_sep> schema <eos>`, where both part
 ### 4.2 Baseline 2: pointer-generator BiLSTM
 `lstm/model.py` (values from `TrainingConfig` and `training_meta.json`):
 
-- **Encoder:** 2-layer bidirectional LSTM. Embedding 256, hidden 256 per direction, so 512-d concatenated states. Packed sequences; training inputs are truncated at 256 tokens (no dev or test input exceeds 242).
+- **Encoder:** 2-layer bidirectional LSTM. Embedding 256, hidden 256 per direction, so 512-d concatenated states. Packed sequences. Training inputs are truncated at 256 tokens, which cuts 556 of the 7,000 Spider training inputs and hides their alphabetically-last tables. Inference does not truncate: no dev input exceeds 242 tokens, but 99 of 2,147 test inputs do (maximum 278). This train/inference mismatch is a known limitation.
 - **Decoder:** 2-layer LSTM with hidden size 512, initialised from projected final encoder states. The input is $[\text{emb}(y_{t-1});\,c_{t-1}]$.
 - **Attention:** additive, $e_{t,i}=v^\top\tanh(W_h h_i+W_s s_t)$.
 - **Copy gate:** $p_{\text{gen}}=\sigma(W[s_t;c_t;\text{emb}(y_{t-1})]+b)$, mixing $P_{\text{vocab}}$ with the attention-weighted copy distribution as in §2.3.
 - **Dropout** 0.2. **Decoding:** greedy, at most 128 tokens, with `<pad>`/`<unk>` masked.
 
 ### 4.3 Training (HPC Job 361547)
-Hardware: one NVIDIA RTX PRO 6000 Blackwell MPS slice (50%), 4 CPUs and 80 GB RAM. Total wall time 49 min.
+Hardware: one NVIDIA RTX PRO 6000 Blackwell MPS slice (50%), 4 CPUs and 80 GB RAM. The whole job, training plus evaluation, took 50 min of wall time (04:41 to 05:31 IST).
 
 - **One Adam optimiser** with constant learning rate $10^{-3}$, batch 64, gradient-norm clipping at 1.0, teacher forcing ratio 1.0, seed 42 and per-epoch shuffling with seed $42+\text{epoch}$. *The earlier draft reported warm-up, cosine decay, a Stage-2 learning rate of $5\times10^{-4}$ and dropout 0.3. None of these exist in the code; those statements were wrong and have been removed.*
 - **Stage 1 (WikiSQL):** 55,968 examples, 10 epochs (8,750 steps). Training NLL fell from 1.723 to 0.098. Saved as `wikisql_checkpoint.pt`.
@@ -289,8 +329,18 @@ The full-dev re-decode of the Stage-1 checkpoint with the rendering fix was queu
 | WikiSQL "26,575 tables" | 26,531 table entries in the release files; 24,241 tables per the paper |
 | Template "returns an empty prediction" | True for the current code (abstention counts given in §4.1); the evaluated Job 361547 revision never abstained |
 
-### 4.12 Demonstration
-`uv run text-to-sql-demo --demo --model template` runs the scripted three-case showcase on `concert_singer`: an easy count, a filter, and a graceful failure on an unsupported join. `--model lstm` loads the evaluated `spider_checkpoint.pt` with the final decoding configuration. `--question "…" --database <path>` answers an arbitrary question and prints the SQL and result table. The proposal promised a GUI; the Part 2 deliverable is this CLI.
+### 4.12 Demonstration (CLI)
+- **Live training:** `uv run text-to-sql-demo --train-demo` trains a small pointer-generator (embedding 128, hidden 256) from scratch on the 95 Spider *train* questions of `soccer_2` for 60 epochs on a laptop CPU, which takes about 2–3 minutes.
+  - It prints the per-epoch training and held-out NLL.
+  - It shows a probe question decoded *before* training (random output) and *after* training.
+  - It reports execution accuracy on 20 questions it trained on versus 11 held-out questions from the same database. In our rehearsal the scores were 15/20 versus 0/11 (loss 4.88 → 0.09), which reproduces the memorisation gap of §4.3 at small scale.
+  - It saves a checkpoint that the CLI can query immediately with `--model lstm --checkpoint artifacts/train-demo/spider_checkpoint.pt`.
+- **Inference showcase:** `uv run text-to-sql-demo --demo --model template` runs the scripted three-case showcase on `concert_singer`: a count, a filter, and a graceful failure on an unsupported join.
+- **Full LSTM:** `--model lstm` loads the evaluated Job 361547 `spider_checkpoint.pt` with the final decoding configuration.
+- **Arbitrary questions:** `--question "…" --database <path>` answers any question and prints the SQL and the result table. For Spider databases, the CLI now builds the schema from `tables.json`, exactly as during training. Previously it used SQLite introspection, a different serialisation from the one the model was trained on.
+- **Preprocessing walkthrough:** `uv run python -m scripts.show_preprocessing --example <id>` prints the pipeline stages of §3.4 for any example.
+
+The proposal promised a GUI; the Part 2 deliverable is this CLI, which the rubric explicitly allows.
 
 ### 4.13 Deviations from the proposal, limitations and Part 3 targets
 - **Deviations.**

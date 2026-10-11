@@ -359,8 +359,8 @@ Excluded (reason)
 \endlastfoot
 WikiSQL train & 56,355 & 55,968 used in Stage 1 & first 56,000 rows
 loaded (\texttt{-\/-train-limit\ 56000}); 32 excluded \\
-WikiSQL dev & 8,421 & 8,415 & 6 (\texttt{database\_not\_found}: table
-missing from \texttt{dev.db}) \\
+WikiSQL dev & 8,421 & 8,415 & 6 (\texttt{unsupported\_query\_structure}:
+the loader's single-table filter rejected them) \\
 Spider train & 7,000 & 7,000 & 0 \\
 Spider dev & 1,034 & 1,034 & 0 \\
 Spider test & 2,147 & 2,147 & 0 \\
@@ -434,6 +434,138 @@ vocabulary}\label{tokenisation-and-vocabulary}
   \texttt{\textless{}unk\textgreater{}}.
 \end{itemize}
 
+\subsubsection{3.4 Worked preprocessing
+example}\label{worked-preprocessing-example}
+
+This is the output of \texttt{scripts/show\_preprocessing.py}, which
+runs the real pipeline on dev example \texttt{spider-dev-4}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{Question : What is the average, minimum, and maximum age of all singers from France?}
+\NormalTok{Tokens   : what is the average minimum and maximum age of all singers from france   (13)}
+\NormalTok{Schema   : database: concert\_singer / table: concert / columns: {-} Stadium\_ID [text] ...}
+\NormalTok{           (34 lines, 4 tables)}
+\NormalTok{Encoder  : \textless{}bos\textgreater{} what is ... france \textless{}schema\_sep\textgreater{} database concert\_singer table concert}
+\NormalTok{           columns ... \textless{}eos\textgreater{}   (93 tokens)}
+\NormalTok{Gold SQL : SELECT avg(age) , min(age) , max(age) FROM singer WHERE country = \textquotesingle{}France\textquotesingle{}}
+\NormalTok{Target   : SELECT AVG ( age ) , MIN ( age ) , MAX ( age ) FROM singer WHERE country = france}
+\NormalTok{           (every token resolves to the fixed vocabulary; 6 source tokens are copy{-}only)}
+\end{Highlighting}
+\end{Shaded}
+
+Three effects are visible. Punctuation is dropped from the question. The
+literal \texttt{\textquotesingle{}France\textquotesingle{}} loses its
+quotes and its case: it becomes the token \texttt{france}, so the
+decoder can only emit \texttt{france}. That is why §4.4 restores the
+surface form from the question at inference. The schema's column
+\emph{types} (\texttt{text}) sit in the encoder input right next to the
+column names.
+
+\subsubsection{3.5 Corpus statistics (as tokenised for the
+model)}\label{corpus-statistics-as-tokenised-for-the-model}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.0968}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Split
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Examples
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+DBs
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Question tokens
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+SQL tokens
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Encoder tokens (max; \textgreater{} 256)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Tables / columns per schema
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Target tokens: vocab / copy / unk
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Train & 7,000 & 140 & 12.8 & 21.7 & 136 (899; 556) & 6.0 / 32.5 &
+100.0\% / 0.0\% / 0.0\% \\
+Dev & 1,034 & 20 & 12.4 & 21.5 & 104 (242; 0) & 4.5 / 24.8 & 90.9\% /
+8.7\% / 0.4\% \\
+Test & 2,147 & 40 & 12.5 & 22.6 & 100 (278; 99) & 4.9 / 20.9 & 91.8\% /
+7.7\% / 0.5\% \\
+\end{longtable}
+}
+
+\textbf{The key observation is that the copy mechanism is never
+trained.} The vocabulary contains every training token, so on Spider
+train \emph{every} target token can be generated from the fixed
+vocabulary, and the copy path receives no supervision. On dev and test,
+8.7\% and 7.7\% of target tokens can \emph{only} be produced by copying:
+unseen table names, column names and values. The model therefore meets
+the exact case the pointer mechanism exists for only at test time, which
+helps explain the schema-linking failures in §4.9. The Part 3 remedy is
+to keep schema identifiers out of the fixed vocabulary, or apply a
+frequency threshold, so that copying is learned.
+
+\subsubsection{3.6 Dataset limitations}\label{dataset-limitations}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Spider.}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \emph{Paraphrase pairs:} most queries appear with two phrasings,
+    which inflates in-domain accuracy. Our dev and test splits are
+    database-disjoint, so this does not leak across splits.
+  \item
+    \emph{Coverage:} the data is English only and concentrated in
+    college, business and entertainment schemas. Dev has only 20
+    databases, so per-database variance is high.
+  \item
+    \emph{Small databases:} these allow coincidental execution matches;
+    §4.9 shows a template example.
+  \item
+    \emph{Annotation conventions:} gold SQL uses inconsistent quoting
+    (\texttt{"blues"} vs
+    \texttt{\textquotesingle{}France\textquotesingle{}}), stray trailing
+    semicolons and mixed identifier case. These break string match but
+    not execution or exact-set match.
+  \item
+    \emph{Data quality:} one database (\texttt{wta\_1}) stores non-UTF-8
+    text.
+  \item
+    \emph{Difficulty imbalance:} 43\% of dev is medium, and extra-hard
+    is only 16\%.
+  \end{itemize}
+\item
+  \textbf{WikiSQL.}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Single-table only, with one aggregate and \texttt{AND}-only
+    conditions.
+  \item
+    Values are stored as text, column names contain spaces and
+    punctuation, and it is known to contain noisy annotations.
+  \item
+    It therefore checks pipeline mechanics, not compositional parsing.
+  \end{itemize}
+\end{itemize}
+
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
 \subsection{Section (d): Methods, Evaluation Protocol, Results and Error
@@ -465,9 +597,12 @@ BiLSTM}\label{baseline-2-pointer-generator-bilstm}
 \tightlist
 \item
   \textbf{Encoder:} 2-layer bidirectional LSTM. Embedding 256, hidden
-  256 per direction, so 512-d concatenated states. Packed sequences;
-  training inputs are truncated at 256 tokens (no dev or test input
-  exceeds 242).
+  256 per direction, so 512-d concatenated states. Packed sequences.
+  Training inputs are truncated at 256 tokens, which cuts 556 of the
+  7,000 Spider training inputs and hides their alphabetically-last
+  tables. Inference does not truncate: no dev input exceeds 242 tokens,
+  but 99 of 2,147 test inputs do (maximum 278). This train/inference
+  mismatch is a known limitation.
 \item
   \textbf{Decoder:} 2-layer LSTM with hidden size 512, initialised from
   projected final encoder states. The input is
@@ -491,7 +626,8 @@ BiLSTM}\label{baseline-2-pointer-generator-bilstm}
 361547)}\label{training-hpc-job-361547}
 
 Hardware: one NVIDIA RTX PRO 6000 Blackwell MPS slice (50\%), 4 CPUs and
-80 GB RAM. Total wall time 49 min.
+80 GB RAM. The whole job, training plus evaluation, took 50 min of wall
+time (04:41 to 05:31 IST).
 
 \begin{itemize}
 \tightlist
@@ -1049,16 +1185,58 @@ never abstained \\
 \end{longtable}
 }
 
-\subsubsection{4.12 Demonstration}\label{demonstration}
+\subsubsection{4.12 Demonstration (CLI)}\label{demonstration-cli}
 
-\texttt{uv\ run\ text-to-sql-demo\ -\/-demo\ -\/-model\ template} runs
-the scripted three-case showcase on \texttt{concert\_singer}: an easy
-count, a filter, and a graceful failure on an unsupported join.
-\texttt{-\/-model\ lstm} loads the evaluated
-\texttt{spider\_checkpoint.pt} with the final decoding configuration.
-\texttt{-\/-question\ "…"\ -\/-database\ \textless{}path\textgreater{}}
-answers an arbitrary question and prints the SQL and result table. The
-proposal promised a GUI; the Part 2 deliverable is this CLI.
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Live training:}
+  \texttt{uv\ run\ text-to-sql-demo\ -\/-train-demo} trains a small
+  pointer-generator (embedding 128, hidden 256) from scratch on the 95
+  Spider \emph{train} questions of \texttt{soccer\_2} for 60 epochs on a
+  laptop CPU, which takes about 2--3 minutes.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    It prints the per-epoch training and held-out NLL.
+  \item
+    It shows a probe question decoded \emph{before} training (random
+    output) and \emph{after} training.
+  \item
+    It reports execution accuracy on 20 questions it trained on versus
+    11 held-out questions from the same database. In our rehearsal the
+    scores were 15/20 versus 0/11 (loss 4.88 → 0.09), which reproduces
+    the memorisation gap of §4.3 at small scale.
+  \item
+    It saves a checkpoint that the CLI can query immediately with
+    \texttt{-\/-model\ lstm\ -\/-checkpoint\ artifacts/train-demo/spider\_checkpoint.pt}.
+  \end{itemize}
+\item
+  \textbf{Inference showcase:}
+  \texttt{uv\ run\ text-to-sql-demo\ -\/-demo\ -\/-model\ template} runs
+  the scripted three-case showcase on \texttt{concert\_singer}: a count,
+  a filter, and a graceful failure on an unsupported join.
+\item
+  \textbf{Full LSTM:} \texttt{-\/-model\ lstm} loads the evaluated Job
+  361547 \texttt{spider\_checkpoint.pt} with the final decoding
+  configuration.
+\item
+  \textbf{Arbitrary questions:}
+  \texttt{-\/-question\ "…"\ -\/-database\ \textless{}path\textgreater{}}
+  answers any question and prints the SQL and the result table. For
+  Spider databases, the CLI now builds the schema from
+  \texttt{tables.json}, exactly as during training. Previously it used
+  SQLite introspection, a different serialisation from the one the model
+  was trained on.
+\item
+  \textbf{Preprocessing walkthrough:}
+  \texttt{uv\ run\ python\ -m\ scripts.show\_preprocessing\ -\/-example\ \textless{}id\textgreater{}}
+  prints the pipeline stages of §3.4 for any example.
+\end{itemize}
+
+The proposal promised a GUI; the Part 2 deliverable is this CLI, which
+the rubric explicitly allows.
 
 \subsubsection{4.13 Deviations from the proposal, limitations and Part 3
 targets}\label{deviations-from-the-proposal-limitations-and-part-3-targets}

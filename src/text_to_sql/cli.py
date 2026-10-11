@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 from .baselines.template import TemplateBaseline
 from .data.schema import DatabaseSchema
+from .data.spider import _schema_from_metadata
 from .data.sqlite_schema import load_sqlite_schema
 from .evaluation.metrics import execute_read_only
 
@@ -89,7 +91,43 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Path to LSTM model checkpoint if using --model lstm.",
     )
+    parser.add_argument(
+        "--train-demo",
+        action="store_true",
+        help="Train a small LSTM live on CPU (a few minutes) and evaluate it on held-out questions.",
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=60,
+        help="Epochs for --train-demo (default: 60, about 2-3 minutes on a laptop CPU).",
+    )
+    parser.add_argument(
+        "--train-databases",
+        type=str,
+        default="soccer_2",
+        help="Comma-separated Spider train databases for --train-demo.",
+    )
     return parser
+
+
+def load_demo_schema(db_path: Path, database_id: str) -> DatabaseSchema:
+    """Load the schema in the same form the models were trained on.
+
+    For a Spider database (``.../database/<db_id>/<db_id>.sqlite``) this reads
+    the official ``tables.json`` metadata, as the training loader does, so the
+    LSTM sees the same serialization (``[text]``/``[number]`` types, real
+    database name). Other databases fall back to SQLite introspection.
+    """
+    spider_root = db_path.resolve().parent.parent.parent
+    for tables_name in ("tables.json", "test_tables.json"):
+        tables_path = spider_root / tables_name
+        if not tables_path.is_file():
+            continue
+        for record in json.loads(tables_path.read_text(encoding="utf-8")):
+            if record.get("db_id") == db_path.stem:
+                return _schema_from_metadata(record, db_path.stem)
+    return load_sqlite_schema(db_path, database_id)
 
 
 def format_table(columns: tuple[str, ...], rows: list[tuple[object, ...]]) -> str:
@@ -170,7 +208,7 @@ def run_scripted_demo(
         print(f"Error: Demo database file not found at {db_path}", file=sys.stderr)
         return 1
 
-    schema = load_sqlite_schema(db_path, database_id)
+    schema = load_demo_schema(db_path, database_id)
     print("=" * 70)
     print(f"  TEXT-TO-SQL PART 2 LIVE DEMO SHOWCASE (Model: {model_name})")
     print(f"  Database: {database_id} ({db_path})")
@@ -204,6 +242,14 @@ def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
+    if args.train_demo:
+        from .lstm.train_demo import run_training_demo
+
+        return run_training_demo(
+            databases=tuple(db.strip() for db in args.train_databases.split(",") if db.strip()),
+            epochs=args.epochs,
+        )
+
     db_path = args.database or DEFAULT_DEMO_DB
     if not db_path.is_file():
         print(
@@ -228,7 +274,8 @@ def main() -> int:
         )
         return 1
 
-    schema = load_sqlite_schema(db_path, args.database_id)
+    database_id = args.database_id if args.database_id != "demo-database" else db_path.stem
+    schema = load_demo_schema(db_path, database_id)
     sql, success, display = run_query(
         args.question,
         schema,
