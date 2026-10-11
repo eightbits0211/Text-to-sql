@@ -13,7 +13,7 @@ abstract: |
 ---
 
 
-# Introduction and Task Formulation
+# Introduction to the NLP Task
 
 ## Motivation
 Relational databases hold most structured enterprise and scientific data. Writing SQL against them requires knowing SQL syntax, relational operations (projection, selection, grouping, joins) and the exact table and column names of each schema. Text-to-SQL removes this barrier by translating a natural-language question into an executable query, giving non-technical users conversational access to structured data.
@@ -29,7 +29,7 @@ Given a question $Q=(q_1,\dots,q_m)$ and a schema $\mathcal{S}=(\mathcal{T},\mat
 $$\hat{Y}=\arg\max_Y \prod_{t=1}^{n} P(y_t\mid y_{<t},Q,\mathcal{S}).$$
 
 
-# Literature Survey
+# Literature Survey: Why the Problem Matters
 
 ## Rule-based semantic parsing
 PRECISE (Popescu et al., 2003) maps words to database elements through bipartite matching and guarantees precision on the questions it accepts, but its recall drops sharply outside its patterns. SCFG (Wong and Mooney, 2007) and CCG (Zettlemoyer and Collins, 2005) parsers induce logical forms but need domain lexicons and do not transfer across schemas.
@@ -58,7 +58,7 @@ Table: Exact-match accuracy of the original Spider baselines (Yu et al., 2018, T
 These numbers come from the original 2018 release and evaluator, which ignored literal values. They give an order-of-magnitude reference, not a like-for-like comparison. Later systems close the gap through relation-aware schema encoding (RAT-SQL; Wang et al., 2020), constrained decoding (PICARD; Scholak et al., 2021), and schema ranking with pre-trained seq2seq models (RESDSQL; Li et al., 2023). Our Part 2 model belongs to the Seq2Seq+Copying family.
 
 
-# Datasets, Preprocessing and Serialisation
+# Dataset and Preprocessing
 
 ## Datasets and splits
 
@@ -101,7 +101,7 @@ foreign_keys:
   - singer_in_concert.Singer_ID -> singer.Singer_ID
 ```
 
-The encoder input is `<bos> question <schema_sep> schema <eos>`, where both parts are tokenised by the regex lexer in `lstm/preprocessing.py`. Column *types* (`text`, `number`) and markup words (`table`, `columns`) become ordinary copyable source tokens. Section 4.8 shows this was the largest single source of invalid SQL.
+The encoder input is `<bos> question <schema_sep> schema <eos>`, where both parts are tokenised by the regex lexer in `lstm/preprocessing.py`. Column *types* (`text`, `number`) and markup words (`table`, `columns`) become ordinary copyable source tokens. Section d.8 shows this was the largest single source of invalid SQL.
 
 ## Tokenisation and vocabulary
 - **Lexer.** It keeps SQL punctuation and operators, splits `t1.col` into `t1 . col`, upper-cases SQL keywords and lower-cases everything else. A quoted literal becomes one unquoted, lower-cased token (`'United States'` → `united states`).
@@ -123,7 +123,7 @@ Target   : SELECT AVG ( age ) , MIN ( age ) , MAX ( age ) FROM singer WHERE coun
            (every token resolves to the fixed vocabulary; 6 source tokens are copy-only)
 ```
 
-Three effects are visible. Punctuation is dropped from the question. The literal `'France'` loses its quotes and its case: it becomes the token `france`, so the decoder can only emit `france`. That is why §4.4 restores the surface form from the question at inference. The schema's column *types* (`text`) sit in the encoder input right next to the column names.
+Three effects are visible. Punctuation is dropped from the question. The literal `'France'` loses its quotes and its case: it becomes the token `france`, so the decoder can only emit `france`. That is why §d.4 restores the surface form from the question at inference. The schema's column *types* (`text`) sit in the encoder input right next to the column names.
 
 ## Corpus statistics (as tokenised for the model)
 
@@ -135,15 +135,15 @@ Table: Spider corpus statistics as tokenised for the model.
 | Dev | 1,034 | 20 | 12.4 | 21.5 | 104 (242; 0) | 4.5 / 24.8 | 90.9% / 8.7% / 0.4% |
 | Test | 2,147 | 40 | 12.5 | 22.6 | 100 (278; 99) | 4.9 / 20.9 | 91.8% / 7.7% / 0.5% |
 
-**The key observation is that the copy mechanism is never trained.** The vocabulary contains every training token, so on Spider train *every* target token can be generated from the fixed vocabulary, and the copy path receives no supervision. On dev and test, 8.7% and 7.7% of target tokens can *only* be produced by copying: unseen table names, column names and values. The model therefore meets the exact case the pointer mechanism exists for only at test time, which helps explain the schema-linking failures in §4.9. The Part 3 remedy is to keep schema identifiers out of the fixed vocabulary, or apply a frequency threshold, so that copying is learned.
+**The key observation is that the copy mechanism is never trained.** The vocabulary contains every training token, so on Spider train *every* target token can be generated from the fixed vocabulary, and the copy path receives no supervision. On dev and test, 8.7% and 7.7% of target tokens can *only* be produced by copying: unseen table names, column names and values. The model therefore meets the exact case the pointer mechanism exists for only at test time, which helps explain the schema-linking failures in §d.9. The Part 3 remedy is to keep schema identifiers out of the fixed vocabulary, or apply a frequency threshold, so that copying is learned.
 
 ## Dataset limitations
-**Spider.** Most queries appear with two paraphrased questions, which inflates in-domain accuracy. This does not leak across our database-disjoint splits, but it matters for the small live training demo (§4.12). Coverage is English-only and skewed towards college, business and entertainment schemas, and dev has only 20 databases, so per-database variance is high. Small databases allow coincidental execution matches (§4.9 shows one). Gold SQL follows inconsistent conventions: `"blues"` vs `'France'` quoting, stray trailing semicolons and mixed identifier case. These break string match but not execution or exact-set match. One database (`wta_1`) stores non-UTF-8 text. Difficulty is imbalanced: 43% of dev is medium and only 16% is extra-hard.
+**Spider.** Most queries appear with two paraphrased questions, which inflates in-domain accuracy. This does not leak across our database-disjoint splits, but it matters for the small live training demo (§d.12). Coverage is English-only and skewed towards college, business and entertainment schemas, and dev has only 20 databases, so per-database variance is high. Small databases allow coincidental execution matches (§d.9 shows one). Gold SQL follows inconsistent conventions: `"blues"` vs `'France'` quoting, stray trailing semicolons and mixed identifier case. These break string match but not execution or exact-set match. One database (`wta_1`) stores non-UTF-8 text. Difficulty is imbalanced: 43% of dev is medium and only 16% is extra-hard.
 
 **WikiSQL.** Each question targets a single table with at most one aggregate and `AND`-only conditions. Values are stored as text, column names contain spaces and punctuation, and the annotations are known to be noisy. It therefore tests pipeline mechanics rather than compositional parsing.
 
 
-# Methods, Evaluation Protocol, Results and Error Analysis
+# Method, Experiments and Results
 
 ## Baseline 1: deterministic template parser
 `baselines/template.py` matches question tokens to table and column names, detects numeric and quoted literals, comparison phrases, aggregation cues (`how many` → `COUNT`, `average` → `AVG`), `DISTINCT` and ordering cues, and fills a single-table template. It never generates joins. When it finds no confident single-table interpretation it **abstains** with an empty string. In the current code it abstains on **92 of 1,034** dev questions (8.9%) and 208 of 2,147 test questions. Every abstention counts as invalid SQL. *(The Job 361547 run used an earlier revision that never abstained; its EX was identical, 60/1,034.)* Apart from abstentions the template produced no SQLite errors, so its low invalid rate reflects conservative, single-table output.
@@ -154,7 +154,7 @@ Table: Spider corpus statistics as tokenised for the model.
 - **Encoder:** 2-layer bidirectional LSTM. Embedding 256, hidden 256 per direction, so 512-d concatenated states. Packed sequences. Training inputs are truncated at 256 tokens, which cuts 556 of the 7,000 Spider training inputs and hides their alphabetically-last tables. Inference does not truncate: no dev input exceeds 242 tokens, but 99 of 2,147 test inputs do (maximum 278). This train/inference mismatch is a known limitation.
 - **Decoder:** 2-layer LSTM with hidden size 512, initialised from projected final encoder states. The input is $[\text{emb}(y_{t-1});\,c_{t-1}]$.
 - **Attention:** additive, $e_{t,i}=v^\top\tanh(W_h h_i+W_s s_t)$.
-- **Copy gate:** $p_{\text{gen}}=\sigma(W[s_t;c_t;\text{emb}(y_{t-1})]+b)$, mixing $P_{\text{vocab}}$ with the attention-weighted copy distribution as in §2.3.
+- **Copy gate:** $p_{\text{gen}}=\sigma(W[s_t;c_t;\text{emb}(y_{t-1})]+b)$, mixing $P_{\text{vocab}}$ with the attention-weighted copy distribution as in §b.3.
 - **Dropout** 0.2. **Decoding:** greedy, at most 128 tokens, with `<pad>`/`<unk>` masked.
 
 ## Training (HPC Job 361547)
@@ -187,7 +187,7 @@ The final pipeline is decode, then render, then repair. All steps operate on the
 
 **Splits and uncertainty.** All development decisions were made on Spider dev. **Spider test was run once**, after the configuration was frozen. WikiSQL dev serves as a single-table diagnostic. We report Wilson or bootstrap 95% intervals (10,000 resamples, seed 42) and exact two-sided McNemar tests on paired per-example outcomes. The main results come from a single training run (seed 42). Replication runs with further seeds were still in progress at submission and are reported in the repository log.
 
-**Sanity check.** Submitting the gold SQL as the prediction gives **100% strict EX** on Spider dev (1,034/1,034) and Spider test (2147/2,147) and WikiSQL dev (8,415/8,415). This check exposed one harness bug, now fixed: two dev gold queries on `wta_1` crashed on non-UTF-8 text and could never be scored. Gold-equals-gold cannot detect a gold query that runs but means nothing, so we also checked that gold queries return real answers. That exposed a far more serious WikiSQL bug, described in §4.11.
+**Sanity check.** Submitting the gold SQL as the prediction gives **100% strict EX** on Spider dev (1,034/1,034) and Spider test (2147/2,147) and WikiSQL dev (8,415/8,415). This check exposed one harness bug, now fixed: two dev gold queries on `wta_1` crashed on non-UTF-8 text and could never be scored. Gold-equals-gold cannot detect a gold query that runs but means nothing, so we also checked that gold queries return real answers. That exposed a far more serious WikiSQL bug, described in §d.11.
 
 ## Main results
 
@@ -313,9 +313,9 @@ Table: WikiSQL dev (all 8,415 examples, corrected harness), Stage-1 checkpoint.
 With the same Stage-1 weights, rendering takes strict EX from 5.76% to 17.15% and invalid SQL from 81.1% to 32.5% (958 vs 0 questions gained vs lost). The remaining invalid queries are 1,890 syntax errors and 822 unknown columns. The syntax errors typically come from a hallucinated multi-word column name: one that exists in some training table but not in the current table (e.g. `points for`, `year born`), so it is never quoted. Both are schema-linking failures, as on Spider. Unlike on Spider, the LSTM is clearly the stronger system here: the template's single-table heuristics reach only 2.65%. Its previously measured 7.23% came almost entirely from coincidental empty-result matches under the broken harness. Both systems remain far below published WikiSQL models: Seq2SQL reports 59.4% and SQLNet 68.0% test execution accuracy (Xu et al., 2017).
 
 ## Demonstration (CLI)
-**Live training.** `uv run text-to-sql-demo --train-demo` trains a small pointer-generator (embedding 128, hidden 256) from scratch on the 95 Spider *train* questions of `soccer_2`, for 60 epochs on a laptop CPU, which takes about 2–3 minutes. It prints the per-epoch training and held-out NLL. It decodes a probe question with random weights before training and again after. It then reports execution accuracy on 20 questions the model trained on and on 11 held-out questions from the same database. In our rehearsal the loss fell from 4.88 to 0.09, and the model scored 15/20 on seen questions but 0/11 on held-out ones. That is the memorisation gap of §4.3 at small scale. The saved checkpoint can be queried at once with `--model lstm --checkpoint artifacts/train-demo/spider_checkpoint.pt`.
+**Live training.** `uv run text-to-sql-demo --train-demo` trains a small pointer-generator (embedding 128, hidden 256) from scratch on the 95 Spider *train* questions of `soccer_2`, for 60 epochs on a laptop CPU, which takes about 2–3 minutes. It prints the per-epoch training and held-out NLL. It decodes a probe question with random weights before training and again after. It then reports execution accuracy on 20 questions the model trained on and on 11 held-out questions from the same database. In our rehearsal the loss fell from 4.88 to 0.09, and the model scored 15/20 on seen questions but 0/11 on held-out ones. That is the memorisation gap of §d.3 at small scale. The saved checkpoint can be queried at once with `--model lstm --checkpoint artifacts/train-demo/spider_checkpoint.pt`.
 
-**Inference.** `--demo --model template` runs a scripted three-case showcase on `concert_singer`: a count, a filter, and a graceful failure on an unsupported join. `--model lstm` loads the evaluated Job 361547 checkpoint with the final decoding configuration. `--question "…" --database <path>` answers any question and prints the SQL and the result table. For Spider databases, the CLI builds the schema from `tables.json`, so the serialisation matches training exactly. `scripts/show_preprocessing.py` prints the pipeline stages of §3.4 for any example.
+**Inference.** `--demo --model template` runs a scripted three-case showcase on `concert_singer`: a count, a filter, and a graceful failure on an unsupported join. `--model lstm` loads the evaluated Job 361547 checkpoint with the final decoding configuration. `--question "…" --database <path>` answers any question and prints the SQL and the result table. For Spider databases, the CLI builds the schema from `tables.json`, so the serialisation matches training exactly. `scripts/show_preprocessing.py` prints the pipeline stages of §c.4 for any example.
 
 # Reproducibility {-}
 

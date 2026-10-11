@@ -7,6 +7,12 @@ from pathlib import Path
 
 import torch
 
+# Root of the external data directory (datasets, checkpoints, tools). Data is
+# never committed; override with TEXT2SQL_DATA_ROOT on another machine.
+DATA_ROOT = Path(os.environ.get("TEXT2SQL_DATA_ROOT", "/Users/roshini/datasets/text-to-sql"))
+SPIDER_ROOT = DATA_ROOT / "spider" / "spider_data"
+LSTM_CHECKPOINT_DIR = DATA_ROOT / "artifacts-lstm-gpu-run" / "lstm-checkpoint"
+
 
 def seed_everything(seed: int = 42) -> None:
     """Set deterministic seeds across random, torch, and CUDA."""

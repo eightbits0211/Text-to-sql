@@ -8,7 +8,7 @@ pandoc part-2-report.md \
   --standalone --number-sections --pdf-engine=xelatex \
   -V documentclass=article -V fontsize=11pt -V geometry:margin=1in \
   -V colorlinks=true -V linkcolor=blue!60!black -V urlcolor=blue!60!black \
-  -V header-includes='\usepackage{float}\floatplacement{figure}{H}' \
+  -V header-includes='\usepackage{float}\floatplacement{figure}{H}\renewcommand{\thesection}{\alph{section}}' \
   -o part-2-report.tex
 for _ in 1 2; do
   xelatex -interaction=nonstopmode -halt-on-error part-2-report.tex >/dev/null

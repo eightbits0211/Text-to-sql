@@ -17,6 +17,7 @@ import statistics
 from collections import Counter
 from pathlib import Path
 
+from text_to_sql.config import LSTM_CHECKPOINT_DIR, SPIDER_ROOT
 from text_to_sql.data.contracts import DatasetSplit, ExampleRecord
 from text_to_sql.data.spider import load_spider
 from text_to_sql.lstm.preprocessing import (
@@ -26,10 +27,8 @@ from text_to_sql.lstm.preprocessing import (
     tokenize_example,
 )
 
-_SPIDER = Path("/Users/roshini/datasets/text-to-sql/spider/spider_data")
-_VOCAB = Path(
-    "/Users/roshini/datasets/text-to-sql/artifacts-lstm-gpu-run/lstm-checkpoint/vocabulary.json"
-)
+_SPIDER = SPIDER_ROOT
+_VOCAB = LSTM_CHECKPOINT_DIR / "vocabulary.json"
 
 
 def load_vocabulary(path: Path) -> FixedVocabulary:
