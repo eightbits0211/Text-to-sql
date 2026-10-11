@@ -6,9 +6,9 @@ before ending every work session.
 ## In-Flight Execution Ledger (Context Continuity)
 - **Active Role:** Lead Agent
 - **Current Milestone:** Part 2 critical-review remediation (submission 2026-10-12)
-- **Active Task:** Finalize the rewritten report after the HPC multi-seed and WikiSQL decode jobs finish
+- **Active Task:** Part 2 complete (report, code bundle, demo)
 - **Last Completed Action:** Spider dev/test ablations, official-evaluator scoring, statistical analysis, docs rewrite
-- **Immediate Next Action:** Sync HPC outputs (jobs 389818/389819 training, 389954 WikiSQL decode, 389932 seed decode), fill the report placeholders, rebuild the PDF
+- **Immediate Next Action:** None outstanding. Upload ~/Desktop/CS-F429-Part2-LMS/ files to LMS; rehearse the viva (docs/viva-qa-prep.md). All HPC jobs (389817-389819, 389932, 389954) completed and synced.
 - **Resumption Invariant:** If session compacts, token limits expire, or models switch, inspect this ledger first to resume seamlessly.
 
 ### Remediation pass (2026-10-11): key facts
