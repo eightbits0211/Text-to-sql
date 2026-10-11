@@ -699,11 +699,11 @@ operate on the same trained weights.
 \emph{Exact-set match} (EM) compares SQL component by component and
 ignores literal values. \emph{Execution accuracy} (EX) compares result
 multisets, and row order matters only when the gold query has
-\texttt{ORDER\ BY}. Test-suite accuracy needs a separate
-\textasciitilde1 GB set of distilled databases, which was not available
-offline, so it is left to Part 3.
-
-\textbf{Harness metrics.} Our own harness
+\texttt{ORDER\ BY}. Test-suite accuracy (Zhong et al., 2020) needs a
+separate \textasciitilde1 GB set of distilled databases, covering Spider
+dev only. Its official download was over its quota at the time of
+writing, so it is deferred to Part 3. Execution accuracy can therefore
+still contain coincidental matches; §d.9 shows one.** Our own harness
 (\texttt{evaluation/metrics.py}) records four per-example outcomes for
 every dataset:
 
@@ -1236,6 +1236,74 @@ databases, the CLI builds the schema from \texttt{tables.json}, so the
 serialisation matches training exactly.
 \texttt{scripts/show\_preprocessing.py} prints the pipeline stages of
 §c.4 for any example.
+
+\subsection{Targets for Part 3}\label{targets-for-part-3}
+
+The proposal fixes the Part 3 plan: fine-tune \textbf{T5} as the modern
+model, and add a novelty, either \emph{constrained decoding} or a
+\emph{self-correction loop}, that must improve execution accuracy over
+that T5 baseline. The targets below are anchored to our measured Part 2
+baselines and to published results. All are scored with the official
+evaluator on Spider test, run once, as mean ± std over at least 3 seeds.
+Early stopping uses a database-disjoint validation split carved from
+Spider \emph{train}.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1765}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1765}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2353}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2353}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1765}}@{}}
+\caption{Numeric targets for Part 3 (Spider test unless
+stated).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Goal
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Metric
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Best Part 2 result
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Part 3 target
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Reference point
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Goal
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Metric
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Best Part 2 result
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Part 3 target
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Reference point
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Modern baseline works & Official EX (dev) & 9.9\% (template) & ≥ 45\% &
+T5-Base, schema only: 57.9\% dev EX (Scholak et al., 2021, Table 1),
+trained far longer (up to 3,072 epochs, batch 2,048) \\
+Classical → modern gain & Official EX & 9.5\% (template); 7.2\% (LSTM) &
+≥ 35\%, McNemar p \textless{} 0.05 vs template & --- \\
+Multi-table queries & Strict EX, 908 multi-table questions & 0.7\%
+(LSTM); 0.3\% (template) & ≥ 25\% & --- \\
+Novelty beats T5 baseline & Official EX & --- & Gain with McNemar p
+\textless{} 0.05 in every seed & PICARD: T5-Base 57.9\% → 68.4\% dev EX
+(Scholak et al., 2021) \\
+Valid SQL & Invalid-SQL rate & 72.7\% (LSTM) & ≤ 5\% & PICARD: T5-3B
+invalid predictions 12\% → 2\% on dev \\
+Schema linking & Identifier recall & 45.1\% (LSTM) & ≥ 75\% & --- \\
+\end{longtable}
+
+We will also report test-suite accuracy (Zhong et al., 2020) on Spider
+dev once the distilled test-suite databases can be obtained; the
+official download was over its quota at the time of writing.
 
 \section*{Reproducibility}\label{reproducibility}
 \addcontentsline{toc}{section}{Reproducibility}

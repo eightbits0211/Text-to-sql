@@ -176,9 +176,7 @@ The final pipeline is decode, then render, then repair. All steps operate on the
 3. **Schema-aware repair** (`lstm/sql_repair.py`, unchanged in substance). It normalises spacing, re-quotes leftover bare literals, replaces hallucinated `FROM` tables with the schema table sharing the most columns, collapses single-table WikiSQL queries to the sole table, and balances parentheses. It now leaves the inside of quoted literals untouched.
 
 ## Evaluation protocol
-**Official metrics.** Spider is scored with the official evaluator (`taoyds/test-suite-sql-eval`, `evaluation.py --etype all`) on Spider's own databases. *Exact-set match* (EM) compares SQL component by component and ignores literal values. *Execution accuracy* (EX) compares result multisets, and row order matters only when the gold query has `ORDER BY`. Test-suite accuracy needs a separate ~1 GB set of distilled databases, which was not available offline, so it is left to Part 3.
-
-**Harness metrics.** Our own harness (`evaluation/metrics.py`) records four per-example outcomes for every dataset:
+**Official metrics.** Spider is scored with the official evaluator (`taoyds/test-suite-sql-eval`, `evaluation.py --etype all`) on Spider's own databases. *Exact-set match* (EM) compares SQL component by component and ignores literal values. *Execution accuracy* (EX) compares result multisets, and row order matters only when the gold query has `ORDER BY`. Test-suite accuracy (Zhong et al., 2020) needs a separate ~1 GB set of distilled databases, covering Spider dev only. Its official download was over its quota at the time of writing, so it is deferred to Part 3. Execution accuracy can therefore still contain coincidental matches; §d.9 shows one.** Our own harness (`evaluation/metrics.py`) records four per-example outcomes for every dataset:
 
 - *Strict EX* requires result-column labels (case-insensitive) and row order to agree as well.
 - *EX with official semantics* ignores labels and compares rows as multisets.
@@ -316,6 +314,22 @@ With the same Stage-1 weights, rendering takes strict EX from 5.76% to 17.15% an
 **Live training.** `uv run text-to-sql-demo --train-demo` trains a small pointer-generator (embedding 128, hidden 256) from scratch on the 95 Spider *train* questions of `soccer_2`, for 60 epochs on a laptop CPU, which takes about 2–3 minutes. It prints the per-epoch training and held-out NLL. It decodes a probe question with random weights before training and again after. It then reports execution accuracy on 20 questions the model trained on and on 11 held-out questions from the same database. In our rehearsal the loss fell from 4.88 to 0.09, and the model scored 15/20 on seen questions but 0/11 on held-out ones. That is the memorisation gap of §d.3 at small scale. The saved checkpoint can be queried at once with `--model lstm --checkpoint artifacts/train-demo/spider_checkpoint.pt`.
 
 **Inference.** `--demo --model template` runs a scripted three-case showcase on `concert_singer`: a count, a filter, and a graceful failure on an unsupported join. `--model lstm` loads the evaluated Job 361547 checkpoint with the final decoding configuration. `--question "…" --database <path>` answers any question and prints the SQL and the result table. For Spider databases, the CLI builds the schema from `tables.json`, so the serialisation matches training exactly. `scripts/show_preprocessing.py` prints the pipeline stages of §c.4 for any example.
+
+## Targets for Part 3
+The proposal fixes the Part 3 plan: fine-tune **T5** as the modern model, and add a novelty, either *constrained decoding* or a *self-correction loop*, that must improve execution accuracy over that T5 baseline. The targets below are anchored to our measured Part 2 baselines and to published results. All are scored with the official evaluator on Spider test, run once, as mean ± std over at least 3 seeds. Early stopping uses a database-disjoint validation split carved from Spider *train*.
+
+Table: Numeric targets for Part 3 (Spider test unless stated).
+
+| Goal | Metric | Best Part 2 result | Part 3 target | Reference point |
+|---|---|---:|---:|---|
+| Modern baseline works | Official EX (dev) | 9.9% (template) | ≥ 45% | T5-Base, schema only: 57.9% dev EX (Scholak et al., 2021, Table 1), trained far longer (up to 3,072 epochs, batch 2,048) |
+| Classical → modern gain | Official EX | 9.5% (template); 7.2% (LSTM) | ≥ 35%, McNemar p < 0.05 vs template | — |
+| Multi-table queries | Strict EX, 908 multi-table questions | 0.7% (LSTM); 0.3% (template) | ≥ 25% | — |
+| Novelty beats T5 baseline | Official EX | — | Gain with McNemar p < 0.05 in every seed | PICARD: T5-Base 57.9% → 68.4% dev EX (Scholak et al., 2021) |
+| Valid SQL | Invalid-SQL rate | 72.7% (LSTM) | ≤ 5% | PICARD: T5-3B invalid predictions 12% → 2% on dev |
+| Schema linking | Identifier recall | 45.1% (LSTM) | ≥ 75% | — |
+
+We will also report test-suite accuracy (Zhong et al., 2020) on Spider dev once the distilled test-suite databases can be obtained; the official download was over its quota at the time of writing.
 
 # Reproducibility {-}
 
