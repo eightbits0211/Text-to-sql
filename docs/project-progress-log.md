@@ -766,3 +766,25 @@ When changing this log:
 - Re-scored full WikiSQL dev (HPC job 389954 decode): LSTM Stage-1 final 17.15% strict EX vs template 2.65%.
 - Added `--train-demo` (live CPU training), `scripts/show_preprocessing.py`, and Spider-metadata schemas in the CLI.
 - Report: paper-style layout; §4.13 removed; results stated directly, without draft-correction framing.
+
+
+### 2026-10-11 — Second review round, multi-seed results, final report check
+
+- A second critical review (metric score 7/10) found that comparisons were tested on the harness's strict EX
+  while the headline used official EX. It also flagged CIs that ignored database clustering, the template's
+  0% EM printed in the tables, the overstated "copy path never trained" claim, and a near-tautological taxonomy.
+- Fixes:
+  - Per-question official scoring.
+  - Database-clustered bootstrap with McNemar and Holm.
+  - Template identifier quoting (real official EM 5.9% dev / 6.7% test).
+  - Copy-gate measurement (gate copies at 96% of copy-only targets; 0.17 probability on the right token).
+  - Root-cause taxonomy.
+  - 30 s execution timeout: a runaway nested query hung the official evaluator.
+- HPC: seeds 42/7/13 (jobs 389817-389819) and the seed decode (389932) completed. Final-decoding official EX
+  on test is 7.6 +- 0.7%, every seed below the template's 9.5%. Epoch 10 vs 25 shows no gain. Dev NLL is
+  minimal at epoch 2-3 in every seed.
+- Final report check against the project description:
+  - Added dataset domain/source/rationale, embedding type, model-choice rationale, implementation details,
+    an error-mitigation paragraph, and missing citations (Hochreiter, McNemar, Holm, Efron).
+  - Fixed one cross-reference and one count.
+- Report: lettered sections a-d, 10pt. The LMS bundle is regenerated from HEAD.

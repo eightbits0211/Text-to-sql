@@ -230,11 +230,11 @@ schemas.
 \subsection{Neural sequence-to-sequence
 parsing}\label{neural-sequence-to-sequence-parsing}
 
-Encoder--decoder LSTMs (Sutskever et al., 2014) with attention (Bahdanau
-et al., 2015) treat Text-to-SQL as translation. Two weaknesses matter
-here. First, identifiers and literals are often out of vocabulary.
-Second, unconstrained decoders emit ungrammatical or schema-inconsistent
-SQL.
+Encoder--decoder LSTMs (Hochreiter and Schmidhuber, 1997; Sutskever et
+al., 2014) with attention (Bahdanau et al., 2015) treat Text-to-SQL as
+translation. Two weaknesses matter here. First, identifiers and literals
+are often out of vocabulary. Second, unconstrained decoders emit
+ungrammatical or schema-inconsistent SQL.
 
 \subsection{Pointer and copy
 mechanisms}\label{pointer-and-copy-mechanisms}
@@ -310,6 +310,10 @@ Spider (Yu et al., 2018)
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
+Domain & Wikipedia tables (open domain) & 138 domains, e.g.~college,
+business, entertainment, government \\
+Source & \texttt{github.com/salesforce/WikiSQL} (BSD-3) &
+\texttt{yale-lily.github.io/spider} (CC BY-SA 4.0) \\
 Role & Stage-1 warm-up and single-table sanity check & Primary
 cross-domain benchmark \\
 Size (release files) & 80,654 questions; 26,531 table entries in
@@ -321,6 +325,13 @@ Operations & \texttt{SELECT}, one aggregate, \texttt{AND} conditions &
 Joins, \texttt{GROUP\ BY}, \texttt{HAVING}, \texttt{ORDER\ BY},
 \texttt{LIMIT}, nesting, set operations \\
 \end{longtable}
+
+\textbf{Why these datasets.} Spider is the standard cross-domain
+multi-table benchmark: its test databases are unseen, which matches our
+objective. Every question ships with an executable SQLite database, so
+execution accuracy can be measured. WikiSQL is large (56k training
+questions) and simple, which makes it a cheap warm-up and a single-table
+sanity check for the pipeline.
 
 \textbf{Per-split retention.} All splits are loaded through the typed
 loaders in \texttt{data/spider.py} and \texttt{data/wikisql.py}. These
@@ -411,7 +422,7 @@ The encoder input is
 where both parts are tokenised by the regex lexer in
 \texttt{lstm/preprocessing.py}. Column \emph{types} (\texttt{text},
 \texttt{number}) and markup words (\texttt{table}, \texttt{columns})
-become ordinary copyable source tokens. Section d.8 shows this was the
+become ordinary copyable source tokens. §d.4 and §d.9 show this was the
 largest single source of invalid SQL.
 
 \subsection{Tokenisation and
@@ -617,11 +628,31 @@ BiLSTM}\label{baseline-2-pointer-generator-bilstm}
   \(P_{\text{vocab}}\) with the attention-weighted copy distribution as
   in §b.3.
 \item
+  \textbf{Embeddings:} word-level, randomly initialised and trained end
+  to end (no pre-trained embeddings, nothing frozen). The encoder and
+  decoder have separate 256-d embedding tables over the shared
+  102,463-token vocabulary.
+\item
   \textbf{Dropout} 0.2. \textbf{Decoding:} greedy, at most 128 tokens,
   with
   \texttt{\textless{}pad\textgreater{}}/\texttt{\textless{}unk\textgreater{}}
   masked.
 \end{itemize}
+
+\textbf{Why these two baselines.} The template parser is the classical
+rule-based reference: lexical matching plus fixed SQL templates, in the
+spirit of PRECISE. The pointer-generator BiLSTM is the canonical
+pre-transformer neural parser. It is the Seq2Seq+Copying family that Yu
+et al.~(2018) evaluated on Spider, so it shows what learning brings over
+rules before any pre-training. Both satisfy the course's definition of a
+classical (pre-transformer) baseline.
+
+\textbf{Implementation.} Python 3.12, PyTorch 2.14 (CUDA 13 on the HPC,
+CPU locally), SQLite through Python's \texttt{sqlite3} (read-only
+connections), and the official Spider evaluator for scoring. The
+environment is pinned with \texttt{uv} (\texttt{uv.lock}), and 87
+\texttt{pytest} unit tests cover loaders, preprocessing, model,
+rendering, metrics and statistics.
 
 \subsection{Training (HPC Job 361547)}\label{training-hpc-job-361547}
 
@@ -675,19 +706,19 @@ operate on the same trained weights.
 \tightlist
 \item
   \textbf{Schema-markup mask}
-  (\texttt{DecodeOptions.mask\_schema\_markup}). This is new.
-  Serialisation tokens (\texttt{text}, \texttt{number}, \texttt{time},
-  \texttt{boolean}, \texttt{others}, \texttt{table}, \texttt{columns},
-  \texttt{primary}, \texttt{key}, \ldots) are given probability 0 during
-  decoding unless the current schema really has an identifier of that
-  name. With base decoding, the bare token \texttt{text} appeared in 278
-  of 1,034 dev predictions.
+  (\texttt{DecodeOptions.mask\_schema\_markup}), added after inspecting
+  dev errors. Serialisation tokens (\texttt{text}, \texttt{number},
+  \texttt{time}, \texttt{boolean}, \texttt{others}, \texttt{table},
+  \texttt{columns}, \texttt{primary}, \texttt{key}, \ldots) are given
+  probability 0 during decoding unless the current schema really has an
+  identifier of that name. With base decoding, the bare token
+  \texttt{text} appeared in 278 of 1,034 dev predictions.
 \item
-  \textbf{Surface-form rendering} (\texttt{lstm/rendering.py}). This is
-  new. Each decoded token is mapped back to its schema spelling
-  (\texttt{School/Club\ Team} is restored and double-quoted). A value
-  token after a comparison operator becomes a single-quoted literal
-  using the question's original casing
+  \textbf{Surface-form rendering} (\texttt{lstm/rendering.py}), also
+  added after inspecting dev errors. Each decoded token is mapped back
+  to its schema spelling (\texttt{School/Club\ Team} is restored and
+  double-quoted). A value token after a comparison operator becomes a
+  single-quoted literal using the question's original casing
   (\texttt{\textquotesingle{}France\textquotesingle{}}, not
   \texttt{\textquotesingle{}france\textquotesingle{}}). A multi-word
   literal stays one literal
@@ -743,9 +774,10 @@ was frozen. WikiSQL dev serves as a single-table diagnostic. Questions
 on the same database are correlated, and Spider pairs most queries with
 a paraphrase, so confidence intervals come from a bootstrap that
 resamples whole \textbf{databases} (10,000 resamples, seed 42). Paired
-comparisons report an exact McNemar test and a paired database-clustered
-bootstrap. Holm's correction is applied across all comparisons in a
-table. Per-question official outcomes are produced by
+comparisons report an exact McNemar test (McNemar, 1947) and a paired
+database-clustered bootstrap (Efron and Tibshirani, 1993). Holm's
+correction (Holm, 1979) is applied across all comparisons in a table.
+Per-question official outcomes are produced by
 \texttt{scripts/official\_per\_example.py}, which mirrors the official
 scoring loop and reproduces its totals exactly. Training was repeated 3
 times (seeds 7, 13, 42) with the identical recipe, as replication runs
@@ -1045,11 +1077,11 @@ rather than correct. Example:
 \texttt{WHERE\ text\ =\ \textquotesingle{}france\textquotesingle{}}
 becomes
 \texttt{WHERE\ Is\_male\ =\ \textquotesingle{}France\textquotesingle{}}.
-Of the roughly 53 queries the mask and rendering made valid, only about
-5 became correct. Invalid-SQL rate is therefore a misleading
-optimisation target: the underlying error is schema linking, not syntax.
-Feeding copied tokens back as \texttt{\textless{}unk\textgreater{}} did
-not help and is not used.
+Of the 52 queries the mask and rendering made valid, only 5 became
+correct. Invalid-SQL rate is therefore a misleading optimisation target:
+the underlying error is schema linking, not syntax. Feeding copied
+tokens back as \texttt{\textless{}unk\textgreater{}} did not help and is
+not used.
 
 \textbf{Epochs.} Our initial 10-epoch run (Job 361487) reached 0.39\%
 SM, and Job 361547, with 25 epochs plus repair, reached 3.29\%. That
@@ -1204,6 +1236,20 @@ different). For example,
 over 20. The EM-confirmed EX column of the main results tables is the
 corresponding conservative accuracy.
 
+\textbf{How these errors can be mitigated.} The recurring pattern is
+schema grounding, not syntax. The model knows when to copy but picks the
+wrong table or column, and joins ignore the foreign-key graph. Our
+analysis points to five concrete remedies. (i) A pre-trained encoder
+with explicit question--schema linking (cross-attention, or value
+matching against database contents), aimed at the 40\% identifier
+recall. (ii) Foreign-key-aware or relation-aware decoding (RAT-SQL
+style) for join paths. (iii) Grammar- and schema-constrained decoding
+(PICARD style), so that nonexistent columns and malformed clauses cannot
+be generated. (iv) A vocabulary that leaves schema identifiers to the
+copy path, so that copying \emph{what} is learned and not only
+\emph{when}. (v) Early stopping at the dev-loss minimum, and no input
+truncation during training. Items (i)--(iii) define Part 3 (§d.13).
+
 \subsection{Qualitative cases (Spider dev; base → final
 decoding)}\label{qualitative-cases-spider-dev-base-final-decoding}
 
@@ -1243,8 +1289,9 @@ decoding)}\label{qualitative-cases-spider-dev-base-final-decoding}
   \emph{``What is maximum and minimum death toll \ldots{}''} →
   \texttt{SELECT\ MAX(caused\_by\_ship\_id),\ MIN(caused\_by\_ship\_id),\ MIN(killed)\ FROM\ death}.
   The aggregate functions are plausible but attached to the wrong
-  columns, plus an extra projection. Aggregation mismatches occur in 167
-  failures.
+  columns, plus an extra projection. Aggregate functions differ from
+  gold in 167 failed predictions; in the root-cause view these failures
+  are attributed to the earlier error, usually a wrong table or column.
 \item
   \textbf{Join hallucination} (\texttt{spider-dev-24}, extra-hard). Gold
   joins \texttt{concert} and \texttt{stadium}. The prediction joins
@@ -1267,8 +1314,8 @@ The predictions are mostly sensible SQL in an unexecutable surface form.
 For example,
 \texttt{SELECT\ player\ FROM\ "table\_1\_10015132\_11"\ WHERE\ no.=\ 42}
 should be \texttt{…\ WHERE\ "No."\ =\ 42}. Multi-word column names were
-emitted unquoted and lower-cased (\texttt{school/club\ team}), and
-repair v1 quoted only the first word of multi-word literals
+emitted unquoted and lower-cased (\texttt{school/club\ team}), and the
+repair step quoted only the first word of multi-word literals
 (\texttt{=\ \textquotesingle{}concord\textquotesingle{}\ hs}). The fault
 lay in the rendering, not the model.
 
@@ -1483,8 +1530,14 @@ Taxonomy, CIs, McNemar, gold sanity check &
   Bahdanau, D., Cho, K., and Bengio, Y. (2015). Neural Machine
   Translation by Jointly Learning to Align and Translate. \emph{ICLR}.
 \item
+  Efron, B., and Tibshirani, R. J. (1993). \emph{An Introduction to the
+  Bootstrap}. Chapman \& Hall.
+\item
   Hochreiter, S., and Schmidhuber, J. (1997). Long Short-Term Memory.
   \emph{Neural Computation} 9(8).
+\item
+  Holm, S. (1979). A Simple Sequentially Rejective Multiple Test
+  Procedure. \emph{Scandinavian Journal of Statistics} 6(2).
 \item
   Li, H., Zhang, J., Li, C., and Chen, H. (2023). RESDSQL: Decoupling
   Schema Linking and Skeleton Parsing for Text-to-SQL. \emph{AAAI}.

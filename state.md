@@ -23,6 +23,13 @@ before ending every work session.
   queries returned nothing. Fixed via per-example TEMP VIEW `execution_prelude`. Corrected WikiSQL dev: LSTM
   Stage-1 final 17.15% strict EX (base 5.76%), template 2.65%.
 - Live training demo: `uv run text-to-sql-demo --train-demo` (soccer_2, 60 epochs, ~2.5 min CPU).
+- Final evaluation (second review round): official EX/EM per question (`scripts/official_per_example.py`),
+  database-clustered CIs + McNemar + Holm (`scripts/official_stats.py`). Template quoting fixed (official EM
+  5.9% dev / 6.7% test). Spider test: template 9.5% EX / 6.7% EM vs LSTM final 7.2% / 5.5%; 3 replication
+  seeds 7.6 +- 0.7% EX, all below template. Copy gate measured (`scripts/measure_copy_gate.py`): copies at 96%
+  of copy-only targets but 0.17 probability on the right token. 30 s execution timeout added.
+- Report: sections lettered a-d, 10pt, 15 pages, built from Markdown via `scripts/build_report.sh`.
+  LMS bundle: `scripts/make_lms_bundle.sh` -> ~/Desktop/CS-F429-Part2-LMS/.
 - Results live outside Git: `/Users/roshini/datasets/text-to-sql/{ablation,analysis,artifacts-seeds}/`;
   official evaluator in `/Users/roshini/datasets/text-to-sql/tools/`.
 - Report: `docs/part-2-report.md` is the single source; build with `scripts/build_report.sh` (pandoc + xelatex).
@@ -302,5 +309,5 @@ before ending every work session.
 | Fallback baseline | Template parser (Spider test: 9.5% official EX) |
 | Overall estimate | 100% (Part 2 Milestone Complete) |
 | HPC Job ID | `361547` (COMPLETED, synchronized locally) |
-| Test suite status | 79 passed, 0 failed, Ruff clean (2026-10-11) |
+| Test suite status | 87 passed, 0 failed, Ruff clean (2026-10-11) |
 | Next review point | Part 2 final freeze review |

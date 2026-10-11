@@ -308,7 +308,7 @@ As of September 24, 2026:
   - *Superseded on 2026-10-11 by the review-remediation pass; see the addendum below.*
 - The interactive demo CLI (`text-to-sql-demo --demo`) is verified with 3 scripted
   queries across both models with formatted ASCII tables.
-- 64/64 unit tests pass cleanly; Ruff clean.
+- 64/64 unit tests passed at that time; 87 pass after the 2026-10-11 remediation. Ruff is clean.
 - **Project audit completed** against NLPpart1.pdf and CS F429 evaluation rubric:
   architecture, datasets, metrics, and pipeline all aligned (estimated score: 16.5–17.5 / 20).
 
@@ -400,5 +400,6 @@ pass addressed them:
 - The forgetting claim was withdrawn: the WikiSQL evaluation used the Stage-1 checkpoint.
 - The report was rewritten from Markdown (single source); the PDF is built by `scripts/build_report.sh`.
 
-Final Spider test: LSTM 7.2% official EX / 5.5% official EM; template 9.5% / 0.0% (6.7% with
-identifier quotes removed).
+Final Spider test: LSTM 7.2% official EX / 5.5% official EM; template 9.5% / 6.7% (after the template
+quoting fix). Three replication seeds: LSTM 7.6 +- 0.7% official EX. WikiSQL dev (corrected harness): LSTM
+17.15% vs template 2.65% EX.
