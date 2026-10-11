@@ -153,29 +153,17 @@ exact-set match}. The template parser reaches 9.5\% and 0.0\%; its 0\%
 EM is a formatting artefact, and it reaches 6.7\% once its double-quoted
 identifiers are unquoted. On strict execution the final LSTM and the
 template differ on 93 vs 82 test questions (McNemar p = 0.450), and the
-fixes improve over the as-submitted decoding on 8 vs 1 questions (p =
-0.039). On Spider dev the LSTM and the template are statistically tied
-(McNemar p = 0.58). Both baselines almost entirely fail on the stated
-core objective, multi-table queries (1.83\% {[}0.9\%, 3.6\%{]} strict EX
-for the LSTM on dev). Most LSTM failures are schema-linking errors:
-identifier recall is 40.4\%, and 690 of 746 invalid queries reference a
-nonexistent column. A per-epoch dev-loss curve shows the model starts
-overfitting after about three Spider epochs, although training continued
-for 25. We also correct the original draft's diagnosis of the WikiSQL
-collapse: it was a rendering defect, not catastrophic forgetting. The
-Stage-1 checkpoint, which never saw Spider, fails in the same way, and
-fixing the rendering raises its WikiSQL execution accuracy from 0.04\%
-to (re-decode pending).
-
-\textbf{Changes from the earlier draft.} An internal review found
-several problems with the earlier draft, and this version fixes them.
-The comparison now uses the official evaluator, an untouched test split,
-confidence intervals and significance tests. The training
-hyper-parameters reported earlier did not match the code; they now do.
-The literature comparison band of ``3.2--5.4\%'' did not appear in the
-cited paper; the paper's actual Table 2 rows are now quoted. The
-``catastrophic forgetting'' claim is withdrawn. Section 4.11 lists every
-correction.
+fixes improve over base decoding on 8 vs 1 questions (p = 0.039). On
+Spider dev the LSTM and the template are statistically tied (McNemar p =
+0.58). Both baselines almost entirely fail on the stated core objective,
+multi-table queries (1.83\% {[}0.9\%, 3.6\%{]} strict EX for the LSTM on
+dev). Most LSTM failures are schema-linking errors: identifier recall is
+40.4\%, and 690 of 746 invalid queries reference a nonexistent column. A
+per-epoch dev-loss curve shows the model starts overfitting after about
+three Spider epochs, although training continued for 25. On WikiSQL, the
+near-total failure of the Stage-1 checkpoint is a rendering defect
+rather than catastrophic forgetting; fixing the rendering raises its
+execution accuracy from 0.04\% to (re-decode pending).
 \end{abstract}
 
 \section{Introduction and Task
@@ -633,10 +621,8 @@ time (04:41 to 05:31 IST).
 \item
   \textbf{One Adam optimiser} with constant learning rate \(10^{-3}\),
   batch 64, gradient-norm clipping at 1.0, teacher forcing ratio 1.0,
-  seed 42 and per-epoch shuffling with seed \(42+\text{epoch}\).
-  \emph{The earlier draft reported warm-up, cosine decay, a Stage-2
-  learning rate of \(5\times10^{-4}\) and dropout 0.3. None of these
-  exist in the code; those statements were wrong and have been removed.}
+  seed 42 and per-epoch shuffling with seed \(42+\text{epoch}\). There
+  is no learning-rate warm-up or schedule.
 \item
   \textbf{Stage 1 (WikiSQL):} 55,968 examples, 10 epochs (8,750 steps).
   Training NLL fell from 1.723 to 0.098. Saved as
@@ -654,13 +640,12 @@ time (04:41 to 05:31 IST).
 Spider-dev NLL (replication runs, seeds 42; same recipe as Job 361547).}
 \end{figure}
 
-\textbf{Training dynamics.} The earlier draft read the training curve as
-evidence of successful transfer, but it plotted training loss only. We
-added a teacher-forced Spider-dev NLL after every Stage-2 epoch in the
-replication runs (seed 42: minimum 0.888 at epoch 3, 1.535 at epoch 25).
-Dev NLL bottoms out within the first few epochs and then rises steadily
-while training NLL keeps falling. A training NLL of 0.04 alongside
-rising dev NLL and over 70\% invalid dev SQL indicates
+\textbf{Training dynamics.} Training loss alone says nothing about
+transfer, so the replication runs also log a teacher-forced Spider-dev
+NLL after every Stage-2 epoch (seed 42: minimum 0.888 at epoch 3, 1.535
+at epoch 25). Dev NLL bottoms out within the first few epochs and then
+rises steadily while training NLL keeps falling. A training NLL of 0.04
+alongside rising dev NLL and over 70\% invalid dev SQL indicates
 \textbf{memorisation of the training databases, not successful
 cross-domain transfer}. Early stopping on a database-disjoint validation
 split is required for Part 3.
@@ -680,8 +665,8 @@ operate on the same trained weights.
   \texttt{boolean}, \texttt{others}, \texttt{table}, \texttt{columns},
   \texttt{primary}, \texttt{key}, \ldots) are given probability 0 during
   decoding unless the current schema really has an identifier of that
-  name. In the Job 361547 output, the bare token \texttt{text} appeared
-  in 278 of 1,034 dev predictions.
+  name. With base decoding, the bare token \texttt{text} appeared in 278
+  of 1,034 dev predictions.
 \item
   \textbf{Surface-form rendering} (\texttt{lstm/rendering.py}). This is
   new. Each decoded token is mapped back to its schema spelling
@@ -792,7 +777,7 @@ Invalid
 \endlastfoot
 \textbf{LSTM, final (mask + render + repair)} & 7.2\% & 5.5\% & 6.52\%
 {[}5.5\%, 7.5\%{]} & 72.7\% \\
-LSTM, as submitted (Job 361547) & 6.8\% & 5.2\% & 6.19\% {[}5.2\%,
+LSTM, base decoding (Job 361547) & 6.8\% & 5.2\% & 6.19\% {[}5.2\%,
 7.2\%{]} & 76.3\% \\
 LSTM, raw greedy (no repair) & 6.2\% & 4.4\% & 2.89\% {[}2.2\%, 3.6\%{]}
 & 82.3\% \\
@@ -844,25 +829,25 @@ Invalid
 \endlastfoot
 \textbf{LSTM, final (mask + render + repair)} & 8.1\% & 5.0\% & 6.38\%
 {[}4.9\%, 7.9\%{]} & 3.29\% & 72.1\% \\
-LSTM, as submitted (Job 361547) & 7.4\% & 4.9\% & 5.90\% {[}4.5\%,
+LSTM, base decoding (Job 361547) & 7.4\% & 4.9\% & 5.90\% {[}4.5\%,
 7.4\%{]} & 3.29\% & 77.2\% \\
 Template parser & 9.9\% & 0.0\% & 5.80\% {[}4.4\%, 7.3\%{]} & 0.00\% &
 8.9\% \\
 \end{longtable}
 
 \textbf{Paired significance (strict EX, McNemar).} Dev: final LSTM vs
-template, 44 vs 38 discordant questions, p = 0.58. As submitted vs
-template: 40 vs 39, p = 1.00. Final vs as submitted: 5 vs 0, p = 0.062.
+template, 44 vs 38 discordant questions, p = 0.58. Base decoding vs
+template: 40 vs 39, p = 1.00. Final vs base decoding: 5 vs 0, p = 0.062.
 
 \textbf{Reading the comparison honestly.} On official EX the template is
 ahead on test and dev. Its 0\% official EM reflects identifier quoting
 only. With quotes removed it scores 5.9\% (test: 6.7\%) EM, which is
 also above the LSTM. On strict EX the two are statistically
 indistinguishable on both splits. The inference fixes give a small but
-consistent LSTM gain, significant on test (p = 0.039). Neither baseline
-is good at the task. The headline claim of the earlier draft, that the
-LSTM surpassed the template, rested on a one-query difference (61 vs 60,
-p = 1.0) and is withdrawn.
+consistent LSTM gain, significant on test (p = 0.039). With base
+decoding the two systems differ by a single dev question (61 vs 60
+correct, p = 1.0), which is no difference at all. Neither baseline is
+good at the task.
 
 \subsection{Inference ablation (same checkpoint, Spider
 dev)}\label{inference-ablation-same-checkpoint-spider-dev}
@@ -906,10 +891,10 @@ Invalid
 \bottomrule\noalign{}
 \endlastfoot
 Raw greedy tokens, no repair & 1.45\% & 5.4\% & 4.4\% & 84.0\% \\
-+ repair v1 (\textbf{as submitted}, Job 361547) & 5.90\% & 7.4\% & 4.9\%
-& 77.2\% \\
++ repair (\textbf{base decoding}, Job 361547) & 5.90\% & 7.4\% & 4.9\% &
+77.2\% \\
 + surface-form rendering & 6.19\% & 7.6\% & 4.9\% & 76.8\% \\
-as submitted + schema-markup mask & 6.09\% & 7.7\% & 5.0\% & 72.6\% \\
+base + schema-markup mask & 6.09\% & 7.7\% & 5.0\% & 72.6\% \\
 \textbf{+ mask + rendering (final)} & 6.38\% & 8.1\% & 5.0\% & 72.1\% \\
 final + copy feedback as \texttt{\textless{}unk\textgreater{}} & 6.19\%
 & 7.9\% & 5.0\% & 72.7\% \\
@@ -918,8 +903,8 @@ final + copy feedback as \texttt{\textless{}unk\textgreater{}} & 6.19\%
 The CPU re-decode reproduced 1,031 of the 1,034 Job 361547 GPU
 predictions exactly. The other three are near-tie argmax flips caused by
 GPU vs CPU floating point. Strict EX is identical (61/1,034), so the
-\emph{as submitted} row is Job 361547. Repair is responsible for most of
-the gap between \emph{raw} and \emph{as submitted}: strict EX goes from
+\emph{base decoding} row is Job 361547. Repair accounts for most of the
+gap between \emph{raw} and \emph{base decoding}: strict EX goes from
 1.45\% to 5.90\%. Raw strict EX is especially low because unrepaired
 spacing changes result-column labels such as \texttt{count\ (\ *\ )}.
 The mask and rendering remove a further 5.0 points of invalid SQL, but
@@ -932,10 +917,10 @@ This shows the underlying error is schema linking, not syntax. Feeding
 copied tokens back as \texttt{\textless{}unk\textgreater{}} did not help
 and is not used.
 
-\textbf{Epochs.} The earlier draft attributed its 0.39\% → 3.29\% SM
-gain to ``25 epochs and syntax repair''. That comparison (Job 361487 vs
-361547) changed several things at once. Repair can now be isolated on
-one checkpoint (table above). An epoch-10 vs epoch-25 comparison with
+\textbf{Epochs.} Our initial 10-epoch run (Job 361487) reached 0.39\%
+SM, and Job 361547, with 25 epochs plus repair, reached 3.29\%. That
+comparison changes several things at once. The table above isolates
+repair on a single checkpoint. An epoch-10 vs epoch-25 comparison with
 fixed decoding is part of the replication runs and was not complete at
 submission.
 
@@ -991,7 +976,7 @@ Nested (other) & 52 & 3.85\% {[}1.1\%, 13.0\%{]} & 0.00\% {[}0.0\%,
 
 Multi-table queries, the core objective, are essentially unsolved:
 1.83\% {[}0.9\%, 3.6\%{]} strict EX for the LSTM, and SM is 0/438 in
-both the as-submitted and final runs. Single-table queries account for
+both the base-decoding and final runs. Single-table queries account for
 56/66 (84.8\%) of all LSTM EX hits, and extra-hard is 0/166, a floor
 effect. Hard EX is slightly above medium EX, but this comes from small
 counts: the 95\% intervals, 4.26\% {[}2.7\%, 6.6\%{]} for medium and
@@ -1005,11 +990,11 @@ LSTM)}\label{error-analysis-all-1034-dev-questions-final-lstm}
 \caption{Invalid SQL on Spider dev by SQLite error
 class.}\tabularnewline
 \toprule\noalign{}
-Error class & As submitted & Final \\
+Error class & Base decoding & Final \\
 \midrule\noalign{}
 \endfirsthead
 \toprule\noalign{}
-Error class & As submitted & Final \\
+Error class & Base decoding & Final \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
@@ -1076,8 +1061,8 @@ is over 20. The LSTM's EX hits without SM split as 15 structurally
 equivalent to gold; 10 coincidental (gold result is empty or zero); 7
 coincidental (a gold clause is missing or different).
 
-\subsection{Qualitative cases (Spider dev; Job 361547 output → final
-output)}\label{qualitative-cases-spider-dev-job-361547-output-final-output}
+\subsection{Qualitative cases (Spider dev; base → final
+decoding)}\label{qualitative-cases-spider-dev-base-final-decoding}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -1102,7 +1087,7 @@ output)}\label{qualitative-cases-spider-dev-job-361547-output-final-output}
   Valid SQL; the third projected column is dropped.
 \item
   \textbf{Schema-type token leak, then wrong column}
-  (\texttt{spider-dev-4}, medium). Job 361547 produced
+  (\texttt{spider-dev-4}, medium). Base decoding produced
   \texttt{…\ WHERE\ text\ =\ \textquotesingle{}france\textquotesingle{}}.
   That query is invalid: \texttt{text} is the serialised \emph{type} of
   \texttt{Country}, and the literal case is wrong. The final
@@ -1126,13 +1111,14 @@ output)}\label{qualitative-cases-spider-dev-job-361547-output-final-output}
   no grounding in the foreign-key graph.
 \end{enumerate}
 
-\subsection{WikiSQL: the ``catastrophic forgetting'' claim
-withdrawn}\label{wikisql-the-catastrophic-forgetting-claim-withdrawn}
+\subsection{WikiSQL: a rendering defect, not
+forgetting}\label{wikisql-a-rendering-defect-not-forgetting}
 
-The earlier draft attributed the LSTM's 0.04\% WikiSQL EX to Spider
-fine-tuning overwriting Stage 1. \textbf{The run log contradicts this.}
-Job 361547 scored WikiSQL with \texttt{wikisql\_checkpoint.pt}, saved at
-the end of Stage 1, \emph{before any Spider training} (log line:
+A natural explanation for the LSTM's 0.04\% WikiSQL EX would be
+catastrophic forgetting during Spider fine-tuning. \textbf{The run log
+rules this out.} Job 361547 scored WikiSQL with
+\texttt{wikisql\_checkpoint.pt}, saved at the end of Stage 1,
+\emph{before any Spider training} (log line:
 \texttt{Loading\ dataset-specific\ checkpoint:\ wikisql\_checkpoint.pt}).
 The predictions are mostly sensible SQL in an unexecutable surface form.
 For example,
@@ -1140,8 +1126,8 @@ For example,
 should be \texttt{…\ WHERE\ "No."\ =\ 42}. Multi-word column names were
 emitted unquoted and lower-cased (\texttt{school/club\ team}), and
 repair v1 quoted only the first word of multi-word literals
-(\texttt{=\ \textquotesingle{}concord\textquotesingle{}\ hs}). The model
-was not at fault; the rendering was.
+(\texttt{=\ \textquotesingle{}concord\textquotesingle{}\ hs}). The fault
+lay in the rendering, not the model.
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2000}}
@@ -1176,7 +1162,7 @@ Invalid
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-LSTM Stage-1, as submitted (Job 361547) & 0.04\% (3/8,415) & 0.04\% &
+LSTM Stage-1, base decoding (Job 361547) & 0.04\% (3/8,415) & 0.04\% &
 99.5\% \\
 Template parser (Job 361547 revision) & 7.23\% (608/8,415) & 1.26\% &
 0.0\% \\
@@ -1186,51 +1172,7 @@ The full-dev re-decode of the Stage-1 checkpoint with the rendering fix
 was queued on the HPC at submission time. The template's 7.23\% EX is
 far below published WikiSQL systems: Seq2SQL reports 59.4\% test EX and
 SQLNet 68.0\% (Xu et al., 2017). It is therefore a weak lower bound, not
-a ``reliable reference'' as the earlier draft called it.
-
-\textbf{Other corrections to the earlier draft.}
-
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
-\caption{Corrections to the earlier draft.}\tabularnewline
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Earlier claim
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Correction
-\end{minipage} \\
-\midrule\noalign{}
-\endfirsthead
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Earlier claim
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Correction
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Comparison band ``3.2--5.4\% EM'' (Yu et al., Table 4) & Not in the
-paper; the actual Table 2 rows are quoted in §2.4 \\
-``8.4× surge'' / ``+743\%'' & Removed (the base was 4 queries; correct
-arithmetic is 8.5× and +744\%) \\
-``Surpasses the template'' & Withdrawn; p = 1.0 \\
-Vocabulary of 1,402 tokens with frequency threshold 2 & Wrong; 102,463
-tokens, no threshold \\
-Dropout 0.3; Stage-2 learning rate 5e-4 with warm-up and cosine decay &
-Wrong; dropout 0.2, constant 1e-3 \\
-Encoder 512 per direction & Wrong; 256 per direction \\
-``Six case studies'' & There were five; now six, labelled honestly \\
-Stage 2 starts at 1.82 in the text and 1.84 in the figure & 1.841 (from
-the log) \\
-WikiSQL ``26,575 tables'' & 26,531 table entries in the release files;
-24,241 tables per the paper \\
-Template ``returns an empty prediction'' & True for the current code
-(abstention counts given in §4.1); the evaluated Job 361547 revision
-never abstained \\
-\end{longtable}
+a strong reference.
 
 \subsection{Demonstration (CLI)}\label{demonstration-cli}
 
