@@ -2,6 +2,7 @@
 
 import re
 import sqlite3
+import time
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -88,6 +89,8 @@ def classify_sqlite_error(message: str | None) -> str | None:
         return "empty_prediction"
     if text.startswith("only read queries"):
         return "forbidden_statement"
+    if text.startswith("timeout after"):
+        return "timeout"
     return "other"
 
 
@@ -99,8 +102,16 @@ def _rows_match_official(gold: ExecutionResult, predicted: ExecutionResult, orde
     return Counter(map(repr, gold.rows)) == Counter(map(repr, predicted.rows))
 
 
+# Generated SQL can be pathological (e.g. deeply nested correlated subqueries);
+# queries running longer than this are interrupted and scored as invalid.
+EXECUTION_TIMEOUT_SECONDS = 30.0
+
+
 def execute_read_only(
-    sql: str, database_path: Path, prelude: tuple[str, ...] = ()
+    sql: str,
+    database_path: Path,
+    prelude: tuple[str, ...] = (),
+    timeout_seconds: float = EXECUTION_TIMEOUT_SECONDS,
 ) -> ExecutionResult:
     if not sql.strip():
         return ExecutionResult(status="invalid_sql", error="SQL is empty")
@@ -113,6 +124,8 @@ def execute_read_only(
     # Some Spider databases (e.g. wta_1) store latin-1 bytes in TEXT columns;
     # decode leniently so gold and predicted queries are compared, not crashed.
     connection.text_factory = lambda value: value.decode("utf-8", errors="replace")
+    deadline = time.monotonic() + timeout_seconds
+    connection.set_progress_handler(lambda: int(time.monotonic() > deadline), 10_000)
     try:
         for statement in prelude:
             connection.execute(statement)
@@ -121,6 +134,10 @@ def execute_read_only(
         columns = tuple(description[0] for description in cursor.description or ())
         return ExecutionResult(status="success", columns=columns, rows=rows)
     except sqlite3.OperationalError as error:
+        if str(error) == "interrupted":
+            return ExecutionResult(
+                status="invalid_sql", error=f"timeout after {timeout_seconds:.0f}s"
+            )
         return ExecutionResult(status="invalid_sql", error=str(error))
     except sqlite3.Error as error:
         return ExecutionResult(status="database_error", error=str(error))

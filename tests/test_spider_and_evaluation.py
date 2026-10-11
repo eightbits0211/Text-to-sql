@@ -340,3 +340,16 @@ def test_classify_difficulty_unknown_for_missing_sql() -> None:
     """No parsed SQL dict → UNKNOWN."""
     assert _classify_difficulty(None) == QueryDifficulty.UNKNOWN
     assert _classify_difficulty({}) == QueryDifficulty.UNKNOWN
+
+
+def test_execution_times_out_runaway_query(tmp_path: Path) -> None:
+    _, _, database_root = _create_spider_fixture(tmp_path)
+    database_path = database_root / "shop" / "shop.sqlite"
+    runaway = (
+        "WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT count(*) FROM c"
+    )
+
+    result = execute_read_only(runaway, database_path, timeout_seconds=0.2)
+
+    assert result.status == "invalid_sql"
+    assert result.error is not None and result.error.startswith("timeout")
