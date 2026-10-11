@@ -55,6 +55,24 @@ def test_template_baseline_declares_bounded_grammar() -> None:
     assert "ORDER BY and LIMIT" in TemplateBaseline.supported_sql_features
 
 
+def test_template_baseline_rejects_clear_multi_table_request() -> None:
+    schema = DatabaseSchema(
+        "concert",
+        (
+            TableSpec("concert", (ColumnSpec("name", "TEXT"),)),
+            TableSpec("stadium", (ColumnSpec("name", "TEXT"),)),
+        ),
+    )
+
+    assert (
+        TemplateBaseline().predict(
+            "What is the stadium name and capacity for the concert with the highest attendance?",
+            schema,
+        )
+        == ""
+    )
+
+
 def test_template_baseline_matches_plural_table_name() -> None:
     baseline = TemplateBaseline()
 

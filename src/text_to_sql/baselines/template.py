@@ -54,6 +54,8 @@ class TemplateBaseline:
         if not question.strip():
             raise ValueError("question must not be empty")
         database_schema = self._coerce_schema(schema)
+        if self._is_unsupported_question(question, database_schema):
+            return ""
         table = self._choose_table(question, database_schema)
         lowered = question.lower()
         conditions = self._extract_conditions(question, table)
@@ -98,6 +100,20 @@ class TemplateBaseline:
             if limit is not None:
                 query += f" LIMIT {limit}"
         return query
+
+    @staticmethod
+    def _is_unsupported_question(question: str, schema: DatabaseSchema) -> bool:
+        """Reject clear multi-table requests instead of returning a misleading query."""
+        if len(schema.tables) < 2:
+            return False
+        lowered = question.lower()
+        return bool(
+            re.search(
+                r"\b(?:join|in each|for each|with the highest|with the most|"
+                r"most number of|number of .+ in each)\b",
+                lowered,
+            )
+        )
 
     def predict_record(self, example: ExampleRecord) -> Prediction:
         return Prediction(

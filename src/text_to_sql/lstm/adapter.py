@@ -6,6 +6,7 @@ per example. Falls back to an empty string on any decoding error.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -25,6 +26,8 @@ from .preprocessing import (
 )
 from .sql_repair import repair_sql
 from .training import TrainingConfig, TrainingResult, load_checkpoint, train_smoke
+
+LOGGER = logging.getLogger(__name__)
 
 
 class LSTMBaseline:
@@ -115,7 +118,8 @@ class LSTMBaseline:
         try:
             raw_sql = self._greedy_decode(question, schema_text, database_id)
             return repair_sql(raw_sql, schema_text, database_id)
-        except Exception:  # noqa: BLE001 — surface all errors as empty predictions
+        except (AssertionError, IndexError, KeyError, RuntimeError, ValueError) as error:
+            LOGGER.warning("LSTM decoding failed for database %s: %s", database_id, error)
             return ""
 
     def predict_record(self, example: ExampleRecord) -> Prediction:
