@@ -9,17 +9,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .baselines.template import TemplateBaseline
+from .config import LSTM_CHECKPOINT_DIR, SPIDER_ROOT
 from .data.schema import DatabaseSchema
 from .data.spider import _schema_from_metadata
 from .data.sqlite_schema import load_sqlite_schema
 from .evaluation.metrics import execute_read_only
 
-DEFAULT_DEMO_DB = Path(
-    "/Users/roshini/datasets/text-to-sql/spider/spider_data/database/concert_singer/concert_singer.sqlite"
-)
-DEFAULT_CHECKPOINT = Path(
-    "/Users/roshini/datasets/text-to-sql/artifacts-lstm-gpu-run/lstm-checkpoint/spider_checkpoint.pt"
-)
+DEFAULT_DEMO_DB = SPIDER_ROOT / "database" / "concert_singer" / "concert_singer.sqlite"
+DEFAULT_CHECKPOINT = LSTM_CHECKPOINT_DIR / "spider_checkpoint.pt"
 
 
 @dataclass(frozen=True)

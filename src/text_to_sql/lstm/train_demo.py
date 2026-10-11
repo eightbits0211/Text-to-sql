@@ -16,6 +16,7 @@ import random
 import time
 from pathlib import Path
 
+from ..config import SPIDER_ROOT
 from ..data.contracts import DatasetSplit, ExampleRecord
 from ..data.spider import load_spider
 from ..evaluation.metrics import evaluate_predictions, execute_read_only
@@ -23,7 +24,7 @@ from .adapter import LSTMBaseline
 from .training import TrainingConfig
 
 DEFAULT_DATABASES = ("soccer_2",)
-DEFAULT_SPIDER_ROOT = Path("/Users/roshini/datasets/text-to-sql/spider/spider_data")
+DEFAULT_SPIDER_ROOT = SPIDER_ROOT
 DEFAULT_OUTPUT = Path("artifacts/train-demo")
 
 

@@ -67,6 +67,30 @@ Both baselines are weak on multi-table queries; the LSTM and the template are st
 
 ---
 
+## Quick start for evaluation (from the LMS download)
+
+The code archive contains no data. Datasets, the trained checkpoint and the official evaluator
+live outside the repository, under one directory (default `/Users/roshini/datasets/text-to-sql`;
+override with `export TEXT2SQL_DATA_ROOT=/path/to/text-to-sql`):
+
+```text
+$TEXT2SQL_DATA_ROOT/spider/spider_data/{train_spider.json,dev.json,test.json,tables.json,test_tables.json,database/,test_database/}
+$TEXT2SQL_DATA_ROOT/wikisql/data/{dev.jsonl,dev.tables.jsonl,dev.db,...}
+$TEXT2SQL_DATA_ROOT/artifacts-lstm-gpu-run/lstm-checkpoint/{spider_checkpoint.pt,wikisql_checkpoint.pt,vocabulary.json}
+```
+
+```bash
+uv sync                                         # install the pinned environment
+uv run pytest                                   # unit tests
+uv run text-to-sql-demo --train-demo            # live training (~2-3 min CPU), then evaluation
+uv run text-to-sql-demo --demo --model template # scripted CLI showcase
+uv run text-to-sql-demo --demo --model lstm     # same showcase with the trained LSTM
+uv run python -m scripts.show_preprocessing     # preprocessing walkthrough and corpus statistics
+```
+
+The report is [`docs/part-2-report.pdf`](docs/part-2-report.pdf), built from
+[`docs/part-2-report.md`](docs/part-2-report.md) by `scripts/build_report.sh`.
+
 ## 3. Installation & Setup
 
 We use [`uv`](https://github.com/astral-sh/uv) for fast, deterministic dependency management.

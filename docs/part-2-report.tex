@@ -106,7 +106,7 @@
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-\usepackage{float}\floatplacement{figure}{H}
+\usepackage{float}\floatplacement{figure}{H}\renewcommand{\thesection}{\alph{section}}
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
@@ -170,8 +170,8 @@ and fixing the rendering raises its execution accuracy from 5.76\% to
 10\textsuperscript{-200}).
 \end{abstract}
 
-\section{Introduction and Task
-Formulation}\label{introduction-and-task-formulation}
+\section{Introduction to the NLP
+Task}\label{introduction-to-the-nlp-task}
 
 \subsection{Motivation}\label{motivation}
 
@@ -214,7 +214,8 @@ and foreign-key edges, produce SQL \(Y=(y_1,\dots,y_n)\) such that
 executing \(Y\) on the database returns the intended result:
 \[\hat{Y}=\arg\max_Y \prod_{t=1}^{n} P(y_t\mid y_{<t},Q,\mathcal{S}).\]
 
-\section{Literature Survey}\label{literature-survey}
+\section{Literature Survey: Why the Problem
+Matters}\label{literature-survey-why-the-problem-matters}
 
 \subsection{Rule-based semantic
 parsing}\label{rule-based-semantic-parsing}
@@ -280,8 +281,7 @@ decoding (PICARD; Scholak et al., 2021), and schema ranking with
 pre-trained seq2seq models (RESDSQL; Li et al., 2023). Our Part 2 model
 belongs to the Seq2Seq+Copying family.
 
-\section{Datasets, Preprocessing and
-Serialisation}\label{datasets-preprocessing-and-serialisation}
+\section{Dataset and Preprocessing}\label{dataset-and-preprocessing}
 
 \subsection{Datasets and splits}\label{datasets-and-splits}
 
@@ -408,7 +408,7 @@ The encoder input is
 where both parts are tokenised by the regex lexer in
 \texttt{lstm/preprocessing.py}. Column \emph{types} (\texttt{text},
 \texttt{number}) and markup words (\texttt{table}, \texttt{columns})
-become ordinary copyable source tokens. Section 4.8 shows this was the
+become ordinary copyable source tokens. Section d.8 shows this was the
 largest single source of invalid SQL.
 
 \subsection{Tokenisation and
@@ -458,7 +458,7 @@ runs the real pipeline on dev example \texttt{spider-dev-4}:
 Three effects are visible. Punctuation is dropped from the question. The
 literal \texttt{\textquotesingle{}France\textquotesingle{}} loses its
 quotes and its case: it becomes the token \texttt{france}, so the
-decoder can only emit \texttt{france}. That is why §4.4 restores the
+decoder can only emit \texttt{france}. That is why §d.4 restores the
 surface form from the question at inference. The schema's column
 \emph{types} (\texttt{text}) sit in the encoder input right next to the
 column names.
@@ -534,7 +534,7 @@ vocabulary, and the copy path receives no supervision. On dev and test,
 8.7\% and 7.7\% of target tokens can \emph{only} be produced by copying:
 unseen table names, column names and values. The model therefore meets
 the exact case the pointer mechanism exists for only at test time, which
-helps explain the schema-linking failures in §4.9. The Part 3 remedy is
+helps explain the schema-linking failures in §d.9. The Part 3 remedy is
 to keep schema identifiers out of the fixed vocabulary, or apply a
 frequency threshold, so that copying is learned.
 
@@ -543,10 +543,10 @@ frequency threshold, so that copying is learned.
 \textbf{Spider.} Most queries appear with two paraphrased questions,
 which inflates in-domain accuracy. This does not leak across our
 database-disjoint splits, but it matters for the small live training
-demo (§4.12). Coverage is English-only and skewed towards college,
+demo (§d.12). Coverage is English-only and skewed towards college,
 business and entertainment schemas, and dev has only 20 databases, so
 per-database variance is high. Small databases allow coincidental
-execution matches (§4.9 shows one). Gold SQL follows inconsistent
+execution matches (§d.9 shows one). Gold SQL follows inconsistent
 conventions: \texttt{"blues"} vs
 \texttt{\textquotesingle{}France\textquotesingle{}} quoting, stray
 trailing semicolons and mixed identifier case. These break string match
@@ -560,8 +560,8 @@ column names contain spaces and punctuation, and the annotations are
 known to be noisy. It therefore tests pipeline mechanics rather than
 compositional parsing.
 
-\section{Methods, Evaluation Protocol, Results and Error
-Analysis}\label{methods-evaluation-protocol-results-and-error-analysis}
+\section{Method, Experiments and
+Results}\label{method-experiments-and-results}
 
 \subsection{Baseline 1: deterministic template
 parser}\label{baseline-1-deterministic-template-parser}
@@ -606,7 +606,7 @@ BiLSTM}\label{baseline-2-pointer-generator-bilstm}
   \textbf{Copy gate:}
   \(p_{\text{gen}}=\sigma(W[s_t;c_t;\text{emb}(y_{t-1})]+b)\), mixing
   \(P_{\text{vocab}}\) with the attention-weighted copy distribution as
-  in §2.3.
+  in §b.3.
 \item
   \textbf{Dropout} 0.2. \textbf{Decoding:} greedy, at most 128 tokens,
   with
@@ -740,7 +740,7 @@ harness bug, now fixed: two dev gold queries on \texttt{wta\_1} crashed
 on non-UTF-8 text and could never be scored. Gold-equals-gold cannot
 detect a gold query that runs but means nothing, so we also checked that
 gold queries return real answers. That exposed a far more serious
-WikiSQL bug, described in §4.11.
+WikiSQL bug, described in §d.11.
 
 \subsection{Main results}\label{main-results}
 
@@ -1221,7 +1221,7 @@ weights before training and again after. It then reports execution
 accuracy on 20 questions the model trained on and on 11 held-out
 questions from the same database. In our rehearsal the loss fell from
 4.88 to 0.09, and the model scored 15/20 on seen questions but 0/11 on
-held-out ones. That is the memorisation gap of §4.3 at small scale. The
+held-out ones. That is the memorisation gap of §d.3 at small scale. The
 saved checkpoint can be queried at once with
 \texttt{-\/-model\ lstm\ -\/-checkpoint\ artifacts/train-demo/spider\_checkpoint.pt}.
 
@@ -1235,7 +1235,7 @@ answers any question and prints the SQL and the result table. For Spider
 databases, the CLI builds the schema from \texttt{tables.json}, so the
 serialisation matches training exactly.
 \texttt{scripts/show\_preprocessing.py} prints the pipeline stages of
-§3.4 for any example.
+§c.4 for any example.
 
 \section*{Reproducibility}\label{reproducibility}
 \addcontentsline{toc}{section}{Reproducibility}
