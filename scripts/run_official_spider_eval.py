@@ -37,8 +37,29 @@ def strip_identifier_quotes(sql: str) -> str:
     return _QUOTED_IDENTIFIER.sub(r"\1", sql)
 
 
+def _times_out(sql: str, database: Path, seconds: float) -> bool:
+    """True if ``sql`` is still running after ``seconds`` (the official evaluator has no timeout)."""
+    import sqlite3
+    import time
+
+    connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True)
+    deadline = time.monotonic() + seconds
+    connection.set_progress_handler(lambda: int(time.monotonic() > deadline), 10_000)
+    try:
+        connection.execute(sql).fetchall()
+    except sqlite3.Error as error:
+        return str(error) == "interrupted"
+    finally:
+        connection.close()
+    return False
+
+
 def write_eval_files(
-    predictions_path: Path, output_dir: Path, unquote_identifiers: bool = False
+    predictions_path: Path,
+    output_dir: Path,
+    unquote_identifiers: bool = False,
+    database_dir: Path | None = None,
+    timeout_seconds: float = 30.0,
 ) -> tuple[Path, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     rows = [json.loads(line) for line in predictions_path.read_text(encoding="utf-8").splitlines()]
@@ -48,13 +69,16 @@ def write_eval_files(
         "".join(f"{_one_line(row['gold_sql'])}\t{row['database_id']}\n" for row in rows),
         encoding="utf-8",
     )
-    pred_path.write_text(
-        "".join(
-            f"{_one_line(_maybe_unquote(row['predicted_sql'], unquote_identifiers))}\n"
-            for row in rows
-        ),
-        encoding="utf-8",
-    )
+    predictions = [_one_line(_maybe_unquote(r["predicted_sql"], unquote_identifiers)) for r in rows]
+    timed_out = []
+    if database_dir is not None:
+        for index, row in enumerate(rows):
+            db = database_dir / row["database_id"] / f"{row['database_id']}.sqlite"
+            if _times_out(predictions[index], db, timeout_seconds):
+                timed_out.append(row["example_id"])
+                predictions[index] = "SELECT"  # unparseable: scored as incorrect
+    pred_path.write_text("".join(f"{p}\n" for p in predictions), encoding="utf-8")
+    (output_dir / "timed_out.json").write_text(json.dumps(timed_out), encoding="utf-8")
     return gold_path, pred_path
 
 
@@ -94,7 +118,7 @@ def main() -> int:
     database_dir = args.db or (_SPIDER / ("database" if args.split == "dev" else "test_database"))
     table_path = _SPIDER / ("tables.json" if args.split == "dev" else "test_tables.json")
     gold_path, pred_path = write_eval_files(
-        args.predictions, args.output_dir, args.unquote_identifiers
+        args.predictions, args.output_dir, args.unquote_identifiers, database_dir
     )
     completed = subprocess.run(
         [

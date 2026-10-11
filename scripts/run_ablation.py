@@ -153,7 +153,11 @@ def _official(output_dir: Path, split: str) -> dict[str, dict[str, float]] | Non
     import subprocess
 
     tools = _DATA / "tools"
-    gold, pred = write_eval_files(output_dir / "predictions.jsonl", output_dir / "official")
+    gold, pred = write_eval_files(
+        output_dir / "predictions.jsonl",
+        output_dir / "official",
+        database_dir=_SPIDER / ("database" if split == "dev" else "test_database"),
+    )
     completed = subprocess.run(
         [
             str(tools / "evalenv" / "bin" / "python"),

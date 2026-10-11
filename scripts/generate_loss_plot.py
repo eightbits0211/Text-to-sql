@@ -155,7 +155,7 @@ def main() -> None:
         )
         best = min(range(len(dev_losses)), key=dev_losses.__getitem__)
         ax2.plot(best + 1, dev_losses[best], "v", color=color, markersize=7)
-    ax2.legend(fontsize=8, loc="upper right")
+    ax2.legend(fontsize=8, loc="center right")
     ax2.set_xlabel("Epoch", fontsize=11)
     ax2.set_ylabel("NLL", fontsize=11)
     ax2.set_title(
