@@ -2,6 +2,7 @@
 
 import re
 import sqlite3
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -25,11 +26,25 @@ class ExecutionResult:
 
 @dataclass(frozen=True)
 class ExampleEvaluation:
+    """Per-example outcome.
+
+    ``exact_match`` is a normalized *string* match (whitespace collapsed,
+    lowercased); it is not Spider's component-wise exact-set match.
+    ``execution_match`` is the strict comparator: result-column labels
+    (case-insensitive) and row order must agree. ``execution_match_official``
+    follows the official Spider/test-suite semantics: column labels are
+    ignored and rows are compared as a multiset unless the gold SQL has
+    ``ORDER BY``.
+    """
+
     example_id: str
     exact_match: bool
     execution_match: bool
     invalid_sql: bool
     failure_category: str | None
+    execution_match_official: bool = False
+    error_class: str | None = None
+    error_message: str | None = None
 
 
 @dataclass(frozen=True)
@@ -40,9 +55,48 @@ class EvaluationReport:
     invalid_sql_rate: float
     examples: tuple[ExampleEvaluation, ...]
 
+    @property
+    def execution_accuracy_official(self) -> float:
+        count = len(self.examples)
+        return (
+            sum(item.execution_match_official for item in self.examples) / count if count else 0.0
+        )
+
 
 def normalize_sql(sql: str) -> str:
     return re.sub(r"\s+", " ", sql.strip()).lower()
+
+
+def classify_sqlite_error(message: str | None) -> str | None:
+    """Map an SQLite error message to a coarse, report-friendly error class."""
+    if message is None:
+        return None
+    text = message.lower()
+    if text.startswith("no such column"):
+        return "no_such_column"
+    if text.startswith("no such table"):
+        return "no_such_table"
+    if text.startswith("ambiguous column"):
+        return "ambiguous_column"
+    if "syntax error" in text or text.startswith("unrecognized token"):
+        return "syntax_error"
+    if text.startswith("incomplete input"):
+        return "incomplete_input"
+    if "misuse of aggregate" in text or "aggregate functions are not allowed" in text:
+        return "aggregate_misuse"
+    if text == "sql is empty":
+        return "empty_prediction"
+    if text.startswith("only read queries"):
+        return "forbidden_statement"
+    return "other"
+
+
+def _rows_match_official(gold: ExecutionResult, predicted: ExecutionResult, ordered: bool) -> bool:
+    if len(gold.columns) != len(predicted.columns):
+        return False
+    if ordered:
+        return gold.rows == predicted.rows
+    return Counter(map(repr, gold.rows)) == Counter(map(repr, predicted.rows))
 
 
 def execute_read_only(sql: str, database_path: Path) -> ExecutionResult:
@@ -54,6 +108,9 @@ def execute_read_only(sql: str, database_path: Path) -> ExecutionResult:
         connection = sqlite3.connect(f"file:{database_path.resolve()}?mode=ro", uri=True)
     except sqlite3.Error as error:
         return ExecutionResult(status="database_error", error=str(error))
+    # Some Spider databases (e.g. wta_1) store latin-1 bytes in TEXT columns;
+    # decode leniently so gold and predicted queries are compared, not crashed.
+    connection.text_factory = lambda value: value.decode("utf-8", errors="replace")
     try:
         cursor = connection.execute(sql)
         rows = tuple(tuple(row) for row in cursor.fetchall())
@@ -88,6 +145,15 @@ def evaluate_predictions(
             == tuple(column.lower() for column in predicted_result.columns)
             and gold_result.rows == predicted_result.rows
         )
+        execution_match_official = (
+            gold_result.status == "success"
+            and predicted_result.status == "success"
+            and _rows_match_official(
+                gold_result,
+                predicted_result,
+                ordered=bool(re.search(r"\border\s+by\b", example.gold_sql, re.IGNORECASE)),
+            )
+        )
         failure_category = None
         if not predicted_sql.strip():
             failure_category = "empty_prediction"
@@ -102,6 +168,9 @@ def evaluate_predictions(
                 execution_match=execution_match,
                 invalid_sql=predicted_result.status != "success",
                 failure_category=failure_category,
+                execution_match_official=execution_match_official,
+                error_class=classify_sqlite_error(predicted_result.error),
+                error_message=predicted_result.error,
             )
         )
     count = len(evaluated)

@@ -4,12 +4,24 @@ This file is the persistent end-of-session handoff. The agent must update it
 before ending every work session.
 
 ## In-Flight Execution Ledger (Context Continuity)
-- **Active Role:** Context & State Tracking Agent / Lead Agent
-- **Current Milestone:** Part 2 Final QA and Submission Decision
-- **Active Task:** Finalize the evidence-backed report, demo, and rubric checklist without changing trained baseline metrics
-- **Last Completed Action:** Completed a bounded pointer-generator invalid-rate experiment; rejected the change because fixed-slice Spider execution accuracy regressed and WikiSQL remained invalid
-- **Immediate Next Action:** Freeze the truthful baseline and finish the final Part 2 rubric checklist, viva preparation, and submission packaging
+- **Active Role:** Lead Agent
+- **Current Milestone:** Part 2 critical-review remediation (submission 2026-10-12)
+- **Active Task:** Finalize the rewritten report after the HPC multi-seed and WikiSQL decode jobs finish
+- **Last Completed Action:** Spider dev/test ablations, official-evaluator scoring, statistical analysis, docs rewrite
+- **Immediate Next Action:** Sync HPC outputs (jobs 389818/389819 training, 389954 WikiSQL decode, 389932 seed decode), fill the report placeholders, rebuild the PDF
 - **Resumption Invariant:** If session compacts, token limits expire, or models switch, inspect this ledger first to resume seamlessly.
+
+### Remediation pass (2026-10-11): key facts
+- The evaluated LSTM checkpoint is `artifacts-lstm-gpu-run/lstm-checkpoint/spider_checkpoint.pt` (copied from HPC).
+  The local `lstm_smoke.pt` is a stale pre-361547 model. The CLI now loads `spider_checkpoint.pt`.
+- The WikiSQL 0.04% used `wikisql_checkpoint.pt` (Stage 1, before Spider), so the forgetting claim is withdrawn.
+  The cause is unquoted multi-word identifiers and split literals in rendering.
+- Final Spider test (2,147, run once): LSTM final 7.2% official EX / 5.5% official EM; as submitted 6.8% / 5.2%;
+  template 9.5% / 0.0% (6.7% EM with identifier quotes stripped). Fixed vs as submitted on strict EX: McNemar p = 0.039.
+- Dev: final LSTM vs template strict EX, p = 0.58. Seed-42 replication dev NLL is minimal at epoch 3 (0.888) and reaches 1.535 at epoch 25.
+- Results live outside Git: `/Users/roshini/datasets/text-to-sql/{ablation,analysis,artifacts-seeds}/`;
+  official evaluator in `/Users/roshini/datasets/text-to-sql/tools/`.
+- Report: `docs/part-2-report.md` is the single source; build with `scripts/build_report.sh` (pandoc + xelatex).
 
 ## What was completed
 
@@ -239,7 +251,7 @@ before ending every work session.
 - Implemented four-tier optimization for LSTM baseline (Commit `bdfde4b`):
   1. `src/text_to_sql/lstm/sql_repair.py`: schema-aware literal quoting, multi-word identifier quoting, table hallucination correction, single-table WikiSQL pruning, and balanced parentheses.
   2. `src/text_to_sql/lstm/adapter.py`: integrated `repair_sql()`, masked `<unk>`/`<pad>` tokens during generation.
-  3. `src/text_to_sql/lstm/training.py`: saved separate `wikisql_checkpoint.pt` and `spider_checkpoint.pt` to eliminate catastrophic forgetting.
+  3. `src/text_to_sql/lstm/training.py`: saved separate `wikisql_checkpoint.pt` and `spider_checkpoint.pt` (the forgetting rationale was later refuted; see the ledger).
   4. `scripts/run_lstm_comparison.py`: automatic dataset-specific checkpoint resolution during evaluation.
   5. `scripts/hpc_run_lstm_gpu.sh`: increased Spider training to 25 epochs.
   6. `tests/test_sql_repair.py`: 6 unit tests added; full suite of 56 tests passing in 3.06s; Ruff clean.
@@ -280,11 +292,11 @@ before ending every work session.
 
 | Field | Value |
 |---|---|
-| Last updated | 2026-09-24 |
-| Active branch | `spec/agent-governance-rules` |
-| Primary baseline | Pointer-Generator LSTM Seq2Seq (Optimized: 5.90% Exec, 3.29% EM) |
-| Fallback baseline | Deterministic Template Parser (5.80% Exec, 0.00% EM) |
+| Last updated | 2026-10-11 |
+| Active branch | `feature/part2-final-deliverables` |
+| Primary baseline | Pointer-Generator LSTM (Spider test: 7.2% official EX, 5.5% official EM) |
+| Fallback baseline | Template parser (Spider test: 9.5% official EX) |
 | Overall estimate | 100% (Part 2 Milestone Complete) |
 | HPC Job ID | `361547` (COMPLETED, synchronized locally) |
-| Test suite status | 63 passed, 0 failed, Ruff clean |
+| Test suite status | 79 passed, 0 failed, Ruff clean (2026-10-11) |
 | Next review point | Part 2 final freeze review |

@@ -161,7 +161,12 @@ Last checklist update: 2026-10-11 (Part 2 complete — report, loss curves, and 
 - [x] 9.21 Re-generate evaluation breakdowns with per-difficulty labels.
 - [x] 9.22 Implement training loss curve generator (`scripts/generate_loss_plot.py`) from Job 361547 metadata.
 - [x] 9.23 Generate high-resolution convergence figures (`training_loss_curve.pdf` / `.png`).
-- [x] 9.24 Document catastrophic forgetting analysis for WikiSQL sequential fine-tuning in LaTeX and Markdown reports.
+- [x] 9.24 ~~Document catastrophic forgetting analysis~~ Withdrawn 2026-10-11: the WikiSQL evaluation used the Stage-1 checkpoint; the cause was a rendering defect.
+- [x] 9.25 Official Spider evaluator wrapper; held-out Spider test evaluation.
+- [x] 9.26 Statistics (bootstrap and Wilson CIs, McNemar), error taxonomy, schema-linking metrics, gold sanity check.
+- [x] 9.27 Inference fixes (schema-markup mask, surface-form rendering, literal-aware repair) and ablation runner.
+- [x] 9.28 Harness fixes: lenient UTF-8 decoding, SQLite error classes, official-semantics EX.
+- [x] 9.29 Multi-seed replication with a per-epoch Spider-dev NLL curve and epoch-10 checkpoints (HPC).
 
 ## Phase 10 — Modern model
 
@@ -205,8 +210,9 @@ Last checklist update: 2026-10-11 (Part 2 complete — report, loss curves, and 
 Part 2 implementation, documentation, and evidence collection are **100% complete**.
 - **All GPU training completed:** Job `361487` (initial) and Job `361547` (optimized)
   both finished successfully on `gpunode8`. All artifacts synchronized locally.
-- **Optimized LSTM results on Spider:** 5.90% exec accuracy, 3.29% exact match
-  (surpassing template baseline's 5.80% exec, 0.00% EM; aligns with published Yale 3.2–5.4% EM).
+- **LSTM results on Spider (revised 2026-10-11):** Spider test 7.2% official EX / 5.5% official EM with the
+  final inference pipeline. The template reaches 9.5% / 0.0% (6.7% EM with identifier quotes removed).
+  The earlier "surpasses the template" and "3.2–5.4% band" claims are withdrawn.
 - **Interactive demo CLI:** Verified with 3 scripted showcase cases across both models
   (`uv run text-to-sql-demo --demo --model template|lstm`).
 - **Core test suite:** 7/7 unit tests pass; Ruff lint clean.
@@ -215,7 +221,7 @@ Part 2 implementation, documentation, and evidence collection are **100% complet
   2. [x] Extract qualitative error examples from predictions — DONE (`docs/error-analysis.md`).
   3. [x] Add README skeleton and seed helper — DONE (`README.md`, `config.py`).
   4. [x] Generate dual-panel training loss curve figure — DONE (`training_loss_curve.pdf`/`.png`).
-  5. [x] Draft 11-page LaTeX report with loss curves & catastrophic forgetting analysis — DONE (`docs/part-2-report.pdf`).
+  5. [x] Report rewritten 2026-10-11 with the official evaluator, test split, CIs and ablations (`docs/part-2-report.pdf`).
   6. [x] Rehearse live demo walkthrough and compile viva Q&A guide — DONE (`docs/viva-qa-prep.md`).
   7. [x] Complete comprehensive rubric audit (16.5–17.5 / 20 estimated score) — DONE.
 

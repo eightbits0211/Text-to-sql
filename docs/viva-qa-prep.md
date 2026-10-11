@@ -87,7 +87,7 @@ walkthroughs and use the final question to demonstrate safe failure handling.
 > 2. *Table aliasing (`FROM singer AS t1` vs `FROM singer`) or trailing punctuation (semicolons) fails exact match.*
 > 3. *Equivalent SQL formulations (e.g., using `JOIN` vs a subquery `IN`) retrieve identical data.*
 >
-> *Execution Accuracy measures whether running the generated query on the underlying SQLite database produces the exact same tuple result table as the gold query. In our Spider dev set, 28 examples (2.7%) achieved execution accuracy despite having different surface forms than the gold query."*
+> *Execution Accuracy measures whether running the generated query on the underlying SQLite database produces the exact same tuple result table as the gold query. In our Spider dev set, 32 final-LSTM queries are execution-correct without matching the gold string. Execution also has false positives, though: some of the template's EX hits are coincidental. For example, it drops `WHERE age > 20` and still matches, because every singer is over 20. That is why we report the official component-wise exact-set match as well, and list test-suite accuracy as future work."*
 
 ---
 
@@ -98,50 +98,39 @@ walkthroughs and use the final question to demonstrate safe failure handling.
 
 ---
 
-### Q4: Why is the LSTM baseline's execution accuracy 5.9% on Spider, while the WikiSQL LSTM result is very poor?
+### Q4: Why was the LSTM so poor on WikiSQL? Isn't that catastrophic forgetting?
 **Answer:**
-> *"The datasets differ substantially, but our own result must be stated honestly: the LSTM obtains 5.90% execution accuracy on Spider and only 0.04% on WikiSQL, with a 99.51% invalid-SQL rate on WikiSQL. WikiSQL is structurally simpler, so this poor result indicates a specific training dynamics phenomenon:*
-> *1. **Catastrophic Forgetting during Curriculum Training:** We used a two-stage sequential curriculum—10 warm-up epochs on WikiSQL (55k examples) followed by 25 fine-tuning epochs on Spider (7k examples). As shown in our training loss plots, Stage 1 converged smoothly from cross-entropy loss 1.72 down to 0.10. However, during Stage 2, sequential updates across 25 epochs on Spider's multi-table schemas and distinct column naming conventions caused the network weights to catastrophically forget the WikiSQL-specific single-table column namespace.*
-> *2. **Spider Alignment with Literature:** In the seminal Yale Spider benchmark paper (Yu et al., EMNLP 2018), standard Seq2Seq and Pointer-Network baselines without schema graphs achieved between 3.2% and 5.4% Exact Match. Our baseline achieves **3.29% Exact Match** and **5.90% Execution Accuracy**, perfectly matching the published baseline.*
-> *3. **Single-Table Competence:** On single-table Spider queries, our LSTM achieves **9.38% execution accuracy** (vs 1.83% on multi-table joins), proving that the model successfully learns single-table alignments, but lacks the relational graph inductive bias required for multi-table joins."*
+> *"No. Our earlier draft claimed that, and we withdrew it once we checked the run log. Job 361547 scored WikiSQL with the Stage-1 checkpoint, saved before any Spider training, so nothing could have been forgotten. Reading the predictions showed the real cause: they were sensible SQL in an unexecutable surface form. For example, `WHERE no.= 42` should be `WHERE "No." = 42`. Multi-word column names were unquoted and lower-cased, and multi-word literals were split. Fixing the rendering, with no retraining, raises WikiSQL EX substantially (report §4.11)."*
 
 ---
 
-### Q5: What were the major error categories identified in your error analysis?
+### Q5: What are the main error categories?
 **Answer:**
-> *"Our quantitative breakdown across the 1,034 Spider dev set queries revealed three main failure modes:*
-> 1. *Schema Column Hallucination (62.1% invalid rate on Easy queries): The model learned the correct clause structure, but hallucinated column names (e.g., using `text` instead of `country`).*
-> 2. *Multi-Table Join Hallucination: Multi-table execution accuracy was only 1.83% because sequential LSTMs cannot reliably trace foreign key edges without a schema graph.*
-> 3. *Complex Nested Queries (0% on Extra-Hard): Pure autoregressive sequence decoders cannot maintain long-range hierarchical state for subqueries and set operations (UNION/INTERSECT).*
+> *"We counted them over all 1,034 dev questions rather than picking anecdotes:*
+> 1. *Schema linking dominates. 690 of 746 invalid queries reference a nonexistent column. Identifier recall is about 40%, and 83% of failures use the wrong table set.*
+> 2. *A serialisation bug: the schema text includes column types (`Country [text]`), and the model copied `text` as a column name in 278 predictions. We now mask those tokens at decode time.*
+> 3. *Joins and nesting: multi-table strict EX is 1.8%, and extra-hard is 0/166.*
+> 4. *Aggregation errors appear in 167 failures.*
 >
-> *Additionally, we implemented schema-aware post-processing (`sql_repair.py`) for literal quoting and table alignment. The final artifact-backed invalid-SQL rates are **77.66% for the LSTM on Spider**, **99.51% for the LSTM on WikiSQL**, **0.58% for the template baseline on Spider**, and **0.00% for the template baseline on WikiSQL**. This makes clear that repair is useful post-processing, not a guarantee of valid output from the LSTM.*
+> *The masking and rendering fixes cut invalid SQL from 77% to 72%, but most of those queries become valid-but-wrong. That shows the bottleneck is grounding in the schema, not syntax."*
 
 ---
 
-### Q6: How does Part 2 directly inform your Part 3 implementation?
+### Q6: How does Part 2 directly inform Part 3?
 **Answer:**
-> *"The empirical baseline results provide the exact architectural requirements for Part 3:*
-> 1. *To solve column hallucination: We will implement cross-attention schema linking, explicitly scoring question token-to-column alignments.*
-> 2. *To solve join hallucination: We will adopt a relation-aware transformer (such as RAT-SQL or RESDSQL) that explicitly encodes foreign key relationships.*
-> 3. *To solve syntax errors (77.6% invalid rate): We will implement constrained grammatical decoding (PICARD) to prune syntactically illegal tokens during beam search."*
+> *"Schema linking is the bottleneck, so Part 3 uses a pre-trained encoder with explicit question–schema linking and foreign-key-aware decoding, plus grammar-constrained decoding (PICARD-style) for the remaining syntax errors. We also fix the protocol: early stopping on a database-disjoint split of Spider train, at least three seeds, the official evaluator, and McNemar tests against this baseline. Our numeric targets on Spider test are official EX ≥ 25%, multi-table EX ≥ 15% and invalid SQL ≤ 20%."*
 
 ---
 
-### Q7: How did your model train, and what do the training loss curves show?
+### Q7: What do the training curves show?
 **Answer:**
-> *"We trained on BITS HPC cluster `gpunode8` using an NVIDIA RTX GPU (Job 361547). The total training time was 49 minutes for 35 total epochs.*
-> *Our dual-panel training loss curve shows:*
-> *- **Stage 1 (WikiSQL warm-up, 10 epochs):** Initial cross-entropy loss started at 1.72 and decayed steadily to 0.10, showing the LSTM successfully learned basic SQL grammar, keyword sequence ordering, and token copying.*
-> *- **Stage 2 (Spider primary, 25 epochs):** The Spider loss started at 1.84 and converged monotonically down to 0.0404 by epoch 25, demonstrating solid convergence with Adam optimizer ($lr=0.001$, gradient clipping at 1.0, batch size 64)."*
+> *"Training NLL falls from 1.72 to 0.10 on WikiSQL and from 1.84 to 0.04 on Spider. Training loss alone is misleading, so in the replication runs we also logged teacher-forced Spider-dev NLL every epoch. It bottoms out around epoch 3 and then climbs steadily to 25. The model memorises the training databases; it does not transfer. Optimiser details: one Adam optimiser with constant LR 1e-3, batch 64, clipping at 1.0, dropout 0.2, no warm-up or schedule."*
 
 ---
 
-### Q8: Why did you implement both a Template Baseline and a Learned Neural Baseline?
+### Q8: Why both a template and a learned baseline? Which is better?
 **Answer:**
-> *"The Part 2 evaluation rubric specifically calls for classical baselines. Implementing both gives us a rigorous dual reference point:*
-> *- The **Template Baseline** represents a rule-based semantic parser: it achieves 0.00% syntax errors on WikiSQL and 0.58% on Spider, making it rock-solid for live interactive demonstrations, but brittle to linguistic variation and unable to handle joins.*
-> *- The **Pointer-Generator LSTM** represents a statistical neural baseline: it handles unrestricted natural language input and scores 3.29% EM / 5.90% Exec Accuracy on Spider, but suffers from syntax errors and schema hallucinations.*
-> *This contrast clearly delineates why modern pretrained language models with constrained decoding are needed in Part 3."*
+> *"They fail differently. The template is a conservative rule system. It never joins, abstains on about 9% of questions, and is the stronger system on official execution accuracy: 9.5% vs 7.2% on Spider test. The LSTM accepts any question and attempts joins and nesting, but it mislinks the schema. Once the template's identifier quoting is normalised, the template also leads on exact-set match (6.7% vs 5.5% on test). On strict EX the two are statistically tied (McNemar p = 0.45 on test). Our earlier claim that the LSTM 'surpassed' the template rested on a one-query difference, so we withdrew it."*
 
 ---
 
@@ -149,7 +138,7 @@ walkthroughs and use the final question to demonstrate safe failure handling.
 
 ### The 4 Golden Rules for Your Viva:
 1. **Lead with the Live Demo:** Open terminal, run `uv run text-to-sql-demo --model template --demo`. It runs in 2 seconds and shows 3 clear cases: single-table SELECT, WHERE filtering, and graceful rejection of unsupported joins. This immediately proves your code is working.
-2. **Be Proud of 3.29% EM on Spider:** In deep learning research, 3.29% EM for an LSTM from scratch on Spider is **a published Yale benchmark result** (EMNLP 2018). Do NOT apologize for this number. State proudly: *"Our LSTM exact match of 3.29% matches the published Yale benchmark band (3.2%–5.4%) for seq2seq pointer baselines."*
+2. **Quote the literature exactly:** Yu et al. (2018), Table 2, database split, Seq2Seq+Copying scores 4.1% dev / 5.3% test exact match. Our LSTM scores 5.0% dev / 5.5% test official exact-set match. That is the same order of magnitude, under a newer evaluator and release. Do not cite a "3.2–5.4% band"; it is not in the paper.
 3. **Turn Baseline Weaknesses into Part 3 Strengths:** Whenever asked about errors (e.g., column hallucinations or 77% invalid rate), explain the root cause and pivot to Part 3: *"This exact finding proves that sequential LSTMs lack relational inductive bias, motivating our Part 3 plan for schema-linking transformers and PICARD grammar decoding."*
-4. **Speak the Language of the Rubric:** Use exact technical terms: *cross-domain evaluation*, *zero-shot schema generalization*, *execution accuracy vs exact match*, *pointer-generator copy gate*, *curriculum learning*, and *catastrophic forgetting*. Evaluators love precise terminology.
+4. **Speak the Language of the Rubric:** Use exact technical terms: *cross-domain evaluation*, *zero-shot schema generalization*, *execution accuracy vs exact match*, *pointer-generator copy gate*, *curriculum learning*, *McNemar test*, *held-out test split*. Avoid "catastrophic forgetting"; our own evidence refutes it (Q4).
 

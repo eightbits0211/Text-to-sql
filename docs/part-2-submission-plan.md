@@ -302,9 +302,10 @@ As of September 24, 2026:
 - **All GPU training completed:** Job `361487` (initial, 10+10 epochs) and Job `361547`
   (optimized, 10+25 epochs) both finished on `gpunode8`. All artifacts synchronized locally.
 - **Optimized LSTM results (primary baseline) on Spider:**
-  - Execution Accuracy: **5.90%** (surpasses Template's 5.80%)
-  - Exact Match: **3.29%** (vs Template's 0.00%; aligns with published 3.2–5.4% range)
-  - Invalid SQL: 77.66% (reduced from 85.20% via `sql_repair.py`)
+  - Execution Accuracy: 5.90% strict (template 5.80%; statistical tie, McNemar p = 1.0)
+  - Normalised string match: 3.29% (this is *not* Spider's official EM)
+  - Invalid SQL: 77.66% as originally scored
+  - *Superseded on 2026-10-11 by the review-remediation pass; see the addendum below.*
 - The interactive demo CLI (`text-to-sql-demo --demo`) is verified with 3 scripted
   queries across both models with formatted ASCII tables.
 - 64/64 unit tests pass cleanly; Ruff clean.
@@ -321,7 +322,7 @@ As of September 24, 2026:
 5. [x] Created training loss curve generator (`scripts/generate_loss_plot.py`) from HPC Job `361547` metadata and generated dual-panel figures.
 
 **Report (Sections a–d):**
-6. [x] Drafted complete 11-page LaTeX report (`docs/part-2-report.tex`) and Markdown report (`docs/part-2-report.md`) covering Introduction & Motivation, Literature Survey (14 citations), Dataset & Preprocessing, Classical Baselines, Dual-Panel Training Loss Convergence, Error Analysis by Difficulty/Structure, and Catastrophic Forgetting explanation.
+6. [x] Drafted complete 11-page LaTeX report (`docs/part-2-report.tex`) and Markdown report (`docs/part-2-report.md`) covering Introduction & Motivation, Literature Survey (14 citations), Dataset & Preprocessing, Classical Baselines, Dual-Panel Training Loss Convergence, Error Analysis by Difficulty/Structure, and Catastrophic Forgetting explanation (withdrawn on 2026-10-11; see the addendum).
 
 **Demo & Viva:**
 7. [x] Rehearsed live interactive demo CLI (`uv run text-to-sql-demo --demo --model template`) with 3 scripted cases and verified live SQLite executions.
@@ -381,3 +382,23 @@ These are genuine model experiments, not safe documentation-only fixes.
 | Report sections a–d | ✅ Fully drafted and compiled in LaTeX (`part-2-report.pdf`, 11 pages) |
 | Difficulty breakdowns | ✅ Implemented and evaluated across all 1,034 Spider dev queries |
 | Modern transformer & novelty | Deferred to Part 3 (correct per course timeline) |
+
+
+## Addendum (2026-10-11): critical-review remediation
+
+An internal critical review (metric score 4/10) found an untested headline comparison, a
+nonstandard EM, an unsupported forgetting diagnosis, and several report inconsistencies. This
+pass addressed them:
+
+- Official Spider evaluator (exact-set match and EX) via `scripts/run_official_spider_eval.py`.
+- Held-out Spider **test** (2,147 questions) run once after freezing the inference configuration.
+- CIs, exact McNemar tests, an error-class decomposition, a structural error taxonomy, schema-linking
+  precision and recall, a template audit, and a gold-through-gold sanity check (`scripts/analyze_part2.py`).
+- Inference fixes on the same checkpoint (schema-markup mask, surface-form rendering), measured in
+  an ablation (`scripts/run_ablation.py`).
+- Multi-seed replication with a per-epoch dev-loss curve and an epoch-10 checkpoint (HPC jobs 389817–389819).
+- The forgetting claim was withdrawn: the WikiSQL evaluation used the Stage-1 checkpoint.
+- The report was rewritten from Markdown (single source); the PDF is built by `scripts/build_report.sh`.
+
+Final Spider test: LSTM 7.2% official EX / 5.5% official EM; template 9.5% / 0.0% (6.7% with
+identifier quotes removed).
