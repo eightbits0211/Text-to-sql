@@ -160,10 +160,14 @@ multi-table queries (1.83\% {[}0.9\%, 3.6\%{]} strict EX for the LSTM on
 dev). Most LSTM failures are schema-linking errors: identifier recall is
 40.4\%, and 690 of 746 invalid queries reference a nonexistent column. A
 per-epoch dev-loss curve shows the model starts overfitting after about
-three Spider epochs, although training continued for 25. On WikiSQL, the
-near-total failure of the Stage-1 checkpoint is a rendering defect
-rather than catastrophic forgetting; fixing the rendering raises its
-execution accuracy from 0.04\% to (re-decode pending).
+three Spider epochs, although training continued for 25. On WikiSQL we
+found and fixed a harness defect: gold SQL named columns that the
+database stores as \texttt{col0…colN}, so 71\% of gold queries silently
+returned nothing. With it fixed, the Stage-1 LSTM's near-total failure
+turns out to be a rendering defect rather than catastrophic forgetting,
+and fixing the rendering raises its execution accuracy from 5.76\% to
+17.15\%, far above the template's 2.65\% (McNemar p \textless{}
+10\textsuperscript{-200}).
 \end{abstract}
 
 \section{Introduction and Task
@@ -731,9 +735,12 @@ repository log.
 
 \textbf{Sanity check.} Submitting the gold SQL as the prediction gives
 \textbf{100\% strict EX} on Spider dev (1,034/1,034) and Spider test
-(2147/2,147). This check exposed one harness bug, now fixed: two dev
-gold queries on \texttt{wta\_1} crashed on non-UTF-8 text and could
-never be scored.
+(2147/2,147) and WikiSQL dev (8,415/8,415). This check exposed one
+harness bug, now fixed: two dev gold queries on \texttt{wta\_1} crashed
+on non-UTF-8 text and could never be scored. Gold-equals-gold cannot
+detect a gold query that runs but means nothing, so we also checked that
+gold queries return real answers. That exposed a far more serious
+WikiSQL bug, described in §4.11.
 
 \subsection{Main results}\label{main-results}
 
@@ -1111,8 +1118,8 @@ decoding)}\label{qualitative-cases-spider-dev-base-final-decoding}
   no grounding in the foreign-key graph.
 \end{enumerate}
 
-\subsection{WikiSQL: a rendering defect, not
-forgetting}\label{wikisql-a-rendering-defect-not-forgetting}
+\subsection{WikiSQL: a harness defect and a rendering
+defect}\label{wikisql-a-harness-defect-and-a-rendering-defect}
 
 A natural explanation for the LSTM's 0.04\% WikiSQL EX would be
 catastrophic forgetting during Spider fine-tuning. \textbf{The run log
@@ -1129,12 +1136,29 @@ repair v1 quoted only the first word of multi-word literals
 (\texttt{=\ \textquotesingle{}concord\textquotesingle{}\ hs}). The fault
 lay in the rendering, not the model.
 
+\textbf{Harness defect.} The official WikiSQL database stores each
+table's columns as \texttt{col0\ …\ colN}, with lower-cased text values.
+Our loader, however, wrote gold SQL with the original header names, such
+as
+\texttt{SELECT\ "Position"\ …\ WHERE\ "School/Club\ Team"\ =\ \textquotesingle{}Butler\ CC\ (KS)\textquotesingle{}}.
+SQLite treats a double-quoted name that matches no column as a
+\emph{string literal}. Every gold query therefore executed without error
+but compared constants: 6,007 of 8,415 dev gold queries returned an
+empty result, and any prediction that also returned nothing counted as
+correct. All earlier WikiSQL execution numbers, the template's 7.23\%
+included, were therefore meaningless. The harness now creates, per
+connection, a TEMP VIEW with the table's own name that exposes
+\texttt{colN} under its header. Text columns compare case-insensitively,
+mirroring the official executor, which lower-cases condition values.
+With the view, 7,767 gold queries return real answers. The table below
+re-scores the same predictions with the corrected harness.
+
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2000}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}@{}}
-\caption{WikiSQL dev (all 8,415 examples), Stage-1
+\caption{WikiSQL dev (all 8,415 examples, corrected harness), Stage-1
 checkpoint.}\tabularnewline
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
@@ -1162,17 +1186,28 @@ Invalid
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-LSTM Stage-1, base decoding (Job 361547) & 0.04\% (3/8,415) & 0.04\% &
-99.5\% \\
-Template parser (Job 361547 revision) & 7.23\% (608/8,415) & 1.26\% &
-0.0\% \\
+LSTM Stage-1, raw greedy & 3.11\% {[}2.8\%, 3.5\%{]} & 0.00\% &
+89.5\% \\
+LSTM Stage-1, base decoding (Job 361547) & 5.76\% {[}5.3\%, 6.3\%{]} &
+0.04\% & 81.1\% \\
+\textbf{LSTM Stage-1, final decoding} & 17.15\% {[}16.4\%, 18.0\%{]} &
+1.84\% & 32.5\% \\
+Template parser & 2.65\% {[}2.3\%, 3.0\%{]} & 1.26\% & 0.0\% \\
 \end{longtable}
 
-The full-dev re-decode of the Stage-1 checkpoint with the rendering fix
-was queued on the HPC at submission time. The template's 7.23\% EX is
-far below published WikiSQL systems: Seq2SQL reports 59.4\% test EX and
-SQLNet 68.0\% (Xu et al., 2017). It is therefore a weak lower bound, not
-a strong reference.
+With the same Stage-1 weights, rendering takes strict EX from 5.76\% to
+17.15\% and invalid SQL from 81.1\% to 32.5\% (958 vs 0 questions gained
+vs lost). The remaining invalid queries are 1,890 syntax errors and 822
+unknown columns. The syntax errors typically come from a hallucinated
+multi-word column name: one that exists in some training table but not
+in the current table (e.g.~\texttt{points\ for}, \texttt{year\ born}),
+so it is never quoted. Both are schema-linking failures, as on Spider.
+Unlike on Spider, the LSTM is clearly the stronger system here: the
+template's single-table heuristics reach only 2.65\%. Its previously
+measured 7.23\% came almost entirely from coincidental empty-result
+matches under the broken harness. Both systems remain far below
+published WikiSQL models: Seq2SQL reports 59.4\% and SQLNet 68.0\% test
+execution accuracy (Xu et al., 2017).
 
 \subsection{Demonstration (CLI)}\label{demonstration-cli}
 

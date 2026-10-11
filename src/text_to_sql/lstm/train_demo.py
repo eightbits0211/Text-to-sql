@@ -144,7 +144,9 @@ def run_training_demo(
     rows.sort(key=lambda row: (not row[2].execution_match, row[2].invalid_sql))
     print(f"\nSample held-out questions ({show_examples}, correct ones first):")
     for record, prediction, item in rows[:show_examples]:
-        result = execute_read_only(prediction.predicted_sql, record.database_path)
+        result = execute_read_only(
+            prediction.predicted_sql, record.database_path, record.execution_prelude
+        )
         status = "CORRECT" if item.execution_match else ("INVALID" if item.invalid_sql else "WRONG")
         preview = result.rows[:3] if result.status == "success" else result.error
         print(f"\n  [{status}] ({record.database_id}) {record.question}")

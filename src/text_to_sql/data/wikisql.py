@@ -178,6 +178,7 @@ def _build_record(
         ),
     )
 
+    types = table.get("types", ["text"] * len(headers))
     return ExampleRecord(
         example_id=example_id,
         dataset="wikisql",
@@ -190,7 +191,27 @@ def _build_record(
         difficulty=QueryDifficulty.UNKNOWN,
         query_structure=QueryStructure.SINGLE_TABLE,
         source_index=source_index,
+        execution_prelude=(header_view_sql(table_name, headers, types),),
     )
+
+
+def header_view_sql(table_name: str, headers: list[Any], types: list[Any]) -> str:
+    """TEMP VIEW exposing the official database's ``col0..colN`` under header names.
+
+    The official WikiSQL ``*.db`` files store columns as ``col0..colN`` with
+    lower-cased text values, while questions, schemas and gold SQL use the
+    original headers. A same-named TEMP VIEW shadows the base table on the
+    connection, so header-based SQL executes against the real data. Text
+    columns compare case-insensitively, mirroring the official executor,
+    which lower-cases condition values.
+    """
+    columns = ", ".join(
+        f"col{index}{'' if str(kind).lower() == 'real' else ' COLLATE NOCASE'} "
+        f"AS {_quote_identifier(str(header))}"
+        for index, (header, kind) in enumerate(zip(headers, types, strict=True))
+    )
+    quoted = _quote_identifier(table_name)
+    return f"CREATE TEMP VIEW {quoted} AS SELECT {columns} FROM main.{quoted}"
 
 
 def _build_sql(sql_payload: Any, headers: list[Any], table_name: str) -> str:
