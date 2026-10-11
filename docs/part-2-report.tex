@@ -3,12 +3,12 @@
 \PassOptionsToPackage{hyphens}{url}
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 \documentclass[
-  10pt,
+  11pt,
 ]{article}
 \usepackage{xcolor}
-\usepackage[margin=0.9in]{geometry}
+\usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\setcounter{secnumdepth}{5}
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
@@ -22,8 +22,6 @@
 \usepackage{lmodern}
 \ifPDFTeX\else
   % xetex/luatex font selection
-  \setmainfont[]{Times New Roman}
-  \setmonofont[]{Menlo}
 \fi
 % Use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -114,12 +112,12 @@
 \urlstyle{same}
 \hypersetup{
   pdftitle={CS F429 Natural Language Processing --- Part 2 Report},
-  pdfauthor={Roshini Kotte (2024A7PS0048H)},
+  pdfauthor={Course: CS F429 Natural Language Processing, BITS Pilani; Name: Roshini Kotte \textbar{} ID Number: 2024A7PS0048H},
   colorlinks=true,
-  linkcolor={Maroon},
+  linkcolor={blue!60!black},
   filecolor={Maroon},
   citecolor={Blue},
-  urlcolor={Blue},
+  urlcolor={blue!60!black},
   pdfcreator={LaTeX via pandoc}}
 
 \title{CS F429 Natural Language Processing --- Part 2 Report}
@@ -131,18 +129,13 @@
 \makeatother
 \subtitle{Robust Natural Language to SQL Translation Across Single- and
 Multi-Table Relational Databases}
-\author{Roshini Kotte (2024A7PS0048H)}
+\author{Course: CS F429 Natural Language Processing, BITS
+Pilani \and Name: Roshini Kotte \textbar{} ID Number: 2024A7PS0048H}
 \date{October 11, 2026}
 
 \begin{document}
 \maketitle
-
-\textbf{Course:} CS F429 Natural Language Processing, BITS Pilani\\
-\textbf{Component:} Part 2 Report (Classical Baselines, Evaluation
-Protocol, Results and Error Analysis)
-
-\subsection{Abstract}\label{abstract}
-
+\begin{abstract}
 We formulate cross-domain Text-to-SQL and build an execution-based
 evaluation harness for Spider (multi-table, unseen databases) and
 WikiSQL (single-table). Two classical baselines are compared: a
@@ -183,13 +176,12 @@ The literature comparison band of ``3.2--5.4\%'' did not appear in the
 cited paper; the paper's actual Table 2 rows are now quoted. The
 ``catastrophic forgetting'' claim is withdrawn. Section 4.11 lists every
 correction.
+\end{abstract}
 
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+\section{Introduction and Task
+Formulation}\label{introduction-and-task-formulation}
 
-\subsection{Section (a): Introduction and Task
-Formulation}\label{section-a-introduction-and-task-formulation}
-
-\subsubsection{1.1 Motivation}\label{motivation}
+\subsection{Motivation}\label{motivation}
 
 Relational databases hold most structured enterprise and scientific
 data. Writing SQL against them requires knowing SQL syntax, relational
@@ -198,7 +190,7 @@ and column names of each schema. Text-to-SQL removes this barrier by
 translating a natural-language question into an executable query, giving
 non-technical users conversational access to structured data.
 
-\subsubsection{1.2 Core challenges}\label{core-challenges}
+\subsection{Core challenges}\label{core-challenges}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -222,7 +214,7 @@ non-technical users conversational access to structured data.
   sequence can still score zero.
 \end{enumerate}
 
-\subsubsection{1.3 Formulation}\label{formulation}
+\subsection{Formulation}\label{formulation}
 
 Given a question \(Q=(q_1,\dots,q_m)\) and a schema
 \(\mathcal{S}=(\mathcal{T},\mathcal{C},\mathcal{E})\) of tables, columns
@@ -230,12 +222,9 @@ and foreign-key edges, produce SQL \(Y=(y_1,\dots,y_n)\) such that
 executing \(Y\) on the database returns the intended result:
 \[\hat{Y}=\arg\max_Y \prod_{t=1}^{n} P(y_t\mid y_{<t},Q,\mathcal{S}).\]
 
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+\section{Literature Survey}\label{literature-survey}
 
-\subsection{Section (b): Literature
-Survey}\label{section-b-literature-survey}
-
-\subsubsection{2.1 Rule-based semantic
+\subsection{Rule-based semantic
 parsing}\label{rule-based-semantic-parsing}
 
 PRECISE (Popescu et al., 2003) maps words to database elements through
@@ -245,7 +234,7 @@ Mooney, 2007) and CCG (Zettlemoyer and Collins, 2005) parsers induce
 logical forms but need domain lexicons and do not transfer across
 schemas.
 
-\subsubsection{2.2 Neural sequence-to-sequence
+\subsection{Neural sequence-to-sequence
 parsing}\label{neural-sequence-to-sequence-parsing}
 
 Encoder--decoder LSTMs (Sutskever et al., 2014) with attention (Bahdanau
@@ -254,7 +243,7 @@ here. First, identifiers and literals are often out of vocabulary.
 Second, unconstrained decoders emit ungrammatical or schema-inconsistent
 SQL.
 
-\subsubsection{2.3 Pointer and copy
+\subsection{Pointer and copy
 mechanisms}\label{pointer-and-copy-mechanisms}
 
 Pointer Networks (Vinyals et al., 2015) and Pointer-Generator Networks
@@ -264,16 +253,20 @@ distribution over the input:
 On WikiSQL, Seq2SQL (Zhong et al., 2017) and SQLNet (Xu et al., 2017)
 combine pointing with sketch-based slot filling.
 
-\subsubsection{2.4 Spider and its
-baselines}\label{spider-and-its-baselines}
+\subsection{Spider and its baselines}\label{spider-and-its-baselines}
 
 Spider (Yu et al., 2018) has 10,181 questions and 5,693 unique queries
 over 200 databases in 138 domains, split so that test databases are
 unseen. \textbf{Table 2 of Yu et al.~(2018)} reports exact-matching
 accuracy on the \emph{database split}:
 
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}lrr@{}}
+\caption{Exact-match accuracy of the original Spider baselines (Yu et
+al., 2018, Table 2, database split).}\tabularnewline
+\toprule\noalign{}
+Model (Yu et al., 2018, Table 2, database split) & Test EM & Dev EM \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 Model (Yu et al., 2018, Table 2, database split) & Test EM & Dev EM \\
 \midrule\noalign{}
@@ -286,7 +279,6 @@ Seq2Seq + Copying & 5.3\% & 4.1\% \\
 SQLNet & 12.4\% & 10.9\% \\
 TypeSQL & 8.2\% & 8.0\% \\
 \end{longtable}
-}
 
 These numbers come from the original 2018 release and evaluator, which
 ignored literal values. They give an order-of-magnitude reference, not a
@@ -296,18 +288,25 @@ decoding (PICARD; Scholak et al., 2021), and schema ranking with
 pre-trained seq2seq models (RESDSQL; Li et al., 2023). Our Part 2 model
 belongs to the Seq2Seq+Copying family.
 
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+\section{Datasets, Preprocessing and
+Serialisation}\label{datasets-preprocessing-and-serialisation}
 
-\subsection{Section (c): Datasets, Preprocessing and
-Serialisation}\label{section-c-datasets-preprocessing-and-serialisation}
+\subsection{Datasets and splits}\label{datasets-and-splits}
 
-\subsubsection{3.1 Datasets and splits}\label{datasets-and-splits}
-
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\caption{Datasets used in this work.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+WikiSQL (Zhong et al., 2017)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Spider (Yu et al., 2018)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
@@ -330,19 +329,30 @@ Operations & \texttt{SELECT}, one aggregate, \texttt{AND} conditions &
 Joins, \texttt{GROUP\ BY}, \texttt{HAVING}, \texttt{ORDER\ BY},
 \texttt{LIMIT}, nesting, set operations \\
 \end{longtable}
-}
 
 \textbf{Per-split retention.} All splits are loaded through the typed
 loaders in \texttt{data/spider.py} and \texttt{data/wikisql.py}. These
 record an explicit exclusion event for any example with a missing
 question, gold SQL, schema or database file.
 
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2143}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2857}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2857}}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2143}}@{}}
+\caption{Per-split retention after loading.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Split
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Source
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Retained
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Excluded (reason)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Split
@@ -365,7 +375,6 @@ Spider train & 7,000 & 7,000 & 0 \\
 Spider dev & 1,034 & 1,034 & 0 \\
 Spider test & 2,147 & 2,147 & 0 \\
 \end{longtable}
-}
 
 \textbf{Spider difficulty distribution} (official
 \texttt{eval\_hardness}, reimplemented in \texttt{data/spider.py} and
@@ -384,7 +393,7 @@ a join and a subquery is counted as multi-table, and set operations
 count as multi-table even over one table. Dev has 544 single-table, 438
 multi-table and 52 nested examples.
 
-\subsubsection{3.2 Schema serialisation}\label{schema-serialisation}
+\subsection{Schema serialisation}\label{schema-serialisation}
 
 \texttt{data/schema.py} serialises each schema deterministically, with
 tables and columns sorted:
@@ -410,7 +419,7 @@ where both parts are tokenised by the regex lexer in
 become ordinary copyable source tokens. Section 4.8 shows this was the
 largest single source of invalid SQL.
 
-\subsubsection{3.3 Tokenisation and
+\subsection{Tokenisation and
 vocabulary}\label{tokenisation-and-vocabulary}
 
 \begin{itemize}
@@ -434,7 +443,7 @@ vocabulary}\label{tokenisation-and-vocabulary}
   \texttt{\textless{}unk\textgreater{}}.
 \end{itemize}
 
-\subsubsection{3.4 Worked preprocessing
+\subsection{Worked preprocessing
 example}\label{worked-preprocessing-example}
 
 This is the output of \texttt{scripts/show\_preprocessing.py}, which
@@ -462,10 +471,9 @@ surface form from the question at inference. The schema's column
 \emph{types} (\texttt{text}) sit in the encoder input right next to the
 column names.
 
-\subsubsection{3.5 Corpus statistics (as tokenised for the
+\subsection{Corpus statistics (as tokenised for the
 model)}\label{corpus-statistics-as-tokenised-for-the-model}
 
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.0968}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
@@ -475,6 +483,28 @@ model)}\label{corpus-statistics-as-tokenised-for-the-model}
   >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}@{}}
+\caption{Spider corpus statistics as tokenised for the
+model.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Split
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Examples
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+DBs
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Question tokens
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+SQL tokens
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Encoder tokens (max; \textgreater{} 256)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Tables / columns per schema
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Target tokens: vocab / copy / unk
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Split
@@ -504,7 +534,6 @@ Dev & 1,034 & 20 & 12.4 & 21.5 & 104 (242; 0) & 4.5 / 24.8 & 90.9\% /
 Test & 2,147 & 40 & 12.5 & 22.6 & 100 (278; 99) & 4.9 / 20.9 & 91.8\% /
 7.7\% / 0.5\% \\
 \end{longtable}
-}
 
 \textbf{The key observation is that the copy mechanism is never
 trained.} The vocabulary contains every training token, so on Spider
@@ -517,61 +546,32 @@ helps explain the schema-linking failures in §4.9. The Part 3 remedy is
 to keep schema identifiers out of the fixed vocabulary, or apply a
 frequency threshold, so that copying is learned.
 
-\subsubsection{3.6 Dataset limitations}\label{dataset-limitations}
+\subsection{Dataset limitations}\label{dataset-limitations}
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Spider.}
+\textbf{Spider.} Most queries appear with two paraphrased questions,
+which inflates in-domain accuracy. This does not leak across our
+database-disjoint splits, but it matters for the small live training
+demo (§4.12). Coverage is English-only and skewed towards college,
+business and entertainment schemas, and dev has only 20 databases, so
+per-database variance is high. Small databases allow coincidental
+execution matches (§4.9 shows one). Gold SQL follows inconsistent
+conventions: \texttt{"blues"} vs
+\texttt{\textquotesingle{}France\textquotesingle{}} quoting, stray
+trailing semicolons and mixed identifier case. These break string match
+but not execution or exact-set match. One database (\texttt{wta\_1})
+stores non-UTF-8 text. Difficulty is imbalanced: 43\% of dev is medium
+and only 16\% is extra-hard.
 
-  \begin{itemize}
-  \tightlist
-  \item
-    \emph{Paraphrase pairs:} most queries appear with two phrasings,
-    which inflates in-domain accuracy. Our dev and test splits are
-    database-disjoint, so this does not leak across splits.
-  \item
-    \emph{Coverage:} the data is English only and concentrated in
-    college, business and entertainment schemas. Dev has only 20
-    databases, so per-database variance is high.
-  \item
-    \emph{Small databases:} these allow coincidental execution matches;
-    §4.9 shows a template example.
-  \item
-    \emph{Annotation conventions:} gold SQL uses inconsistent quoting
-    (\texttt{"blues"} vs
-    \texttt{\textquotesingle{}France\textquotesingle{}}), stray trailing
-    semicolons and mixed identifier case. These break string match but
-    not execution or exact-set match.
-  \item
-    \emph{Data quality:} one database (\texttt{wta\_1}) stores non-UTF-8
-    text.
-  \item
-    \emph{Difficulty imbalance:} 43\% of dev is medium, and extra-hard
-    is only 16\%.
-  \end{itemize}
-\item
-  \textbf{WikiSQL.}
+\textbf{WikiSQL.} Each question targets a single table with at most one
+aggregate and \texttt{AND}-only conditions. Values are stored as text,
+column names contain spaces and punctuation, and the annotations are
+known to be noisy. It therefore tests pipeline mechanics rather than
+compositional parsing.
 
-  \begin{itemize}
-  \tightlist
-  \item
-    Single-table only, with one aggregate and \texttt{AND}-only
-    conditions.
-  \item
-    Values are stored as text, column names contain spaces and
-    punctuation, and it is known to contain noisy annotations.
-  \item
-    It therefore checks pipeline mechanics, not compositional parsing.
-  \end{itemize}
-\end{itemize}
+\section{Methods, Evaluation Protocol, Results and Error
+Analysis}\label{methods-evaluation-protocol-results-and-error-analysis}
 
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
-
-\subsection{Section (d): Methods, Evaluation Protocol, Results and Error
-Analysis}\label{section-d-methods-evaluation-protocol-results-and-error-analysis}
-
-\subsubsection{4.1 Baseline 1: deterministic template
+\subsection{Baseline 1: deterministic template
 parser}\label{baseline-1-deterministic-template-parser}
 
 \texttt{baselines/template.py} matches question tokens to table and
@@ -587,7 +587,7 @@ revision that never abstained; its EX was identical, 60/1,034.)} Apart
 from abstentions the template produced no SQLite errors, so its low
 invalid rate reflects conservative, single-table output.
 
-\subsubsection{4.2 Baseline 2: pointer-generator
+\subsection{Baseline 2: pointer-generator
 BiLSTM}\label{baseline-2-pointer-generator-bilstm}
 
 \texttt{lstm/model.py} (values from \texttt{TrainingConfig} and
@@ -622,8 +622,7 @@ BiLSTM}\label{baseline-2-pointer-generator-bilstm}
   masked.
 \end{itemize}
 
-\subsubsection{4.3 Training (HPC Job
-361547)}\label{training-hpc-job-361547}
+\subsection{Training (HPC Job 361547)}\label{training-hpc-job-361547}
 
 Hardware: one NVIDIA RTX PRO 6000 Blackwell MPS slice (50\%), 4 CPUs and
 80 GB RAM. The whole job, training plus evaluation, took 50 min of wall
@@ -664,10 +663,9 @@ while training NLL keeps falling. A training NLL of 0.04 alongside
 rising dev NLL and over 70\% invalid dev SQL indicates
 \textbf{memorisation of the training databases, not successful
 cross-domain transfer}. Early stopping on a database-disjoint validation
-split is a Part 3 requirement (§4.12).
+split is required for Part 3.
 
-\subsubsection{4.4 Inference pipeline and the fixes made in this
-revision}\label{inference-pipeline-and-the-fixes-made-in-this-revision}
+\subsection{Inference pipeline}\label{inference-pipeline}
 
 The final pipeline is decode, then render, then repair. All steps
 operate on the same trained weights.
@@ -704,78 +702,78 @@ operate on the same trained weights.
   of quoted literals untouched.
 \end{enumerate}
 
-\subsubsection{4.5 Evaluation protocol}\label{evaluation-protocol}
+\subsection{Evaluation protocol}\label{evaluation-protocol}
+
+\textbf{Official metrics.} Spider is scored with the official evaluator
+(\texttt{taoyds/test-suite-sql-eval},
+\texttt{evaluation.py\ -\/-etype\ all}) on Spider's own databases.
+\emph{Exact-set match} (EM) compares SQL component by component and
+ignores literal values. \emph{Execution accuracy} (EX) compares result
+multisets, and row order matters only when the gold query has
+\texttt{ORDER\ BY}. Test-suite accuracy needs a separate
+\textasciitilde1 GB set of distilled databases, which was not available
+offline, so it is left to Part 3.
+
+\textbf{Harness metrics.} Our own harness
+(\texttt{evaluation/metrics.py}) records four per-example outcomes for
+every dataset:
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{Official metrics (Spider).} We use the official evaluator
-  (\texttt{taoyds/test-suite-sql-eval},
-  \texttt{evaluation.py\ -\/-etype\ all}) on Spider's own databases:
-
-  \begin{itemize}
-  \tightlist
-  \item
-    \textbf{Exact-set match (EM):} component-wise comparison; values are
-    ignored.
-  \item
-    \textbf{Execution accuracy (EX):} result multisets compared; row
-    order matters only if the gold SQL has \texttt{ORDER\ BY}.
-  \end{itemize}
-
-  Test-suite accuracy needs the separate distilled test-suite databases
-  (\textasciitilde1 GB), which were not available offline. It is listed
-  as Part 3 work.
+  \emph{Strict EX} requires result-column labels (case-insensitive) and
+  row order to agree as well.
 \item
-  \textbf{Harness metrics} (\texttt{evaluation/metrics.py}, every
-  dataset, per-example records):
-
-  \begin{itemize}
-  \tightlist
-  \item
-    \emph{Strict EX:} result-column labels (case-insensitive) and row
-    order must agree. This is the metric of the earlier draft and is
-    kept for continuity.
-  \item
-    \emph{EX with official semantics:} labels ignored, multiset rows.
-  \item
-    \emph{Normalised string match (SM):} whitespace-collapsed,
-    lower-cased string equality. The earlier draft called this ``exact
-    match''; it is \textbf{not} Spider's EM, and it is why the template
-    scored 0.
-  \item
-    \emph{Invalid-SQL rate:} any SQLite error or empty prediction. It is
-    decomposed by error class.
-  \end{itemize}
+  \emph{EX with official semantics} ignores labels and compares rows as
+  multisets.
 \item
-  \textbf{Splits.} Spider dev was used for all development decisions.
-  \textbf{Spider test was run once}, after the configuration was frozen.
-  WikiSQL dev is used as a single-table diagnostic.
+  \emph{Normalised string match} (SM) is whitespace-collapsed,
+  lower-cased string equality. It is \textbf{not} Spider's EM, which
+  explains the template's 0\% SM.
 \item
-  \textbf{Uncertainty.} We report Wilson or bootstrap 95\% intervals
-  (10,000 resamples, seed 42) and exact two-sided McNemar tests on
-  paired per-example outcomes. The main results come from a single
-  training run (seed 42). Replication runs with further seeds were still
-  in progress at submission and are reported in the repository log.
-\item
-  \textbf{Harness sanity check.} Submitting gold SQL as the prediction
-  gives \textbf{100\% strict EX} on Spider dev (1,034/1,034) and Spider
-  test (2147/2,147). This revision fixed one harness bug: two dev gold
-  queries on \texttt{wta\_1} previously crashed on non-UTF-8 text and
-  could never be scored.
+  \emph{Invalid SQL} counts any SQLite error or empty prediction, and is
+  decomposed by error class.
 \end{itemize}
 
-\subsubsection{4.6 Main results}\label{main-results}
+\textbf{Splits and uncertainty.} All development decisions were made on
+Spider dev. \textbf{Spider test was run once}, after the configuration
+was frozen. WikiSQL dev serves as a single-table diagnostic. We report
+Wilson or bootstrap 95\% intervals (10,000 resamples, seed 42) and exact
+two-sided McNemar tests on paired per-example outcomes. The main results
+come from a single training run (seed 42). Replication runs with further
+seeds were still in progress at submission and are reported in the
+repository log.
 
-\textbf{Spider test (held out, run once):}
+\textbf{Sanity check.} Submitting the gold SQL as the prediction gives
+\textbf{100\% strict EX} on Spider dev (1,034/1,034) and Spider test
+(2147/2,147). This check exposed one harness bug, now fixed: two dev
+gold queries on \texttt{wta\_1} crashed on non-UTF-8 text and could
+never be scored.
 
-{\def\LTcaptype{none} % do not increment counter
+\subsection{Main results}\label{main-results}
+
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.4348}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.0870}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.0870}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.3043}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.0870}}@{}}
+\caption{Main results on Spider test (held out; run once after freezing
+the configuration).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+System
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX (95\% CI)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 System
@@ -800,11 +798,7 @@ LSTM, raw greedy (no repair) & 6.2\% & 4.4\% & 2.89\% {[}2.2\%, 3.6\%{]}
 & 82.3\% \\
 Template parser & 9.5\% & 0.0\% & 6.01\% {[}5.0\%, 7.0\%{]} & 9.7\% \\
 \end{longtable}
-}
 
-\textbf{Spider dev} (development set; all fixes were chosen here):
-
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.4000}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0800}}
@@ -812,6 +806,24 @@ Template parser & 9.5\% & 0.0\% & 6.01\% {[}5.0\%, 7.0\%{]} & 9.7\% \\
   >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2800}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0800}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0800}}@{}}
+\caption{Results on Spider dev (development set; all fixes were chosen
+here).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+System
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX (95\% CI)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+SM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 System
@@ -837,7 +849,6 @@ LSTM, as submitted (Job 361547) & 7.4\% & 4.9\% & 5.90\% {[}4.5\%,
 Template parser & 9.9\% & 0.0\% & 5.80\% {[}4.4\%, 7.3\%{]} & 0.00\% &
 8.9\% \\
 \end{longtable}
-}
 
 \textbf{Paired significance (strict EX, McNemar).} Dev: final LSTM vs
 template, 44 vs 38 discordant questions, p = 0.58. As submitted vs
@@ -853,17 +864,31 @@ is good at the task. The headline claim of the earlier draft, that the
 LSTM surpassed the template, rested on a one-query difference (61 vs 60,
 p = 1.0) and is withdrawn.
 
-\subsubsection{4.7 Ablation: what each inference component contributes
-(same checkpoint, Spider
-dev)}\label{ablation-what-each-inference-component-contributes-same-checkpoint-spider-dev}
+\subsection{Inference ablation (same checkpoint, Spider
+dev)}\label{inference-ablation-same-checkpoint-spider-dev}
 
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.6000}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1000}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1000}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1000}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1000}}@{}}
+\caption{Inference ablation on one checkpoint (Spider
+dev).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Configuration
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Configuration
@@ -889,7 +914,6 @@ as submitted + schema-markup mask & 6.09\% & 7.7\% & 5.0\% & 72.6\% \\
 final + copy feedback as \texttt{\textless{}unk\textgreater{}} & 6.19\%
 & 7.9\% & 5.0\% & 72.7\% \\
 \end{longtable}
-}
 
 The CPU re-decode reproduced 1,031 of the 1,034 Job 361547 GPU
 predictions exactly. The other three are near-tie argmax flips caused by
@@ -915,16 +939,28 @@ one checkpoint (table above). An epoch-10 vs epoch-25 comparison with
 fixed decoding is part of the replication runs and was not complete at
 submission.
 
-\subsubsection{4.8 Breakdown by difficulty and structure (Spider dev,
-final
+\subsection{Breakdown by difficulty and structure (Spider dev, final
 LSTM)}\label{breakdown-by-difficulty-and-structure-spider-dev-final-lstm}
 
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2000}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}@{}}
+\caption{Strict EX by difficulty and query structure (Spider dev, Wilson
+95\% CI).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Slice
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+n
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+LSTM strict EX (95\% CI)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Template strict EX (95\% CI)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Slice
@@ -952,34 +988,26 @@ Multi-table (join / set op) & 438 & 1.83\% {[}0.9\%, 3.6\%{]} & 0.91\%
 Nested (other) & 52 & 3.85\% {[}1.1\%, 13.0\%{]} & 0.00\% {[}0.0\%,
 6.9\%{]} \\
 \end{longtable}
-}
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Multi-table queries,} the stated core objective, are
-  essentially unsolved: 1.83\% {[}0.9\%, 3.6\%{]} for the LSTM, with SM
-  0/438 in both the as-submitted and final runs.
-\item
-  \textbf{Single-table queries} account for 56/66 (84.8\%) of all LSTM
-  EX hits.
-\item
-  \textbf{Extra-hard} is 0/166 for the LSTM, a floor effect.
-\item
-  \textbf{The non-monotonic medium/hard pattern} (hard EX ≥ medium EX)
-  comes from small counts. The 95\% intervals overlap almost entirely:
-  medium 4.26\% {[}2.7\%, 6.6\%{]} vs hard 5.75\% {[}3.2\%, 10.3\%{]}.
-  The pattern should not be interpreted.
-\end{itemize}
+Multi-table queries, the core objective, are essentially unsolved:
+1.83\% {[}0.9\%, 3.6\%{]} strict EX for the LSTM, and SM is 0/438 in
+both the as-submitted and final runs. Single-table queries account for
+56/66 (84.8\%) of all LSTM EX hits, and extra-hard is 0/166, a floor
+effect. Hard EX is slightly above medium EX, but this comes from small
+counts: the 95\% intervals, 4.26\% {[}2.7\%, 6.6\%{]} for medium and
+5.75\% {[}3.2\%, 10.3\%{]} for hard, overlap almost entirely, so the
+ordering should not be interpreted.
 
-\subsubsection{4.9 Error analysis (all 1,034 dev questions, final
+\subsection{Error analysis (all 1,034 dev questions, final
 LSTM)}\label{error-analysis-all-1034-dev-questions-final-lstm}
 
-\textbf{Invalid SQL by SQLite error class} (Job 361547 → final
-configuration):
-
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}lrr@{}}
+\caption{Invalid SQL on Spider dev by SQLite error
+class.}\tabularnewline
+\toprule\noalign{}
+Error class & As submitted & Final \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 Error class & As submitted & Final \\
 \midrule\noalign{}
@@ -995,15 +1023,19 @@ Error class & As submitted & Final \\
 \texttt{other} & 1 & 1 \\
 \textbf{Total invalid} & \textbf{798} & \textbf{746} \\
 \end{longtable}
-}
 
 \textbf{Structural error taxonomy.} Each wrong prediction is compared
 with its gold query, using literal-stripped signatures
 (\texttt{scripts/analyze\_part2.py}). A prediction can carry several
 labels; \emph{n} = 968 failures.
 
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}lrr@{}}
+\caption{Structural error taxonomy of failed LSTM predictions (Spider
+dev).}\tabularnewline
+\toprule\noalign{}
+Error type & Count & Share of failures \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 Error type & Count & Share of failures \\
 \midrule\noalign{}
@@ -1025,7 +1057,6 @@ Set operation present/absent incorrectly & 55 & 5.7\% \\
 \texttt{HAVING} present/absent incorrectly & 27 & 2.8\% \\
 Literal differs only in letter case & 1 & 0.1\% \\
 \end{longtable}
-}
 
 \textbf{Schema linking.} Over all dev questions, identifiers referenced
 by the LSTM have precision 39.9\% and recall 40.4\%. Tables have
@@ -1045,8 +1076,7 @@ is over 20. The LSTM's EX hits without SM split as 15 structurally
 equivalent to gold; 10 coincidental (gold result is empty or zero); 7
 coincidental (a gold clause is missing or different).
 
-\subsubsection{4.10 Qualitative cases (Spider dev; Job 361547 output →
-final
+\subsection{Qualitative cases (Spider dev; Job 361547 output → final
 output)}\label{qualitative-cases-spider-dev-job-361547-output-final-output}
 
 \begin{enumerate}
@@ -1096,7 +1126,7 @@ output)}\label{qualitative-cases-spider-dev-job-361547-output-final-output}
   no grounding in the foreign-key graph.
 \end{enumerate}
 
-\subsubsection{4.11 WikiSQL: the ``catastrophic forgetting'' claim
+\subsection{WikiSQL: the ``catastrophic forgetting'' claim
 withdrawn}\label{wikisql-the-catastrophic-forgetting-claim-withdrawn}
 
 The earlier draft attributed the LSTM's 0.04\% WikiSQL EX to Spider
@@ -1113,14 +1143,25 @@ repair v1 quoted only the first word of multi-word literals
 (\texttt{=\ \textquotesingle{}concord\textquotesingle{}\ hs}). The model
 was not at fault; the rendering was.
 
-\textbf{WikiSQL dev, Stage-1 checkpoint (full 8,415 examples):}
-
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2000}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}@{}}
+\caption{WikiSQL dev (all 8,415 examples), Stage-1
+checkpoint.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+System
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX (95\% CI)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+SM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 System
@@ -1140,7 +1181,6 @@ LSTM Stage-1, as submitted (Job 361547) & 0.04\% (3/8,415) & 0.04\% &
 Template parser (Job 361547 revision) & 7.23\% (608/8,415) & 1.26\% &
 0.0\% \\
 \end{longtable}
-}
 
 The full-dev re-decode of the Stage-1 checkpoint with the rendering fix
 was queued on the HPC at submission time. The template's 7.23\% EX is
@@ -1150,10 +1190,18 @@ a ``reliable reference'' as the earlier draft called it.
 
 \textbf{Other corrections to the earlier draft.}
 
-{\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
   >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\caption{Corrections to the earlier draft.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Earlier claim
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Correction
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Earlier claim
@@ -1183,125 +1231,37 @@ Template ``returns an empty prediction'' & True for the current code
 (abstention counts given in §4.1); the evaluated Job 361547 revision
 never abstained \\
 \end{longtable}
-}
 
-\subsubsection{4.12 Demonstration (CLI)}\label{demonstration-cli}
+\subsection{Demonstration (CLI)}\label{demonstration-cli}
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Live training:}
-  \texttt{uv\ run\ text-to-sql-demo\ -\/-train-demo} trains a small
-  pointer-generator (embedding 128, hidden 256) from scratch on the 95
-  Spider \emph{train} questions of \texttt{soccer\_2} for 60 epochs on a
-  laptop CPU, which takes about 2--3 minutes.
+\textbf{Live training.}
+\texttt{uv\ run\ text-to-sql-demo\ -\/-train-demo} trains a small
+pointer-generator (embedding 128, hidden 256) from scratch on the 95
+Spider \emph{train} questions of \texttt{soccer\_2}, for 60 epochs on a
+laptop CPU, which takes about 2--3 minutes. It prints the per-epoch
+training and held-out NLL. It decodes a probe question with random
+weights before training and again after. It then reports execution
+accuracy on 20 questions the model trained on and on 11 held-out
+questions from the same database. In our rehearsal the loss fell from
+4.88 to 0.09, and the model scored 15/20 on seen questions but 0/11 on
+held-out ones. That is the memorisation gap of §4.3 at small scale. The
+saved checkpoint can be queried at once with
+\texttt{-\/-model\ lstm\ -\/-checkpoint\ artifacts/train-demo/spider\_checkpoint.pt}.
 
-  \begin{itemize}
-  \tightlist
-  \item
-    It prints the per-epoch training and held-out NLL.
-  \item
-    It shows a probe question decoded \emph{before} training (random
-    output) and \emph{after} training.
-  \item
-    It reports execution accuracy on 20 questions it trained on versus
-    11 held-out questions from the same database. In our rehearsal the
-    scores were 15/20 versus 0/11 (loss 4.88 → 0.09), which reproduces
-    the memorisation gap of §4.3 at small scale.
-  \item
-    It saves a checkpoint that the CLI can query immediately with
-    \texttt{-\/-model\ lstm\ -\/-checkpoint\ artifacts/train-demo/spider\_checkpoint.pt}.
-  \end{itemize}
-\item
-  \textbf{Inference showcase:}
-  \texttt{uv\ run\ text-to-sql-demo\ -\/-demo\ -\/-model\ template} runs
-  the scripted three-case showcase on \texttt{concert\_singer}: a count,
-  a filter, and a graceful failure on an unsupported join.
-\item
-  \textbf{Full LSTM:} \texttt{-\/-model\ lstm} loads the evaluated Job
-  361547 \texttt{spider\_checkpoint.pt} with the final decoding
-  configuration.
-\item
-  \textbf{Arbitrary questions:}
-  \texttt{-\/-question\ "…"\ -\/-database\ \textless{}path\textgreater{}}
-  answers any question and prints the SQL and the result table. For
-  Spider databases, the CLI now builds the schema from
-  \texttt{tables.json}, exactly as during training. Previously it used
-  SQLite introspection, a different serialisation from the one the model
-  was trained on.
-\item
-  \textbf{Preprocessing walkthrough:}
-  \texttt{uv\ run\ python\ -m\ scripts.show\_preprocessing\ -\/-example\ \textless{}id\textgreater{}}
-  prints the pipeline stages of §3.4 for any example.
-\end{itemize}
+\textbf{Inference.} \texttt{-\/-demo\ -\/-model\ template} runs a
+scripted three-case showcase on \texttt{concert\_singer}: a count, a
+filter, and a graceful failure on an unsupported join.
+\texttt{-\/-model\ lstm} loads the evaluated Job 361547 checkpoint with
+the final decoding configuration.
+\texttt{-\/-question\ "…"\ -\/-database\ \textless{}path\textgreater{}}
+answers any question and prints the SQL and the result table. For Spider
+databases, the CLI builds the schema from \texttt{tables.json}, so the
+serialisation matches training exactly.
+\texttt{scripts/show\_preprocessing.py} prints the pipeline stages of
+§3.4 for any example.
 
-The proposal promised a GUI; the Part 2 deliverable is this CLI, which
-the rubric explicitly allows.
-
-\subsubsection{4.13 Deviations from the proposal, limitations and Part 3
-targets}\label{deviations-from-the-proposal-limitations-and-part-3-targets}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Deviations.}
-
-  \begin{itemize}
-  \tightlist
-  \item
-    The CLI replaces the GUI.
-  \item
-    The optional BIRD and LLM baselines were not run.
-  \item
-    The WikiSQL warm-up did not yield a usable single-table model until
-    the rendering fix (§4.11).
-  \item
-    The proposal's ``evaluate on dev or a re-split'' choice is now
-    settled: dev for development, test once.
-  \item
-    The proposal's ``component-wise EM'' is now the official exact-set
-    match.
-  \end{itemize}
-\item
-  \textbf{Limitations.}
-
-  \begin{itemize}
-  \tightlist
-  \item
-    Test-suite accuracy was not run.
-  \item
-    Hyper-parameters were never tuned on a database-disjoint
-    \emph{train} split.
-  \item
-    Early stopping is absent, although the dev curve shows overfitting.
-  \item
-    Headline numbers come from one training seed.
-  \end{itemize}
-\item
-  \textbf{Part 3 targets} (Spider test, official evaluator, mean over at
-  least 3 seeds, McNemar p \textless{} 0.05 against this baseline):
-
-  \begin{itemize}
-  \tightlist
-  \item
-    multi-table official EX ≥ 15\%;
-  \item
-    overall official EX ≥ 25\%;
-  \item
-    invalid SQL ≤ 20\%;
-  \item
-    identifier recall ≥ 70\%.
-  \end{itemize}
-
-  Planned levers: a pre-trained encoder with explicit schema linking,
-  foreign-key-aware decoding, and grammar or PICARD-style constraints.
-  Early stopping will use a validation split carved from Spider
-  \emph{train} by database.
-\end{itemize}
-
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
-
-\subsection{Reproducibility}\label{reproducibility}
+\section*{Reproducibility}\label{reproducibility}
+\addcontentsline{toc}{section}{Reproducibility}
 
 {\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
@@ -1328,7 +1288,8 @@ Taxonomy, CIs, McNemar, gold sanity check &
 \end{longtable}
 }
 
-\subsection{References}\label{references}
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
