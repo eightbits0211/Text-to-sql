@@ -8,9 +8,8 @@ date: "October 11, 2026"
 abstract: |
   We formulate cross-domain Text-to-SQL and build an execution-based evaluation harness for Spider (multi-table, unseen databases) and WikiSQL (single-table). Two classical baselines are compared: a deterministic template parser and a two-stage pointer-generator BiLSTM sequence-to-sequence model. All Spider numbers are reported with the official Spider evaluator (exact-set match and execution accuracy), 95% confidence intervals and paired McNemar tests. Every inference fix was developed on Spider dev and frozen before a single run on the held-out Spider test set (2,147 questions, 40 databases disjoint from train and dev).
 
-  On **Spider test**, the final LSTM configuration reaches **7.2% official execution accuracy** and **5.5% official exact-set match**. The template parser reaches 9.5% and 0.0%; its 0% EM is a formatting artefact, and it reaches 6.7% once its double-quoted identifiers are unquoted. On strict execution the final LSTM and the template differ on 93 vs 82 test questions (McNemar p = 0.450), and the fixes improve over the as-submitted decoding on 8 vs 1 questions (p = 0.039). On Spider dev the LSTM and the template are statistically tied (McNemar p = 0.58). Both baselines almost entirely fail on the stated core objective, multi-table queries (1.83% [0.9%, 3.6%] strict EX for the LSTM on dev). Most LSTM failures are schema-linking errors: identifier recall is 40.4%, and 690 of 746 invalid queries reference a nonexistent column. A per-epoch dev-loss curve shows the model starts overfitting after about three Spider epochs, although training continued for 25. We also correct the original draft's diagnosis of the WikiSQL collapse: it was a rendering defect, not catastrophic forgetting. The Stage-1 checkpoint, which never saw Spider, fails in the same way, and fixing the rendering raises its WikiSQL execution accuracy from 0.04% to (re-decode pending).
+  On **Spider test**, the final LSTM configuration reaches **7.2% official execution accuracy** and **5.5% official exact-set match**. The template parser reaches 9.5% and 0.0%; its 0% EM is a formatting artefact, and it reaches 6.7% once its double-quoted identifiers are unquoted. On strict execution the final LSTM and the template differ on 93 vs 82 test questions (McNemar p = 0.450), and the fixes improve over base decoding on 8 vs 1 questions (p = 0.039). On Spider dev the LSTM and the template are statistically tied (McNemar p = 0.58). Both baselines almost entirely fail on the stated core objective, multi-table queries (1.83% [0.9%, 3.6%] strict EX for the LSTM on dev). Most LSTM failures are schema-linking errors: identifier recall is 40.4%, and 690 of 746 invalid queries reference a nonexistent column. A per-epoch dev-loss curve shows the model starts overfitting after about three Spider epochs, although training continued for 25. On WikiSQL, the near-total failure of the Stage-1 checkpoint is a rendering defect rather than catastrophic forgetting; fixing the rendering raises its execution accuracy from 0.04% to (re-decode pending).
 
-  **Changes from the earlier draft.** An internal review found several problems with the earlier draft, and this version fixes them. The comparison now uses the official evaluator, an untouched test split, confidence intervals and significance tests. The training hyper-parameters reported earlier did not match the code; they now do. The literature comparison band of "3.2–5.4%" did not appear in the cited paper; the paper's actual Table 2 rows are now quoted. The "catastrophic forgetting" claim is withdrawn. Section 4.11 lists every correction.
 ---
 
 
@@ -161,18 +160,18 @@ Table: Spider corpus statistics as tokenised for the model.
 ## Training (HPC Job 361547)
 Hardware: one NVIDIA RTX PRO 6000 Blackwell MPS slice (50%), 4 CPUs and 80 GB RAM. The whole job, training plus evaluation, took 50 min of wall time (04:41 to 05:31 IST).
 
-- **One Adam optimiser** with constant learning rate $10^{-3}$, batch 64, gradient-norm clipping at 1.0, teacher forcing ratio 1.0, seed 42 and per-epoch shuffling with seed $42+\text{epoch}$. *The earlier draft reported warm-up, cosine decay, a Stage-2 learning rate of $5\times10^{-4}$ and dropout 0.3. None of these exist in the code; those statements were wrong and have been removed.*
+- **One Adam optimiser** with constant learning rate $10^{-3}$, batch 64, gradient-norm clipping at 1.0, teacher forcing ratio 1.0, seed 42 and per-epoch shuffling with seed $42+\text{epoch}$. There is no learning-rate warm-up or schedule.
 - **Stage 1 (WikiSQL):** 55,968 examples, 10 epochs (8,750 steps). Training NLL fell from 1.723 to 0.098. Saved as `wikisql_checkpoint.pt`.
 - **Stage 2 (Spider):** 7,000 examples, 25 epochs (2,750 steps), continuing from Stage 1. Training NLL fell from 1.841 to 0.040. Saved as `spider_checkpoint.pt`.
 
 ![Training NLL (Job 361547) and per-epoch teacher-forced Spider-dev NLL (replication runs, seeds 42; same recipe as Job 361547).](training_loss_curve.png){ width=95% }
 
-**Training dynamics.** The earlier draft read the training curve as evidence of successful transfer, but it plotted training loss only. We added a teacher-forced Spider-dev NLL after every Stage-2 epoch in the replication runs (seed 42: minimum 0.888 at epoch 3, 1.535 at epoch 25). Dev NLL bottoms out within the first few epochs and then rises steadily while training NLL keeps falling. A training NLL of 0.04 alongside rising dev NLL and over 70% invalid dev SQL indicates **memorisation of the training databases, not successful cross-domain transfer**. Early stopping on a database-disjoint validation split is required for Part 3.
+**Training dynamics.** Training loss alone says nothing about transfer, so the replication runs also log a teacher-forced Spider-dev NLL after every Stage-2 epoch (seed 42: minimum 0.888 at epoch 3, 1.535 at epoch 25). Dev NLL bottoms out within the first few epochs and then rises steadily while training NLL keeps falling. A training NLL of 0.04 alongside rising dev NLL and over 70% invalid dev SQL indicates **memorisation of the training databases, not successful cross-domain transfer**. Early stopping on a database-disjoint validation split is required for Part 3.
 
 ## Inference pipeline
 The final pipeline is decode, then render, then repair. All steps operate on the same trained weights.
 
-1. **Schema-markup mask** (`DecodeOptions.mask_schema_markup`). This is new. Serialisation tokens (`text`, `number`, `time`, `boolean`, `others`, `table`, `columns`, `primary`, `key`, …) are given probability 0 during decoding unless the current schema really has an identifier of that name. In the Job 361547 output, the bare token `text` appeared in 278 of 1,034 dev predictions.
+1. **Schema-markup mask** (`DecodeOptions.mask_schema_markup`). This is new. Serialisation tokens (`text`, `number`, `time`, `boolean`, `others`, `table`, `columns`, `primary`, `key`, …) are given probability 0 during decoding unless the current schema really has an identifier of that name. With base decoding, the bare token `text` appeared in 278 of 1,034 dev predictions.
 2. **Surface-form rendering** (`lstm/rendering.py`). This is new. Each decoded token is mapped back to its schema spelling (`School/Club Team` is restored and double-quoted). A value token after a comparison operator becomes a single-quoted literal using the question's original casing (`'France'`, not `'france'`). A multi-word literal stays one literal (`'United States'`, not `'united' states`).
 3. **Schema-aware repair** (`lstm/sql_repair.py`, unchanged in substance). It normalises spacing, re-quotes leftover bare literals, replaces hallucinated `FROM` tables with the schema table sharing the most columns, collapses single-table WikiSQL queries to the sole table, and balances parentheses. It now leaves the inside of quoted literals untouched.
 
@@ -197,7 +196,7 @@ Table: Main results on Spider test (held out; run once after freezing the config
 | System | Official EX | Official EM | Strict EX (95% CI) | Invalid |
 |------------------------------|-----:|-----:|--------------------:|-----:|
 | **LSTM, final (mask + render + repair)** | 7.2% | 5.5% | 6.52% [5.5%, 7.5%] | 72.7% |
-| LSTM, as submitted (Job 361547) | 6.8% | 5.2% | 6.19% [5.2%, 7.2%] | 76.3% |
+| LSTM, base decoding (Job 361547) | 6.8% | 5.2% | 6.19% [5.2%, 7.2%] | 76.3% |
 | LSTM, raw greedy (no repair) | 6.2% | 4.4% | 2.89% [2.2%, 3.6%] | 82.3% |
 | Template parser | 9.5% | 0.0% | 6.01% [5.0%, 7.0%] | 9.7% |
 
@@ -206,14 +205,14 @@ Table: Results on Spider dev (development set; all fixes were chosen here).
 | System | Official EX | Official EM | Strict EX (95% CI) | SM | Invalid |
 |------------------------------|-----:|-----:|--------------------:|-----:|-----:|
 | **LSTM, final (mask + render + repair)** | 8.1% | 5.0% | 6.38% [4.9%, 7.9%] | 3.29% | 72.1% |
-| LSTM, as submitted (Job 361547) | 7.4% | 4.9% | 5.90% [4.5%, 7.4%] | 3.29% | 77.2% |
+| LSTM, base decoding (Job 361547) | 7.4% | 4.9% | 5.90% [4.5%, 7.4%] | 3.29% | 77.2% |
 | Template parser | 9.9% | 0.0% | 5.80% [4.4%, 7.3%] | 0.00% | 8.9% |
 
-**Paired significance (strict EX, McNemar).** Dev: final LSTM vs template, 44 vs 38 discordant questions, p = 0.58. As submitted vs template: 40 vs 39, p = 1.00. Final vs as submitted: 5 vs 0, p = 0.062.
+**Paired significance (strict EX, McNemar).** Dev: final LSTM vs template, 44 vs 38 discordant questions, p = 0.58. Base decoding vs template: 40 vs 39, p = 1.00. Final vs base decoding: 5 vs 0, p = 0.062.
 
 
 
-**Reading the comparison honestly.** On official EX the template is ahead on test and dev. Its 0% official EM reflects identifier quoting only. With quotes removed it scores 5.9% (test: 6.7%) EM, which is also above the LSTM. On strict EX the two are statistically indistinguishable on both splits. The inference fixes give a small but consistent LSTM gain, significant on test (p = 0.039). Neither baseline is good at the task. The headline claim of the earlier draft, that the LSTM surpassed the template, rested on a one-query difference (61 vs 60, p = 1.0) and is withdrawn.
+**Reading the comparison honestly.** On official EX the template is ahead on test and dev. Its 0% official EM reflects identifier quoting only. With quotes removed it scores 5.9% (test: 6.7%) EM, which is also above the LSTM. On strict EX the two are statistically indistinguishable on both splits. The inference fixes give a small but consistent LSTM gain, significant on test (p = 0.039). With base decoding the two systems differ by a single dev question (61 vs 60 correct, p = 1.0), which is no difference at all. Neither baseline is good at the task.
 
 ## Inference ablation (same checkpoint, Spider dev)
 
@@ -222,15 +221,15 @@ Table: Inference ablation on one checkpoint (Spider dev).
 | Configuration | Strict EX | Official EX | Official EM | Invalid |
 |------------------------------------------|------:|------:|------:|------:|
 | Raw greedy tokens, no repair | 1.45% | 5.4% | 4.4% | 84.0% |
-| + repair v1 (**as submitted**, Job 361547) | 5.90% | 7.4% | 4.9% | 77.2% |
+| + repair (**base decoding**, Job 361547) | 5.90% | 7.4% | 4.9% | 77.2% |
 | + surface-form rendering | 6.19% | 7.6% | 4.9% | 76.8% |
-| as submitted + schema-markup mask | 6.09% | 7.7% | 5.0% | 72.6% |
+| base + schema-markup mask | 6.09% | 7.7% | 5.0% | 72.6% |
 | **+ mask + rendering (final)** | 6.38% | 8.1% | 5.0% | 72.1% |
 | final + copy feedback as `<unk>` | 6.19% | 7.9% | 5.0% | 72.7% |
 
-The CPU re-decode reproduced 1,031 of the 1,034 Job 361547 GPU predictions exactly. The other three are near-tie argmax flips caused by GPU vs CPU floating point. Strict EX is identical (61/1,034), so the *as submitted* row is Job 361547. Repair is responsible for most of the gap between *raw* and *as submitted*: strict EX goes from 1.45% to 5.90%. Raw strict EX is especially low because unrepaired spacing changes result-column labels such as `count ( * )`. The mask and rendering remove a further 5.0 points of invalid SQL, but most of those queries become *valid but wrong* rather than correct. Example: `WHERE text = 'france'` becomes `WHERE Is_male = 'France'`. This shows the underlying error is schema linking, not syntax. Feeding copied tokens back as `<unk>` did not help and is not used.
+The CPU re-decode reproduced 1,031 of the 1,034 Job 361547 GPU predictions exactly. The other three are near-tie argmax flips caused by GPU vs CPU floating point. Strict EX is identical (61/1,034), so the *base decoding* row is Job 361547. Repair accounts for most of the gap between *raw* and *base decoding*: strict EX goes from 1.45% to 5.90%. Raw strict EX is especially low because unrepaired spacing changes result-column labels such as `count ( * )`. The mask and rendering remove a further 5.0 points of invalid SQL, but most of those queries become *valid but wrong* rather than correct. Example: `WHERE text = 'france'` becomes `WHERE Is_male = 'France'`. This shows the underlying error is schema linking, not syntax. Feeding copied tokens back as `<unk>` did not help and is not used.
 
-**Epochs.** The earlier draft attributed its 0.39% → 3.29% SM gain to "25 epochs and syntax repair". That comparison (Job 361487 vs 361547) changed several things at once. Repair can now be isolated on one checkpoint (table above). An epoch-10 vs epoch-25 comparison with fixed decoding is part of the replication runs and was not complete at submission.
+**Epochs.** Our initial 10-epoch run (Job 361487) reached 0.39% SM, and Job 361547, with 25 epochs plus repair, reached 3.29%. That comparison changes several things at once. The table above isolates repair on a single checkpoint. An epoch-10 vs epoch-25 comparison with fixed decoding is part of the replication runs and was not complete at submission.
 
 ## Breakdown by difficulty and structure (Spider dev, final LSTM)
 
@@ -246,13 +245,13 @@ Table: Strict EX by difficulty and query structure (Spider dev, Wilson 95% CI).
 | Multi-table (join / set op) | 438 | 1.83% [0.9%, 3.6%] | 0.91% [0.4%, 2.3%] |
 | Nested (other) | 52 | 3.85% [1.1%, 13.0%] | 0.00% [0.0%, 6.9%] |
 
-Multi-table queries, the core objective, are essentially unsolved: 1.83% [0.9%, 3.6%] strict EX for the LSTM, and SM is 0/438 in both the as-submitted and final runs. Single-table queries account for 56/66 (84.8%) of all LSTM EX hits, and extra-hard is 0/166, a floor effect. Hard EX is slightly above medium EX, but this comes from small counts: the 95% intervals, 4.26% [2.7%, 6.6%] for medium and 5.75% [3.2%, 10.3%] for hard, overlap almost entirely, so the ordering should not be interpreted.
+Multi-table queries, the core objective, are essentially unsolved: 1.83% [0.9%, 3.6%] strict EX for the LSTM, and SM is 0/438 in both the base-decoding and final runs. Single-table queries account for 56/66 (84.8%) of all LSTM EX hits, and extra-hard is 0/166, a floor effect. Hard EX is slightly above medium EX, but this comes from small counts: the 95% intervals, 4.26% [2.7%, 6.6%] for medium and 5.75% [3.2%, 10.3%] for hard, overlap almost entirely, so the ordering should not be interpreted.
 
 ## Error analysis (all 1,034 dev questions, final LSTM)
 
 Table: Invalid SQL on Spider dev by SQLite error class.
 
-| Error class | As submitted | Final |
+| Error class | Base decoding | Final |
 |---|---:|---:|
 | `no_such_column` | 708 | 690 |
 | `syntax_error` | 55 | 29 |
@@ -288,43 +287,26 @@ Table: Structural error taxonomy of failed LSTM predictions (Spider dev).
 
 **Template audit.** The template's 0/1,034 SM is a formatting artefact. It double-quotes every identifier (`FROM "singer"`), which the official parser reads as a string value. With identifier quotes removed, its official EM is 5.9% (test: 6.7%) on dev. Its 60 strict EX hits were classified as follows: 43 structurally equivalent to gold; 11 coincidental (a gold clause is missing or different); 6 coincidental (gold result is empty or zero). For example, `SELECT DISTINCT "Country" FROM "singer"` matches gold `... WHERE age > 20` only because every singer is over 20. The LSTM's EX hits without SM split as 15 structurally equivalent to gold; 10 coincidental (gold result is empty or zero); 7 coincidental (a gold clause is missing or different).
 
-## Qualitative cases (Spider dev; Job 361547 output → final output)
+## Qualitative cases (Spider dev; base → final decoding)
 
 1. **Correct** (`spider-dev-20`, medium): *"How many concerts are there in year 2014 or 2015?"* → `SELECT COUNT(*) FROM concert WHERE Year = 2014 OR Year = 2015`. Both EM and EX are correct. The numeric literals are in-vocabulary tokens, so this case shows correct generation, not copy-gate behaviour. Gate activations were not logged.
 2. **Execution-equivalent** (`spider-dev-87`, easy): gold `SELECT count(*) FROM CONTINENTS;` vs `SELECT COUNT(*) FROM continents`. EX is correct, and the official exact-set match also counts it correct. Our string match does not, because of the trailing semicolon.
 3. **Projection omission** (`spider-dev-2`, medium): *"Show name, country, age …"* → `SELECT Name, Country FROM singer ORDER BY Age DESC`. Valid SQL; the third projected column is dropped.
-4. **Schema-type token leak, then wrong column** (`spider-dev-4`, medium). Job 361547 produced `… WHERE text = 'france'`. That query is invalid: `text` is the serialised *type* of `Country`, and the literal case is wrong. The final configuration produces `… WHERE Is_male = 'France'`. Casing and validity are fixed, but the column is still wrong. Rendering cannot fix schema linking.
+4. **Schema-type token leak, then wrong column** (`spider-dev-4`, medium). Base decoding produced `… WHERE text = 'france'`. That query is invalid: `text` is the serialised *type* of `Country`, and the literal case is wrong. The final configuration produces `… WHERE Is_male = 'France'`. Casing and validity are fixed, but the column is still wrong. Rendering cannot fix schema linking.
 5. **Aggregation error** (`spider-dev-494`, medium): *"What is maximum and minimum death toll …"* → `SELECT MAX(caused_by_ship_id), MIN(caused_by_ship_id), MIN(killed) FROM death`. The aggregate functions are plausible but attached to the wrong columns, plus an extra projection. Aggregation mismatches occur in 167 failures.
 6. **Join hallucination** (`spider-dev-24`, extra-hard). Gold joins `concert` and `stadium`. The prediction joins `singer_in_concert` and `singer` on `Singer_ID = concert_ID` and selects the nonexistent `t2.stadium`. It shows correct clause skeleton generation with no grounding in the foreign-key graph.
 
-## WikiSQL: the "catastrophic forgetting" claim withdrawn
-The earlier draft attributed the LSTM's 0.04% WikiSQL EX to Spider fine-tuning overwriting Stage 1. **The run log contradicts this.** Job 361547 scored WikiSQL with `wikisql_checkpoint.pt`, saved at the end of Stage 1, *before any Spider training* (log line: `Loading dataset-specific checkpoint: wikisql_checkpoint.pt`). The predictions are mostly sensible SQL in an unexecutable surface form. For example, `SELECT player FROM "table_1_10015132_11" WHERE no.= 42` should be `… WHERE "No." = 42`. Multi-word column names were emitted unquoted and lower-cased (`school/club team`), and repair v1 quoted only the first word of multi-word literals (`= 'concord' hs`). The model was not at fault; the rendering was.
+## WikiSQL: a rendering defect, not forgetting
+A natural explanation for the LSTM's 0.04% WikiSQL EX would be catastrophic forgetting during Spider fine-tuning. **The run log rules this out.** Job 361547 scored WikiSQL with `wikisql_checkpoint.pt`, saved at the end of Stage 1, *before any Spider training* (log line: `Loading dataset-specific checkpoint: wikisql_checkpoint.pt`). The predictions are mostly sensible SQL in an unexecutable surface form. For example, `SELECT player FROM "table_1_10015132_11" WHERE no.= 42` should be `… WHERE "No." = 42`. Multi-word column names were emitted unquoted and lower-cased (`school/club team`), and repair v1 quoted only the first word of multi-word literals (`= 'concord' hs`). The fault lay in the rendering, not the model.
 
 Table: WikiSQL dev (all 8,415 examples), Stage-1 checkpoint.
 
 | System | Strict EX (95% CI) | SM | Invalid |
 |---|---:|---:|---:|
-| LSTM Stage-1, as submitted (Job 361547) | 0.04% (3/8,415) | 0.04% | 99.5% |
+| LSTM Stage-1, base decoding (Job 361547) | 0.04% (3/8,415) | 0.04% | 99.5% |
 | Template parser (Job 361547 revision) | 7.23% (608/8,415) | 1.26% | 0.0% |
 
-The full-dev re-decode of the Stage-1 checkpoint with the rendering fix was queued on the HPC at submission time. The template's 7.23% EX is far below published WikiSQL systems: Seq2SQL reports 59.4% test EX and SQLNet 68.0% (Xu et al., 2017). It is therefore a weak lower bound, not a "reliable reference" as the earlier draft called it.
-
-**Other corrections to the earlier draft.**
-
-Table: Corrections to the earlier draft.
-
-| Earlier claim | Correction |
-|---|---|
-| Comparison band "3.2–5.4% EM" (Yu et al., Table 4) | Not in the paper; the actual Table 2 rows are quoted in §2.4 |
-| "8.4× surge" / "+743%" | Removed (the base was 4 queries; correct arithmetic is 8.5× and +744%) |
-| "Surpasses the template" | Withdrawn; p = 1.0 |
-| Vocabulary of 1,402 tokens with frequency threshold 2 | Wrong; 102,463 tokens, no threshold |
-| Dropout 0.3; Stage-2 learning rate 5e-4 with warm-up and cosine decay | Wrong; dropout 0.2, constant 1e-3 |
-| Encoder 512 per direction | Wrong; 256 per direction |
-| "Six case studies" | There were five; now six, labelled honestly |
-| Stage 2 starts at 1.82 in the text and 1.84 in the figure | 1.841 (from the log) |
-| WikiSQL "26,575 tables" | 26,531 table entries in the release files; 24,241 tables per the paper |
-| Template "returns an empty prediction" | True for the current code (abstention counts given in §4.1); the evaluated Job 361547 revision never abstained |
+The full-dev re-decode of the Stage-1 checkpoint with the rendering fix was queued on the HPC at submission time. The template's 7.23% EX is far below published WikiSQL systems: Seq2SQL reports 59.4% test EX and SQLNet 68.0% (Xu et al., 2017). It is therefore a weak lower bound, not a strong reference.
 
 ## Demonstration (CLI)
 **Live training.** `uv run text-to-sql-demo --train-demo` trains a small pointer-generator (embedding 128, hidden 256) from scratch on the 95 Spider *train* questions of `soccer_2`, for 60 epochs on a laptop CPU, which takes about 2–3 minutes. It prints the per-epoch training and held-out NLL. It decodes a probe question with random weights before training and again after. It then reports execution accuracy on 20 questions the model trained on and on 11 held-out questions from the same database. In our rehearsal the loss fell from 4.88 to 0.09, and the model scored 15/20 on seen questions but 0/11 on held-out ones. That is the memorisation gap of §4.3 at small scale. The saved checkpoint can be queried at once with `--model lstm --checkpoint artifacts/train-demo/spider_checkpoint.pt`.
