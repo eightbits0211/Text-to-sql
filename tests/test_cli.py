@@ -175,3 +175,26 @@ def test_load_demo_schema_prefers_spider_metadata(tmp_path: Path) -> None:
 
     assert schema.database_id == "shop"
     assert [c.data_type for c in schema.tables[0].columns] == ["text"]
+
+
+def test_judge_verdicts(tmp_path: Path) -> None:
+    from text_to_sql.cli import judge
+
+    db_path = tmp_path / "test.sqlite"
+    _create_sample_db(db_path)
+    gold = "SELECT Name FROM singer WHERE Country = 'France'"
+
+    assert judge("SELECT Name FROM singer WHERE Country = 'France'", db_path, gold)[0] == "CORRECT"
+    assert judge("SELECT Name FROM singer WHERE Age > 30", db_path, gold)[0] == "WRONG ANSWER"
+    assert judge("SELECT Nope FROM singer", db_path, gold)[0] == "EXECUTION ERROR"
+    assert judge("", db_path, gold) == ("NO SQL (refused)", None)
+    assert judge("SELECT Name FROM singer", db_path, None)[0] == "RAN (not checked)"
+
+
+def test_cli_main_demo_both_models(tmp_path: Path) -> None:
+    db_path = tmp_path / "test.sqlite"
+    _create_sample_db(db_path)
+
+    test_args = ["text-to-sql-demo", "--database", str(db_path), "--demo", "--model", "both"]
+    with patch("sys.argv", test_args):
+        assert main() == 0

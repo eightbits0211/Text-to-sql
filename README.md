@@ -88,6 +88,7 @@ uv run pytest                                   # unit tests
 uv run text-to-sql-demo --train-demo            # live training (~2-3 min CPU), then evaluation
 uv run text-to-sql-demo --demo --model template # scripted CLI showcase
 uv run text-to-sql-demo --demo --model lstm     # same showcase with the trained LSTM
+uv run text-to-sql-demo --demo --model both     # template vs LSTM, each checked against gold SQL
 uv run python -m scripts.show_preprocessing     # preprocessing walkthrough and corpus statistics
 ```
 
