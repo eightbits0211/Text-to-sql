@@ -23,7 +23,7 @@ os.environ.setdefault("TORCH_DISABLE_NATIVE_JIT", "1")
 from scripts.run_ablation import _SPIDER, _write, load_records
 from text_to_sql.data.contracts import DatasetSplit
 from text_to_sql.data.spider import load_spider
-from text_to_sql.evaluation.metrics import Prediction
+from text_to_sql.evaluation.metrics import Prediction, evaluate_predictions
 from text_to_sql.transformer.t5_adapter import T5Baseline, T5Config
 
 LOGGER = logging.getLogger("run_t5")
@@ -61,20 +61,32 @@ def train(args: argparse.Namespace) -> Path:
     print(f"train={len(train_records)} dev={len(dev_records)} config={asdict(config)}", flush=True)
 
     best_dir = args.output_dir / "best"
-    state = {"best": float("inf")}
+    # Higher is better for both criteria: dev execution accuracy, or -dev_loss.
+    state = {"best": -float("inf")}
     history_path = args.output_dir / "history.jsonl"
     args.output_dir.mkdir(parents=True, exist_ok=True)
     history_path.write_text("")
     baseline = T5Baseline(config)
 
     def on_epoch_end(model, tokenizer, record):
+        baseline._model, baseline._tokenizer = model, tokenizer
+        if args.select_by == "ex":
+            # Dev NLL rises long before dev accuracy peaks (job 398812: NLL best at
+            # epoch 2 of 25), so select on greedy execution accuracy instead.
+            model.eval()
+            report = evaluate_predictions(dev_records, baseline.predict_records(dev_records, 64, 1))
+            record["dev_ex"] = report.execution_accuracy_official
+            record["dev_invalid"] = report.invalid_sql_rate
+            score = record["dev_ex"]
+        else:
+            score = -record.get("dev_loss", float("inf"))
         with history_path.open("a") as handle:
             handle.write(json.dumps(record) + "\n")
-        if record.get("dev_loss", float("inf")) < state["best"]:
-            state["best"] = record["dev_loss"]
-            baseline._model, baseline._tokenizer = model, tokenizer
+        print(f"  epoch {int(record['epoch'])}: {record}", flush=True)
+        if score > state["best"]:
+            state["best"] = score
             baseline.save(best_dir)
-            print(f"  saved best (dev_loss={record['dev_loss']:.4f}) to {best_dir}", flush=True)
+            print(f"  saved best ({args.select_by}={score:.4f}) to {best_dir}", flush=True)
 
     baseline.fit(train_records, dev_examples=dev_records, on_epoch_end=on_epoch_end)
     return best_dir
@@ -176,6 +188,7 @@ def main() -> int:
     parser.add_argument("--include-others", action="store_true")
     parser.add_argument("--split", choices=("dev", "test"), default="dev")
     parser.add_argument("--beams", default="1,4")
+    parser.add_argument("--select-by", choices=("ex", "loss"), default="ex")
     parser.add_argument("--novelty-k", type=int, default=0, help="Also run the A/B ablation")
     args = parser.parse_args()
 

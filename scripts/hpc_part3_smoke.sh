@@ -17,7 +17,7 @@ export TEXT2SQL_DATA_ROOT=/home/csisnlp_20/datasets
 export PYTHONUNBUFFERED=1
 export TORCH_DISABLE_NATIVE_JIT=1
 # Models are pre-downloaded on the login node; compute nodes run offline.
-export HF_HUB_OFFLINE=1
+export HF_HUB_OFFLINE=${HF_HUB_OFFLINE:-1}
 export PYTHONPATH=/home/csisnlp_20/Text-to-sql/src:/home/csisnlp_20/Text-to-sql
 PY=/home/csisnlp_20/venv_nlp/bin/python3
 cd /home/csisnlp_20/Text-to-sql
