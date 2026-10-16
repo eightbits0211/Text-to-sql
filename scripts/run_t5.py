@@ -23,6 +23,7 @@ os.environ.setdefault("TORCH_DISABLE_NATIVE_JIT", "1")
 from scripts.run_ablation import _SPIDER, _write, load_records
 from text_to_sql.data.contracts import DatasetSplit
 from text_to_sql.data.spider import load_spider
+from text_to_sql.evaluation.metrics import Prediction
 from text_to_sql.transformer.t5_adapter import T5Baseline, T5Config
 
 LOGGER = logging.getLogger("run_t5")
@@ -99,6 +100,65 @@ def decode(model_dir: Path, split: str, beams: list[int], limit: int | None, out
     (out / f"spider-{split}" / "summary.json").write_text(json.dumps(summary, indent=2))
 
 
+def decode_novelty(model_dir: Path, split: str, k: int, limit: int | None, out: Path) -> None:
+    """Ablation variants from one k-beam pass without and one with the schema constraint.
+
+    - ``beam``: top unconstrained beam (plain T5)
+    - ``A_prune``: top constrained beam
+    - ``A_full``: first constrained beam that passes SQLite EXPLAIN
+    - ``B_rerank``: execution rerank of the unconstrained beams
+    - ``AB``: execution rerank of the constrained beams
+    """
+    from transformers import LogitsProcessorList
+
+    from text_to_sql.generation.exec_correction import execution_rerank
+    from text_to_sql.transformer.constrained import SchemaConstraintProcessor, first_valid
+
+    baseline = T5Baseline.from_checkpoint(model_dir)
+    records = load_records("spider", split, limit)
+    variants = ("beam", "A_prune", "A_full", "B_rerank", "AB")
+    chosen: dict[str, list[Prediction]] = {name: [] for name in variants}
+    root = out / f"spider-{split}" / f"novelty-k{k}"
+    root.mkdir(parents=True, exist_ok=True)
+    started, pruned = time.monotonic(), 0
+    with (root / "candidates.jsonl").open("w") as log:
+        for index, ex in enumerate(records, start=1):
+            plain = baseline.generate_candidates(ex.question, ex.schema_text, k, k)
+            processor = SchemaConstraintProcessor(baseline._tokenizer, ex.schema_text, ex.question)
+            constrained = baseline.generate_candidates(
+                ex.question, ex.schema_text, k, k, LogitsProcessorList([processor])
+            )
+            pruned += processor.pruned
+            picks = {
+                "beam": plain[0],
+                "A_prune": constrained[0],
+                "A_full": first_valid(constrained, ex.database_path),
+                "B_rerank": execution_rerank(plain, ex.database_path, ex.execution_prelude).sql,
+                "AB": execution_rerank(constrained, ex.database_path, ex.execution_prelude).sql,
+            }
+            for name, sql in picks.items():
+                chosen[name].append(Prediction(ex.example_id, f"t5-{name}", sql))
+            log.write(
+                json.dumps(
+                    {"example_id": ex.example_id, "plain": plain, "constrained": constrained}
+                )
+                + "\n"
+            )
+            if index % 100 == 0:
+                print(f"  {index}/{len(records)} ({time.monotonic() - started:.0f}s)", flush=True)
+    summary = {"k": k, "beams_pruned": pruned, "seconds": round(time.monotonic() - started, 1)}
+    for name in variants:
+        report = _write(root / name, records, tuple(chosen[name]))
+        summary[name] = {
+            "n": report.evaluated_count,
+            "exec_strict": report.execution_accuracy,
+            "exec_official_style": report.execution_accuracy_official,
+            "invalid": report.invalid_sql_rate,
+        }
+        print(f"{split} {name}: {summary[name]}", flush=True)
+    (root / "summary.json").write_text(json.dumps(summary, indent=2))
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
     parser = argparse.ArgumentParser(description=__doc__)
@@ -116,14 +176,18 @@ def main() -> int:
     parser.add_argument("--include-others", action="store_true")
     parser.add_argument("--split", choices=("dev", "test"), default="dev")
     parser.add_argument("--beams", default="1,4")
+    parser.add_argument("--novelty-k", type=int, default=0, help="Also run the A/B ablation")
     args = parser.parse_args()
 
     if not args.train and args.model_dir is None:
         parser.error("pass --train or --model-dir")
     model_dir = train(args) if args.train else args.model_dir
-    beams = [int(b) for b in args.beams.split(",")]
     limit = args.dev_limit if args.split == "dev" else None
-    decode(model_dir, args.split, beams, limit, args.output_dir / "decode")
+    if args.beams:
+        beams = [int(b) for b in args.beams.split(",")]
+        decode(model_dir, args.split, beams, limit, args.output_dir / "decode")
+    if args.novelty_k:
+        decode_novelty(model_dir, args.split, args.novelty_k, limit, args.output_dir / "decode")
     return 0
 
 
