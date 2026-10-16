@@ -26,6 +26,9 @@ class GPTConfig:
     max_new_tokens: int = 1024
     reasoning_effort: str = "low"
     batch_size: int = 8
+    # The HPC nodes lack Python.h, so Triton cannot build the MXFP4 kernels;
+    # dequantize to bf16 (~42 GB) instead.
+    dequantize: bool = False
 
 
 class GPTBaseline:
@@ -45,8 +48,15 @@ class GPTBaseline:
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
         self._tokenizer = AutoTokenizer.from_pretrained(self.config.model_id, padding_side="left")
+        kwargs = {}
+        if self.config.dequantize:
+            from transformers import Mxfp4Config
+
+            kwargs = {"quantization_config": Mxfp4Config(dequantize=True), "dtype": torch.bfloat16}
+        else:
+            kwargs = {"dtype": "auto"}
         self._model = AutoModelForCausalLM.from_pretrained(
-            self.config.model_id, torch_dtype="auto", device_map="auto"
+            self.config.model_id, device_map="auto", **kwargs
         ).eval()
         return self
 

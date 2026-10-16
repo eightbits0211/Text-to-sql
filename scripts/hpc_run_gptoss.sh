@@ -23,6 +23,6 @@ PY=/home/csisnlp_20/venv_nlp/bin/python3
 cd /home/csisnlp_20/Text-to-sql
 echo "hub reachable: $(timeout 10 curl -sI https://huggingface.co | head -1 || echo no)"
 
-$PY -u -m scripts.run_gpt --shots 0,3 --split dev --batch-size 8 \
+$PY -u -m scripts.run_gpt --shots 0,3 --split dev --batch-size 8 --dequantize --correction-retries 2 \
     --output-dir /home/csisnlp_20/artifacts/part3/gpt-oss-20b ${GPT_ARGS:-}
 echo "Finished at $(date)"

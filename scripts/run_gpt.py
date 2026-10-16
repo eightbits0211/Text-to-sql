@@ -17,7 +17,36 @@ os.environ.setdefault("TORCH_DISABLE_NATIVE_JIT", "1")
 
 from scripts.run_ablation import _write, load_records
 from scripts.run_t5 import load_train
+from text_to_sql.evaluation.metrics import Prediction, execute_read_only
+from text_to_sql.generation.exec_correction import correction_loop, correction_message
 from text_to_sql.llm.gpt_adapter import GPTBaseline, GPTConfig
+from text_to_sql.llm.prompts import extract_sql
+
+
+def correct(runner, records, predictions, retries):
+    """Re-run only failed predictions through the error-feedback loop (novelty B)."""
+    fixed = []
+    for example, prediction in zip(records, predictions, strict=True):
+        first = execute_read_only(
+            prediction.predicted_sql, example.database_path, example.execution_prelude
+        )
+        if first.status == "success":
+            fixed.append(prediction)
+            continue
+        messages = runner.messages_for(example) + [
+            {"role": "assistant", "content": f"```sql\n{prediction.predicted_sql}\n```"},
+            {"role": "user", "content": correction_message(prediction.predicted_sql, first)},
+        ]
+        result = correction_loop(
+            lambda conv: runner.generate([conv])[0],
+            extract_sql,
+            messages,
+            example.database_path,
+            max_retries=retries - 1,
+            prelude=example.execution_prelude,
+        )
+        fixed.append(Prediction(example.example_id, f"{runner.name}-fix", result.sql))
+    return tuple(fixed)
 
 
 def main() -> int:
@@ -30,6 +59,8 @@ def main() -> int:
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--reasoning-effort", default="low")
     parser.add_argument("--max-new-tokens", type=int, default=1024)
+    parser.add_argument("--dequantize", action="store_true", help="Load in bf16, not MXFP4")
+    parser.add_argument("--correction-retries", type=int, default=0, help="Novelty B for GPT")
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
 
@@ -40,6 +71,7 @@ def main() -> int:
         batch_size=args.batch_size,
         reasoning_effort=args.reasoning_effort,
         max_new_tokens=args.max_new_tokens,
+        dequantize=args.dequantize,
     )
     model = GPTBaseline(base).load()
     summary = {}
@@ -58,6 +90,17 @@ def main() -> int:
             "seconds": round(time.monotonic() - started, 1),
         }
         print(runner.name, summary[runner.name], flush=True)
+        if args.correction_retries:
+            fixed = correct(runner, records, predictions, args.correction_retries)
+            name = f"{runner.name}-fix{args.correction_retries}"
+            report = _write(args.output_dir / f"spider-{args.split}" / name, records, fixed)
+            summary[name] = {
+                "n": report.evaluated_count,
+                "exec_strict": report.execution_accuracy,
+                "exec_official_style": report.execution_accuracy_official,
+                "invalid": report.invalid_sql_rate,
+            }
+            print(name, summary[name], flush=True)
     (args.output_dir / f"spider-{args.split}" / "summary.json").write_text(
         json.dumps(summary, indent=2)
     )
