@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class T5Config:
-    checkpoint: str = "t5-base"
+    checkpoint: str = "google-t5/t5-base"
     max_input_length: int = 512
     max_output_length: int = 256
     learning_rate: float = 1e-4
@@ -82,11 +82,17 @@ class T5Baseline:
         output_dir: Path | None = None,
         dev_examples: Sequence[ExampleRecord] = (),
         log_every: int = 50,
+        on_epoch_end=None,
     ) -> list[dict[str, float]]:
         from .training import train_t5
 
         model, tokenizer, history = train_t5(
-            self.config, examples, dev_examples, self.device, log_every=log_every
+            self.config,
+            examples,
+            dev_examples,
+            self.device,
+            log_every=log_every,
+            on_epoch_end=on_epoch_end,
         )
         self._model, self._tokenizer = model.eval(), tokenizer
         if output_dir is not None:
@@ -144,8 +150,42 @@ class T5Baseline:
             predicted_sql=self.predict(example.question, example.schema_text, example.database_id),
         )
 
-    def predict_records(self, examples: Iterable[ExampleRecord]) -> tuple[Prediction, ...]:
-        return tuple(self.predict_record(example) for example in examples)
+    @torch.no_grad()
+    def generate_batch(
+        self, examples: Sequence[ExampleRecord], num_beams: int | None = None
+    ) -> list[str]:
+        """Top beam for each example, decoded in one padded batch."""
+        if self._model is None or self._tokenizer is None:
+            raise RuntimeError("T5Baseline has no model; train it or load a checkpoint")
+        encoded = self._tokenizer(
+            [self.encode_input(ex.question, ex.schema_text) for ex in examples],
+            max_length=self.config.max_input_length,
+            truncation=True,
+            padding=True,
+            return_tensors="pt",
+        ).to(self.device)
+        outputs = self._model.generate(
+            **encoded,
+            max_length=self.config.max_output_length,
+            num_beams=num_beams or self.config.num_beams,
+        )
+        return [
+            text.strip() for text in self._tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        ]
+
+    def predict_records(
+        self,
+        examples: Iterable[ExampleRecord],
+        batch_size: int = 32,
+        num_beams: int | None = None,
+    ) -> tuple[Prediction, ...]:
+        records = tuple(examples)
+        predictions: list[Prediction] = []
+        for start in range(0, len(records), batch_size):
+            chunk = records[start : start + batch_size]
+            for example, sql in zip(chunk, self.generate_batch(chunk, num_beams), strict=True):
+                predictions.append(Prediction(example.example_id, self.name, sql))
+        return tuple(predictions)
 
     def evaluate(
         self, examples: Iterable[ExampleRecord], database_root: object | None = None

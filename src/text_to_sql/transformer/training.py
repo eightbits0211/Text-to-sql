@@ -49,7 +49,25 @@ def _loss(model, tokenizer, batch, config, device) -> torch.Tensor:
     return model(**encoded, labels=labels).loss
 
 
-def train_t5(config, examples, dev_examples, device, log_every: int = 50):
+# Characters SQL needs that the T5 SentencePiece vocabulary maps to <unk>.
+SQL_EXTRA_TOKENS = ("<", "<=")
+
+
+def add_sql_tokens(tokenizer, model) -> int:
+    """Add SQL characters missing from the T5 vocabulary and resize the embeddings."""
+    missing = [
+        token
+        for token in SQL_EXTRA_TOKENS
+        if tokenizer.unk_token_id in tokenizer(token, add_special_tokens=False).input_ids
+    ]
+    added = tokenizer.add_tokens(missing) if missing else 0
+    if added:
+        model.resize_token_embeddings(len(tokenizer))
+    return added
+
+
+def train_t5(config, examples, dev_examples, device, log_every: int = 50, on_epoch_end=None):
+    """Fine-tune ``config.checkpoint``; ``on_epoch_end(model, tokenizer, record)`` runs after each epoch."""
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, get_linear_schedule_with_warmup
 
     if not examples:
@@ -57,7 +75,9 @@ def train_t5(config, examples, dev_examples, device, log_every: int = 50):
     seed_everything(config.seed)
     rng = random.Random(config.seed)
     tokenizer = AutoTokenizer.from_pretrained(config.checkpoint)
-    model = AutoModelForSeq2SeqLM.from_pretrained(config.checkpoint).to(device)
+    model = AutoModelForSeq2SeqLM.from_pretrained(config.checkpoint)
+    LOGGER.info("added %d SQL tokens to the T5 vocabulary", add_sql_tokens(tokenizer, model))
+    model = model.to(device)
     train_pairs, dev_pairs = _pairs(examples), _pairs(dev_examples)
 
     steps_per_epoch = math.ceil(
@@ -102,4 +122,6 @@ def train_t5(config, examples, dev_examples, device, log_every: int = 50):
         record["elapsed_s"] = time.monotonic() - started
         history.append(record)
         LOGGER.info("epoch %d %s", epoch, {k: round(v, 4) for k, v in record.items()})
+        if on_epoch_end is not None:
+            on_epoch_end(model, tokenizer, record)
     return model, tokenizer, history
