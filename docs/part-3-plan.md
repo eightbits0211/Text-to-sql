@@ -37,22 +37,22 @@ tests, lint and the viva live-training demo.
 - [x] T5 input serialization, `T5Baseline` adapter, fine-tuning loop, tests (`8cd283e`)
 - [x] Handle `<` (and other characters missing from the T5 vocabulary) in tokenization
 - [x] Literature check: PICARD, RESDSQL, DIN-SQL, DAIL-SQL, C3, gpt-oss Spider results; fix GPT prompt format
-- [ ] HPC smoke job: transformers + CUDA import, t5-base forward pass, gpt-oss-20b load (job 398804 running)
+- [x] HPC smoke jobs: T5 OK (398804); gpt-oss-20b runs in bf16 only (398865), MXFP4 blocked by missing Python.h
 - [x] Sync Part 3 code to HPC (rsync); HPC: torch 2.14.0+cu130, transformers 5.20.1, kernels 0.17.2, triton 3.8.0; models cached on login node
 
 ### Phase 1: modern baselines (Oct 21–27)
-- [x] `scripts/hpc_run_t5.sh` written (not yet submitted): T5-base on Spider train, dev loss per epoch, best checkpoint kept
-- [ ] `scripts/hpc_decode_t5.sh`: greedy and beam decoding on Spider dev
+- [x] `scripts/hpc_run_t5.sh` (jobs 398812 loss-selected, 398846 EX-selected, best epoch 14): T5-base on Spider train, dev loss per epoch, best checkpoint kept
+- [x] Greedy and beam decoding on Spider dev, done inside `run_t5.py` (dev official-style EX 51.3% greedy, 51.5% beam-4)
 - [ ] Score T5 dev with the official evaluator (`run_official_spider_eval.py`, `official_per_example.py`)
 - [x] `src/text_to_sql/llm/prompts.py` and `gpt_adapter.py` (local HF/vLLM backend)
-- [x] `scripts/hpc_run_gptoss.sh` written (not yet submitted): gpt-oss-20b zero-shot and few-shot on Spider dev
+- [x] `scripts/hpc_run_gptoss.sh` (full dev: 0-shot job 398898, 3-shot job 398899, each with correction): gpt-oss-20b zero-shot and few-shot on Spider dev
 - [ ] Optional: T5 on WikiSQL dev for the cross-dataset table
 
 ### Phase 2: novelty (Oct 28–Nov 7)
-- [ ] `transformer/constrained.py`: schema prefix-trie `LogitsProcessor` + SQLite `EXPLAIN` check on finished beams (A)
-- [ ] `generation/exec_correction.py`: beam reranking for T5, error-feedback retries for GPT (B)
-- [ ] Unit tests for trie, constraint and retry stopping conditions (no GPU, no network)
-- [ ] `scripts/run_part3_ablation.py` + HPC job: greedy / beam / +A / +B / +A+B on dev
+- [x] `transformer/constrained.py`: schema prefix-trie `LogitsProcessor` + SQLite `EXPLAIN` check on finished beams (A)
+- [x] `generation/exec_correction.py`: beam reranking for T5, error-feedback retries for GPT (B)
+- [x] Unit tests for trie, constraint and retry stopping conditions (no GPU, no network)
+- [x] Ablation on dev via `run_t5.py --novelty-k 8` (job 398846): beam 51.4%, +A 60.0%, +B 59.6%, +A+B 61.0% official-style EX; invalid 30.7% to 13.1%
 - [ ] Tune beam size and retry budget on dev only
 - [ ] Fallback if EX does not improve: report invalid-SQL reduction
 
