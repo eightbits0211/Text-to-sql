@@ -35,17 +35,17 @@ tests, lint and the viva live-training demo.
 - [x] Create branch `feature/part3-modern-models`
 - [x] Add optional `modern` dependency group (transformers, accelerate, sentencepiece)
 - [x] T5 input serialization, `T5Baseline` adapter, fine-tuning loop, tests (`8cd283e`)
-- [ ] Handle `<` (and other characters missing from the T5 vocabulary) in tokenization
-- [ ] Literature check: PICARD, RESDSQL, DIN-SQL, DAIL-SQL, C3, gpt-oss Spider results; fix GPT prompt format
-- [ ] HPC smoke job: transformers + CUDA import, t5-base forward pass, gpt-oss-20b load
-- [ ] Sync Part 3 code to HPC; record library versions
+- [x] Handle `<` (and other characters missing from the T5 vocabulary) in tokenization
+- [x] Literature check: PICARD, RESDSQL, DIN-SQL, DAIL-SQL, C3, gpt-oss Spider results; fix GPT prompt format
+- [ ] HPC smoke job: transformers + CUDA import, t5-base forward pass, gpt-oss-20b load (job 398804 running)
+- [x] Sync Part 3 code to HPC (rsync); HPC: torch 2.14.0+cu130, transformers 5.20.1, kernels 0.17.2, triton 3.8.0; models cached on login node
 
 ### Phase 1: modern baselines (Oct 21–27)
-- [ ] `scripts/hpc_run_t5.sh`: T5-base on Spider train, dev loss per epoch, best checkpoint kept
+- [x] `scripts/hpc_run_t5.sh` written (not yet submitted): T5-base on Spider train, dev loss per epoch, best checkpoint kept
 - [ ] `scripts/hpc_decode_t5.sh`: greedy and beam decoding on Spider dev
 - [ ] Score T5 dev with the official evaluator (`run_official_spider_eval.py`, `official_per_example.py`)
-- [ ] `src/text_to_sql/llm/prompts.py` and `gpt_adapter.py` (local HF/vLLM backend)
-- [ ] `scripts/hpc_run_gptoss.sh`: gpt-oss-20b zero-shot and few-shot on Spider dev
+- [x] `src/text_to_sql/llm/prompts.py` and `gpt_adapter.py` (local HF/vLLM backend)
+- [x] `scripts/hpc_run_gptoss.sh` written (not yet submitted): gpt-oss-20b zero-shot and few-shot on Spider dev
 - [ ] Optional: T5 on WikiSQL dev for the cross-dataset table
 
 ### Phase 2: novelty (Oct 28–Nov 7)
