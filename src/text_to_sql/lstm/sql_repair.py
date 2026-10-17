@@ -52,6 +52,17 @@ SQL_KEYWORDS = {
 }
 
 COMPARISON_OPERATORS = ("=", "!=", "<>", ">", "<", ">=", "<=", "LIKE")
+_LITERAL_RE = re.compile(r"('(?:[^']|'')*')")
+_TOKEN_RE = re.compile(r"'(?:[^']|'')*'|\"[^\"]*\"|\S+")
+
+
+def _sub_outside_literals(pattern: str, replacement: str, text: str, flags: int = 0) -> str:
+    """Apply ``re.sub`` only to text outside single-quoted SQL literals."""
+    parts = _LITERAL_RE.split(text)
+    return "".join(
+        part if index % 2 else re.sub(pattern, replacement, part, flags=flags)
+        for index, part in enumerate(parts)
+    )
 
 
 def parse_schema_identifiers(
@@ -95,12 +106,14 @@ def repair_sql(sql: str, schema_text: str, database_id: str = "") -> str:
     all_tables, all_columns, tables_dict = parse_schema_identifiers(schema_text)
 
     # 1. Clean whitespace around operators, punctuation, and aggregates
-    repaired = re.sub(r"\b(COUNT|AVG|MIN|MAX|SUM)\s+\(", r"\1(", sql.strip(), flags=re.IGNORECASE)
-    repaired = re.sub(r"\s*\.\s*", ".", repaired)
-    repaired = re.sub(r"\(\s*", "(", repaired)
-    repaired = re.sub(r"\s*\)", ")", repaired)
-    repaired = re.sub(r"\s*,\s*", ", ", repaired)
-    repaired = re.sub(r"\s+;", ";", repaired)
+    repaired = _sub_outside_literals(
+        r"\b(COUNT|AVG|MIN|MAX|SUM)\s+\(", r"\1(", sql.strip(), flags=re.IGNORECASE
+    )
+    repaired = _sub_outside_literals(r"\s*\.\s*", ".", repaired)
+    repaired = _sub_outside_literals(r"\(\s*", "(", repaired)
+    repaired = _sub_outside_literals(r"\s*\)", ")", repaired)
+    repaired = _sub_outside_literals(r"\s*,\s*", ", ", repaired)
+    repaired = _sub_outside_literals(r"\s+;", ";", repaired)
     repaired = re.sub(r"\s*;\s*$", "", repaired)
 
     # 2. Strip dangling trailing clauses or operators
@@ -162,7 +175,7 @@ def repair_sql(sql: str, schema_text: str, database_id: str = "") -> str:
                     )
 
     # 5. Token-level literal quoting in comparison predicates
-    tokens = repaired.split()
+    tokens = _TOKEN_RE.findall(repaired)
     repaired_tokens: list[str] = []
     idx = 0
     while idx < len(tokens):

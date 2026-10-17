@@ -1,399 +1,1591 @@
-\documentclass[11pt,a4paper]{article}
-
-\usepackage[utf8]{inputenc}
-\usepackage[margin=1in]{geometry}
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{booktabs}
-\usepackage{tabularx}
-\usepackage{microtype}
-\usepackage{hyperref}
-\usepackage{graphicx}
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  10pt,
+]{article}
 \usepackage{xcolor}
-
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue!80!black,
-    citecolor=blue!80!black,
-    urlcolor=blue!80!black
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\newenvironment{Shaded}{}{}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.50,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.50,0.00}{\textbf{#1}}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
 }
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{float}\floatplacement{figure}{H}\renewcommand{\thesection}{\alph{section}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={CS F429 Natural Language Processing --- Part 2 Report},
+  pdfauthor={Name: Roshini Kotte \textbar{} ID Number: 2024A7PS0048H},
+  colorlinks=true,
+  linkcolor={blue!60!black},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={blue!60!black},
+  pdfcreator={LaTeX via pandoc}}
 
-\title{\textbf{CS F429 Natural Language Processing --- Part 2 Milestone Report}\\
-\large Robust Natural Language to SQL Translation Across Single- and Multi-Table Relational Databases}
-
-\author{\textbf{Course:} CS F429 Natural Language Processing \\
-\textbf{Institution:} BITS Pilani \\
-\textbf{Milestone:} Part 2 Progress Report (Classical Baselines \& Error Analysis) \\
-\textbf{Date:} September 24, 2026}
-
+\title{\textbf{CS F429 Natural Language Processing --- Part 2 Report}}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Robust Natural Language to SQL Translation Across Single- and
+Multi-Table Relational Databases}
+\author{Name: Roshini Kotte \textbar{} ID Number: 2024A7PS0048H}
 \date{}
 
 \begin{document}
-
 \maketitle
-
 \begin{abstract}
-Natural Language to SQL (Text-to-SQL) translation bridges the semantic gap between non-technical domain users and relational databases. In this Part~2 milestone, we formulate the cross-domain semantic parsing task and construct an end-to-end evaluation harness across single-table (WikiSQL) and complex multi-table relational databases (Spider). We implement and empirically compare two classical baseline architectures: (1) a deterministic rule-based template parser and (2) a dual-stage Pointer-Generator BiLSTM sequence-to-sequence neural network equipped with Bahdanau additive attention, dynamic vocabulary copying, and schema-aware syntax repair. Evaluated across all 1,034 held-out Spider validation queries over 20 unseen database schemas, our optimized Pointer-Generator LSTM achieves \textbf{5.90\% Execution Accuracy} and \textbf{3.29\% Exact Match}, surpassing the deterministic template baseline (5.80\% Execution Accuracy, 0.00\% Exact Match) and falling directly within the canonical baseline band (3.2\%--5.4\% Exact Match) established in the seminal Yale Spider benchmark (\textit{Yu et al., 2018}). On single-table queries, the model achieves \textbf{9.38\% Execution Accuracy} and \textbf{5.88\% Exact Match}, while achieving \textbf{100\% syntactic validity} on WikiSQL. We present extensive quantitative breakdowns across official difficulty tiers (Easy: 13.31\%, Medium: 4.04\%, Hard: 5.75\%, Extra-Hard: 0.00\%) and six detailed qualitative error case studies, establishing a rigorous empirical and diagnostic foundation for modern schema-linking transformer architectures in Part~3.
+We formulate cross-domain Text-to-SQL and build an execution-based
+evaluation harness for Spider (multi-table, unseen databases) and
+WikiSQL (single-table). Two classical baselines are compared: a
+deterministic template parser and a two-stage pointer-generator BiLSTM
+sequence-to-sequence model. The headline comparisons use the official
+Spider evaluator (exact-set match and execution accuracy) with
+database-clustered 95\% confidence intervals, paired McNemar tests and
+Holm correction. Our own harness supplies the diagnostic breakdowns.
+Every inference fix was developed on Spider dev and frozen before a
+single run on the held-out Spider test set (2,147 questions, 40
+databases disjoint from train and dev).
+
+On \textbf{Spider test}, the template parser reaches \textbf{9.5\%
+official execution accuracy} and \textbf{6.7\% official exact-set
+match}, against 7.2\% and 5.5\% for the LSTM. The template's lead on
+execution accuracy (2.3 points) is significant by McNemar (Holm p =
+0.008) but borderline under a database-clustered bootstrap (p = 0.045
+unadjusted, 0.14 adjusted), and the two do not differ significantly on
+exact-set match. Both baselines almost entirely fail on the stated core
+objective, multi-table queries (1.83\% {[}0.9\%, 3.6\%{]} strict EX for
+the LSTM on dev). The LSTM's failures are overwhelmingly schema-linking
+errors: identifier recall is 40.4\%, 690 of 746 invalid queries
+reference a nonexistent column, and its copy gate switches to copying
+correctly but points at the wrong schema element. Per-epoch dev-loss
+curves from replication runs of the same recipe show overfitting after
+about three Spider epochs, although training continued for 25. On
+WikiSQL we found and fixed a harness defect: gold SQL named columns that
+the database stores as \texttt{col0…colN}, so 71\% of gold queries
+silently returned nothing. With it fixed, the Stage-1 LSTM's near-total
+failure turns out to be a rendering defect rather than catastrophic
+forgetting, and fixing the rendering raises its execution accuracy from
+5.76\% to 17.15\%, far above the template's 2.65\% (McNemar p
+\textless{} 10\textsuperscript{-200}).
 \end{abstract}
 
-\section{Introduction and Task Formulation}
+\section{Introduction to the NLP
+Task}\label{introduction-to-the-nlp-task}
 
-\subsection{Motivation and Practical Relevance}
-Relational database management systems (RDBMS) store the overwhelming majority of modern enterprise, transactional, and scientific data. Structured Query Language (SQL) serves as the standard query interface for retrieving and aggregating information from relational tables. However, authoring syntactically valid and semantically correct SQL requires substantial domain expertise: users must know SQL syntax conventions, understand relational algebra (projection, selection, grouping, Cartesian joins), and possess detailed knowledge of database schemas, including exact table names, column names, data types, and primary-foreign key linkages.
+\subsection{Motivation}\label{motivation}
 
-The Text-to-SQL task seeks to automate this interface: translating arbitrary natural language questions $Q = (x_1, x_2, \dots, x_{|Q|})$ into executable SQL queries $Y = (y_1, y_2, \dots, y_{|Y|})$ that, when executed over database schema $\mathcal{S}$, retrieve the exact intended result table $\mathcal{R}$. Successfully solving this task democratizes database access for non-technical analysts, business users, and healthcare personnel, enabling intuitive conversational interfaces to structured data stores.
+Relational databases hold most structured enterprise and scientific
+data. Writing SQL against them requires knowing SQL syntax, relational
+operations (projection, selection, grouping, joins) and the exact table
+and column names of each schema. Text-to-SQL removes this barrier by
+translating a natural-language question into an executable query, giving
+non-technical users conversational access to structured data.
 
-\subsection{Core NLP Challenges in Text-to-SQL}
-Translating free-form human language into executable SQL entails multiple interrelated natural language understanding and formal semantic parsing challenges:
+\subsection{Core challenges}\label{core-challenges}
+
 \begin{enumerate}
-    \item \textbf{Schema Grounding and Schema Linking:} Natural language questions rarely use exact database identifier names. For instance, the question \textit{``Which airports are in Los Angeles?''} requires linking \textit{``airports''} to table \texttt{AIRPORTS}, \textit{``Los Angeles''} to column \texttt{City}, and retrieving \texttt{AirportCode}. The system must bridge lexical gaps, synonyms, abbreviations, and informal phrasing to bind phrases to schema entities.
-    \item \textbf{Structural Compositionality and Complex Relational Logic:} Unlike single-table benchmarks where queries map to fixed templates (\texttt{SELECT agg(col) FROM t WHERE col = val}), multi-table relational benchmarks require synthesizing nested subqueries, aggregations (\texttt{COUNT}, \texttt{AVG}, \texttt{SUM}), group-by clauses with \texttt{HAVING} filters, ordering, bounds (\texttt{LIMIT}), and multiple \texttt{JOIN ... ON} constraints across complex foreign key hierarchies.
-    \item \textbf{Cross-Domain Generalization:} In real-world deployments, a model must generalize to unseen databases at test time without fine-tuning on target schemas (zero-shot domain transfer). The model must rely strictly on schema metadata provided at inference time, precluding memorization of table or column names.
-    \item \textbf{Constrained Syntactic and Execution Validity:} SQL is a strictly typed, formal language. A single misplaced parenthesis, an unquoted string literal (e.g., \texttt{WHERE city = Paris}), or a misspelled column identifier results in immediate SQLite compilation errors (\texttt{no such column}), yielding 0\% execution utility even if 95\% of the query tokens were semantically correct.
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Schema linking.} Questions rarely use exact identifiers. In
+  \emph{``Which airports are in Los Angeles?''}, the phrase ``airports''
+  must be linked to table \texttt{airports}, ``Los Angeles'' to a value
+  of column \texttt{City}, and the answer to \texttt{AirportName}.
+\item
+  \textbf{Compositional structure.} Multi-table queries need joins along
+  foreign keys, nested subqueries, \texttt{GROUP\ BY}/\texttt{HAVING},
+  ordering and set operations.
+\item
+  \textbf{Cross-domain generalisation.} Test databases are unseen during
+  training, so the model cannot memorise identifiers. It must read the
+  schema supplied at inference time.
+\item
+  \textbf{Executable validity.} A single unknown column or unquoted
+  literal makes SQLite reject the query, so a nearly-correct token
+  sequence can still score zero.
 \end{enumerate}
 
-\subsection{Mathematical Task Formulation}
-Formally, we define the Text-to-SQL problem as conditional sequence generation:
-\begin{equation}
-\hat{Y} = \arg\max_Y P(Y \mid Q, \mathcal{S})
-\end{equation}
-where:
+\subsection{Formulation}\label{formulation}
+
+Given a question \(Q=(q_1,\dots,q_m)\) and a schema
+\(\mathcal{S}=(\mathcal{T},\mathcal{C},\mathcal{E})\) of tables, columns
+and foreign-key edges, produce SQL \(Y=(y_1,\dots,y_n)\) such that
+executing \(Y\) on the database returns the intended result:
+\[\hat{Y}=\arg\max_Y \prod_{t=1}^{n} P(y_t\mid y_{<t},Q,\mathcal{S}).\]
+
+\section{Literature Survey: Why the Problem
+Matters}\label{literature-survey-why-the-problem-matters}
+
+\subsection{Rule-based semantic
+parsing}\label{rule-based-semantic-parsing}
+
+PRECISE (Popescu et al., 2003) maps words to database elements through
+bipartite matching and guarantees precision on the questions it accepts,
+but its recall drops sharply outside its patterns. SCFG (Wong and
+Mooney, 2007) and CCG (Zettlemoyer and Collins, 2005) parsers induce
+logical forms but need domain lexicons and do not transfer across
+schemas.
+
+\subsection{Neural sequence-to-sequence
+parsing}\label{neural-sequence-to-sequence-parsing}
+
+Encoder--decoder LSTMs (Hochreiter and Schmidhuber, 1997; Sutskever et
+al., 2014) with attention (Bahdanau et al., 2015) treat Text-to-SQL as
+translation. Two weaknesses matter here. First, identifiers and literals
+are often out of vocabulary. Second, unconstrained decoders emit
+ungrammatical or schema-inconsistent SQL.
+
+\subsection{Pointer and copy
+mechanisms}\label{pointer-and-copy-mechanisms}
+
+Pointer Networks (Vinyals et al., 2015) and Pointer-Generator Networks
+(See et al., 2017) mix a vocabulary distribution with a copy
+distribution over the input:
+\[P(w)=p_{\text{gen}}P_{\text{vocab}}(w)+(1-p_{\text{gen}})\sum_{i:x_i=w}a^t_i .\]
+On WikiSQL, Seq2SQL (Zhong et al., 2017) and SQLNet (Xu et al., 2017)
+combine pointing with sketch-based slot filling.
+
+\subsection{Spider and its baselines}\label{spider-and-its-baselines}
+
+Spider (Yu et al., 2018) has 10,181 questions and 5,693 unique queries
+over 200 databases in 138 domains, split so that test databases are
+unseen. \textbf{Table 2 of Yu et al.~(2018)} reports exact-matching
+accuracy on the \emph{database split}:
+
+\begin{longtable}[]{@{}lrr@{}}
+\caption{Exact-match accuracy of the original Spider baselines (Yu et
+al., 2018, Table 2, database split).}\tabularnewline
+\toprule\noalign{}
+Model (Yu et al., 2018, Table 2, database split) & Test EM & Dev EM \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Model (Yu et al., 2018, Table 2, database split) & Test EM & Dev EM \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Seq2Seq & 3.7\% & 1.9\% \\
+Seq2Seq + Attention & 4.8\% & 1.8\% \\
+Seq2Seq + Copying & 5.3\% & 4.1\% \\
+SQLNet & 12.4\% & 10.9\% \\
+TypeSQL & 8.2\% & 8.0\% \\
+\end{longtable}
+
+These numbers come from the original 2018 release and evaluator, which
+ignored literal values. They give an order-of-magnitude reference, not a
+like-for-like comparison. Later systems close the gap through
+relation-aware schema encoding (RAT-SQL; Wang et al., 2020), constrained
+decoding (PICARD; Scholak et al., 2021), and schema ranking with
+pre-trained seq2seq models (RESDSQL; Li et al., 2023). Our Part 2 model
+belongs to the Seq2Seq+Copying family.
+
+\section{Dataset and Preprocessing}\label{dataset-and-preprocessing}
+
+\subsection{Datasets and splits}\label{datasets-and-splits}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\caption{Datasets used in this work.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+WikiSQL (Zhong et al., 2017)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Spider (Yu et al., 2018)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+WikiSQL (Zhong et al., 2017)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Spider (Yu et al., 2018)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Domain & Wikipedia tables (open domain) & 138 domains, e.g.~college,
+business, entertainment, government \\
+Source & \texttt{github.com/salesforce/WikiSQL} (BSD-3) &
+\texttt{yale-lily.github.io/spider} (CC BY-SA 4.0) \\
+Role & Stage-1 warm-up and single-table sanity check & Primary
+cross-domain benchmark \\
+Size (release files) & 80,654 questions; 26,531 table entries in
+\texttt{*.tables.jsonl} (the paper reports 24,241 tables) & 7,000 train
+/ 1,034 dev / 2,147 test questions \\
+Databases & One table per question & 140 train / 20 dev / 40 test
+databases, pairwise disjoint (verified) \\
+Operations & \texttt{SELECT}, one aggregate, \texttt{AND} conditions &
+Joins, \texttt{GROUP\ BY}, \texttt{HAVING}, \texttt{ORDER\ BY},
+\texttt{LIMIT}, nesting, set operations \\
+\end{longtable}
+
+\textbf{Why these datasets.} Spider is the standard cross-domain
+multi-table benchmark: its test databases are unseen, which matches our
+objective. Every question ships with an executable SQLite database, so
+execution accuracy can be measured. WikiSQL is large (56k training
+questions) and simple, which makes it a cheap warm-up and a single-table
+sanity check for the pipeline.
+
+\textbf{Per-split retention.} All splits are loaded through the typed
+loaders in \texttt{data/spider.py} and \texttt{data/wikisql.py}. These
+record an explicit exclusion event for any example with a missing
+question, gold SQL, schema or database file.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2143}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2857}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2857}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2143}}@{}}
+\caption{Per-split retention after loading.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Split
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Source
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Retained
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Excluded (reason)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Split
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Source
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Retained
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Excluded (reason)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+WikiSQL train & 56,355 & 55,968 used in Stage 1 & 387 unused: 355 beyond
+\texttt{-\/-train-limit\ 56000} and 32 excluded by the single-table
+filter \\
+WikiSQL dev & 8,421 & 8,415 & 6 (\texttt{unsupported\_query\_structure}:
+the loader's single-table filter rejected them) \\
+Spider train & 7,000 & 7,000 & 0 \\
+Spider dev & 1,034 & 1,034 & 0 \\
+Spider test & 2,147 & 2,147 & 0 \\
+\end{longtable}
+
+\textbf{Spider difficulty distribution} (official
+\texttt{eval\_hardness}, reimplemented in \texttt{data/spider.py} and
+cross-checked against the official evaluator's counts): train has 1,694
+easy, 2,777 medium, 1,461 hard and 1,068 extra-hard examples (3,609
+single-table, 3,004 multi-table, 387 nested); dev has 248 easy, 446
+medium, 174 hard and 166 extra-hard examples; test has 470 easy, 857
+medium, 463 hard and 357 extra-hard (1,100 single-table, 908
+multi-table, 139 nested).
+
+\textbf{Query-structure categories} (\texttt{\_query\_structure} in
+\texttt{data/spider.py}) are rule-based on the gold SQL text. A query
+goes to \emph{multi-table} if it contains \texttt{JOIN}, \texttt{UNION},
+\texttt{INTERSECT} or \texttt{EXCEPT}. Otherwise it goes to \emph{other
+(nested)} if it contains more than one \texttt{SELECT}, and otherwise to
+\emph{single-table}. The first matching rule wins, so a query with both
+a join and a subquery is counted as multi-table, and set operations
+count as multi-table even over one table. Dev has 544 single-table, 438
+multi-table and 52 nested examples.
+
+\subsection{Schema serialisation}\label{schema-serialisation}
+
+\texttt{data/schema.py} serialises each schema deterministically, with
+tables and columns sorted:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{database: concert\_singer}
+\NormalTok{table: singer}
+\NormalTok{columns:}
+\NormalTok{  {-} Age [number]}
+\NormalTok{  {-} Country [text]}
+\NormalTok{  {-} Singer\_ID [number] [PRIMARY KEY]}
+\NormalTok{foreign\_keys:}
+\NormalTok{  {-} singer\_in\_concert.Singer\_ID {-}\textgreater{} singer.Singer\_ID}
+\end{Highlighting}
+\end{Shaded}
+
+The encoder input is
+\texttt{\textless{}bos\textgreater{}\ question\ \textless{}schema\_sep\textgreater{}\ schema\ \textless{}eos\textgreater{}},
+where both parts are tokenised by the regex lexer in
+\texttt{lstm/preprocessing.py}. Column \emph{types} (\texttt{text},
+\texttt{number}) and markup words (\texttt{table}, \texttt{columns})
+become ordinary copyable source tokens. §d.4 and §d.9 show this was the
+largest single source of invalid SQL.
+
+\subsection{Tokenisation and
+vocabulary}\label{tokenisation-and-vocabulary}
+
 \begin{itemize}
-    \item $Q = [q_1, q_2, \dots, q_m]$ is the sequence of natural language question tokens.
-    \item $\mathcal{S} = (\mathcal{T}, \mathcal{C}, \mathcal{E})$ is the relational database schema, comprising tables $\mathcal{T} = \{T_1, \dots, T_k\}$, columns $\mathcal{C} = \{C_{i,j}\}$, and foreign key edges $\mathcal{E} \subseteq \mathcal{C} \times \mathcal{C}$. In serialized text format, $\mathcal{S}$ is represented as a linearized string sequence of table and column definitions.
-    \item $Y = [y_1, y_2, \dots, y_n]$ is the target tokenized SQL query sequence drawn from an extended target vocabulary $\mathcal{V}_{\text{ext}} = \mathcal{V}_{\text{SQL}} \cup \mathcal{V}_{\text{schema}} \cup \mathcal{V}_{Q}$.
+\tightlist
+\item
+  \textbf{Lexer.} It keeps SQL punctuation and operators, splits
+  \texttt{t1.col} into \texttt{t1\ .\ col}, upper-cases SQL keywords and
+  lower-cases everything else. A quoted literal becomes one unquoted,
+  lower-cased token
+  (\texttt{\textquotesingle{}United\ States\textquotesingle{}} →
+  \texttt{united\ states}).
+\item
+  \textbf{Vocabulary.} Every token in the Stage-1 and Stage-2
+  \emph{training} questions, schemas and SQL, with no frequency
+  threshold: \textbf{102,463 types} (\texttt{training\_meta.json}). Dev
+  and test are never read when building the vocabulary.
+\item
+  \textbf{Copy targets.} Each example extends the vocabulary with its
+  out-of-vocabulary source tokens. A gold SQL token resolves to the
+  fixed vocabulary first, then to a source copy, else to
+  \texttt{\textless{}unk\textgreater{}}.
 \end{itemize}
 
-At each decoding timestep $t$, the conditional probability of predicting token $y_t$ is conditioned on the input representations and all previously emitted tokens $y_{<t}$:
-\begin{equation}
-P(Y \mid Q, \mathcal{S}) = \prod_{t=1}^n P(y_t \mid y_{<t}, Q, \mathcal{S})
-\end{equation}
+\subsection{Worked preprocessing
+example}\label{worked-preprocessing-example}
 
-\section{Literature Survey and Related Work}
+This is the output of \texttt{scripts/show\_preprocessing.py}, which
+runs the real pipeline on dev example \texttt{spider-dev-4}:
 
-\subsection{Classical and Rule-Based Semantic Parsing}
-Early semantic parsers and conversational database interfaces relied heavily on pattern-matching rules, domain-specific grammars, and heuristic keyword mappers. Systems such as PRECISE \cite{popescu2003towards} mapped words to database elements by solving max-flow graph problems over bipartite schema matches. While PRECISE guaranteed 100\% precision when a query was recognized, its recall degraded dramatically when queries deviated from anticipated linguistic patterns. Other classical approaches utilized Synchronous Context-Free Grammars (SCFG) \cite{wong2007learning} or Combinatory Categorial Grammars (CCG) \cite{zettlemoyer2005learning}, which induced formal lambda-calculus representations. Although theoretically sound, these systems required manual lexicon engineering and failed completely in cross-domain settings with unseen database schemas.
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{Question : What is the average, minimum, and maximum age of all singers from France?}
+\NormalTok{Tokens   : what is the average minimum and maximum age of all singers from france   (13)}
+\NormalTok{Schema   : database: concert\_singer / table: concert / columns: {-} Stadium\_ID [text] ...}
+\NormalTok{           (34 lines, 4 tables)}
+\NormalTok{Encoder  : \textless{}bos\textgreater{} what is ... france \textless{}schema\_sep\textgreater{} database concert\_singer table concert}
+\NormalTok{           columns ... \textless{}eos\textgreater{}   (93 tokens)}
+\NormalTok{Gold SQL : SELECT avg(age) , min(age) , max(age) FROM singer WHERE country = \textquotesingle{}France\textquotesingle{}}
+\NormalTok{Target   : SELECT AVG ( age ) , MIN ( age ) , MAX ( age ) FROM singer WHERE country = france}
+\NormalTok{           (every token resolves to the fixed vocabulary; 6 source tokens are copy{-}only)}
+\end{Highlighting}
+\end{Shaded}
 
-\subsection{Sequence-to-Sequence Models and Neural Semantic Parsing}
-The advent of deep neural sequence-to-sequence (Seq2Seq) architectures \cite{sutskever2014sequence, bahdanau2015neural} fundamentally transformed Text-to-SQL. Instead of relying on brittle manual rules, recurrent neural networks (RNNs) with Long Short-Term Memory (LSTM) cells \cite{hochreiter1997long} encoded question tokens into continuous vector representations and decoded sequential tokens autoregressively.
+Three effects are visible. Punctuation is dropped from the question. The
+literal \texttt{\textquotesingle{}France\textquotesingle{}} loses its
+quotes and its case: it becomes the token \texttt{france}, so the
+decoder can only emit \texttt{france}. That is why §d.4 restores the
+surface form from the question at inference. The schema's column
+\emph{types} (\texttt{text}) sit in the encoder input right next to the
+column names.
 
-However, standard Seq2Seq models suffered from two fatal limitations:
-\begin{enumerate}
-    \item \textbf{The Out-of-Vocabulary (OOV) Bottleneck:} Standard decoders sample exclusively from a fixed pre-trained vocabulary $\mathcal{V}$. In Text-to-SQL, queries frequently require database column names, table names, and literal values (e.g., proper nouns, dates, codes) that appear only in the input question or target schema and never in the training lexicon.
-    \item \textbf{Lack of Syntactic Constraints:} Standard sequential decoders are unaware of SQL grammar rules, frequently emitting malformed clauses, unclosed parentheses, or nonsensical keyword sequences.
-\end{enumerate}
+\subsection{Corpus statistics (as tokenised for the
+model)}\label{corpus-statistics-as-tokenised-for-the-model}
 
-\subsection{Pointer Networks and Pointer-Generator Decoders}
-To solve the OOV bottleneck, Vinyals et al. \cite{vinyals2015pointer} introduced \textbf{Pointer Networks}, which use attention distributions directly as pointers to select positions in the input sequence. See et al. \cite{see2017get} unified pointer mechanisms with generative decoders in \textbf{Pointer-Generator Networks}, which compute a soft generation-versus-copy probability:
-\begin{equation}
-p_{\text{gen}} = \sigma\left(W_h^\top h_t^* + W_s^\top s_t + W_x^\top x_t + b_{\text{ptr}}\right)
-\end{equation}
-The final token probability distribution is a convex combination of the fixed vocabulary distribution and the input attention distribution:
-\begin{equation}
-P(w) = p_{\text{gen}} P_{\text{vocab}}(w) + (1 - p_{\text{gen}}) \sum_{i: w_i = w} a_i^t
-\end{equation}
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.0968}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 14\tabcolsep) * \real{0.1290}}@{}}
+\caption{Spider corpus statistics as tokenised for the
+model.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Split
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Examples
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+DBs
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Question tokens
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+SQL tokens
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Encoder tokens (max; \textgreater{} 256)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Tables / columns per schema
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Target tokens: vocab / copy / unk
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Split
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Examples
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+DBs
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Question tokens
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+SQL tokens
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Encoder tokens (max; \textgreater{} 256)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Tables / columns per schema
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Target tokens: vocab / copy / unk
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Train & 7,000 & 140 & 12.8 & 21.7 & 136 (899; 556) & 6.0 / 32.5 &
+100.0\% / 0.0\% / 0.0\% \\
+Dev & 1,034 & 20 & 12.4 & 21.5 & 104 (242; 0) & 4.5 / 24.8 & 90.9\% /
+8.7\% / 0.4\% \\
+Test & 2,147 & 40 & 12.5 & 22.6 & 100 (278; 99) & 4.9 / 20.9 & 91.8\% /
+7.7\% / 0.5\% \\
+\end{longtable}
 
-In single-table contexts, Zhong et al. \cite{zhong2017seq2sql} proposed \textbf{Seq2SQL}, combining Seq2Seq with pointer networks and reinforcement learning rewards to execute single-table aggregation and condition queries over WikiSQL. Concurrently, Xu et al. \cite{xu2017sqlnet} introduced \textbf{SQLNet}, replacing autoregressive decoding with a sketch-based slot-filling approach tailored specifically to single-table schemas.
+\textbf{No training target requires copying.} The vocabulary contains
+every training token, so on Spider train every target token can also be
+\emph{generated} from the fixed vocabulary. On dev and test, 8.7\% and
+7.7\% of target tokens can \emph{only} be produced by copying: unseen
+table names, column names and values. Is the copy path still learned?
+The gate still receives gradient, because copying an in-vocabulary
+source token also produces the correct token. We measured this directly
+(\texttt{scripts/measure\_copy\_gate.py}, 200 dev questions,
+teacher-forced). At positions whose gold token is copy-only, the gate
+chooses to copy (\(p_{\text{gen}} < 0.5\)) 96.0\% of the time (mean
+\(p_{\text{gen}}\) 0.04, vs 0.82 for in-vocabulary targets). But it puts
+only 0.17 probability on the correct source token, vs 0.82 for
+in-vocabulary targets. The pointer mechanism therefore works as a
+switch: the model knows \emph{when} to copy, but not \emph{what} to
+copy. This is the schema-linking failure seen throughout §d.9.
 
-\subsection{Multi-Table Benchmarks and Modern Transformer Evolution}
-While single-table models achieved high accuracy on WikiSQL ($>80\%$), they proved inadequate for enterprise databases. To challenge the community, Yu et al. \cite{yu2018spider} introduced \textbf{Spider}, a complex, cross-domain, multi-table Text-to-SQL benchmark spanning 200 databases and 10,181 natural language questions. The original Spider paper evaluated multiple classical Seq2Seq and Pointer-Network baselines, demonstrating that without schema-linking graphs or relational inductive biases, Seq2Seq LSTMs achieved only \textbf{3.2\% to 5.4\% Exact Match} on held-out Spider dev sets.
+\subsection{Dataset limitations}\label{dataset-limitations}
 
-Subsequent advancements bridged this gap through transformer-based pre-training and schema-graph encoding:
+\textbf{Spider.} Most queries appear with two paraphrased questions,
+which inflates in-domain accuracy. This does not leak across our
+database-disjoint splits, but it matters for the small live training
+demo (§d.12). Coverage is English-only and skewed towards college,
+business and entertainment schemas, and dev has only 20 databases, so
+per-database variance is high. Small databases allow coincidental
+execution matches (§d.9 shows one). Gold SQL follows inconsistent
+conventions: \texttt{"blues"} vs
+\texttt{\textquotesingle{}France\textquotesingle{}} quoting, stray
+trailing semicolons and mixed identifier case. These break string match
+but not execution or exact-set match. One database (\texttt{wta\_1})
+stores non-UTF-8 text. Difficulty is imbalanced: 43\% of dev is medium
+and only 16\% is extra-hard.
+
+\textbf{WikiSQL.} Each question targets a single table with at most one
+aggregate and \texttt{AND}-only conditions. Values are stored as text,
+column names contain spaces and punctuation, and the annotations are
+known to be noisy. It therefore tests pipeline mechanics rather than
+compositional parsing.
+
+\section{Method, Experiments and
+Results}\label{method-experiments-and-results}
+
+\subsection{Baseline 1: deterministic template
+parser}\label{baseline-1-deterministic-template-parser}
+
+\texttt{baselines/template.py} matches question tokens to table and
+column names, detects numeric and quoted literals, comparison phrases,
+aggregation cues (\texttt{how\ many} → \texttt{COUNT}, \texttt{average}
+→ \texttt{AVG}), \texttt{DISTINCT} and ordering cues, and fills a
+single-table template. It never generates joins. When it finds no
+confident single-table interpretation it \textbf{abstains} with an empty
+string. In the current code it abstains on \textbf{92 of 1,034} dev
+questions (8.9\%) and 208 of 2,147 test questions. Every abstention
+counts as invalid SQL. Identifiers are double-quoted only when
+necessary, because the official evaluator's parser reads
+\texttt{"singer"} as a string value. Apart from abstentions the template
+produced no SQLite errors, so its low invalid rate reflects
+conservative, single-table output.
+
+\subsection{Baseline 2: pointer-generator
+BiLSTM}\label{baseline-2-pointer-generator-bilstm}
+
+\texttt{lstm/model.py} (values from \texttt{TrainingConfig} and
+\texttt{training\_meta.json}):
+
 \begin{itemize}
-    \item \textbf{RAT-SQL} \cite{wang2020rat}: Introduced relation-aware self-attention, encoding schema tables, columns, and foreign-key edges directly into transformer layers.
-    \item \textbf{RESDSQL} \cite{li2023resdsql}: Decoupled schema linking and skeleton parsing, using schema-ranking classifiers to filter irrelevant tables before generation.
-    \item \textbf{PICARD} \cite{scholak2021picard}: Enforced strict grammatical and schema validity at every decoding beam step via incremental SQLite abstract syntax tree parsing.
+\tightlist
+\item
+  \textbf{Encoder:} 2-layer bidirectional LSTM. Embedding 256, hidden
+  256 per direction, so 512-d concatenated states. Packed sequences.
+  Training inputs are truncated at 256 tokens, which cuts 556 of the
+  7,000 Spider training inputs and hides their alphabetically-last
+  tables. Inference does not truncate: no dev input exceeds 242 tokens,
+  but 99 of 2,147 test inputs do (maximum 278). This train/inference
+  mismatch is a known limitation.
+\item
+  \textbf{Decoder:} 2-layer LSTM with hidden size 512, initialised from
+  projected final encoder states. The input is
+  \([\text{emb}(y_{t-1});\,c_{t-1}]\).
+\item
+  \textbf{Attention:} additive,
+  \(e_{t,i}=v^\top\tanh(W_h h_i+W_s s_t)\).
+\item
+  \textbf{Copy gate:}
+  \(p_{\text{gen}}=\sigma(W[s_t;c_t;\text{emb}(y_{t-1})]+b)\), mixing
+  \(P_{\text{vocab}}\) with the attention-weighted copy distribution as
+  in §b.3.
+\item
+  \textbf{Embeddings:} word-level, randomly initialised and trained end
+  to end (no pre-trained embeddings, nothing frozen). The encoder and
+  decoder have separate 256-d embedding tables over the shared
+  102,463-token vocabulary.
+\item
+  \textbf{Dropout} 0.2. \textbf{Decoding:} greedy, at most 128 tokens,
+  with
+  \texttt{\textless{}pad\textgreater{}}/\texttt{\textless{}unk\textgreater{}}
+  masked.
 \end{itemize}
 
-In this project, our Part~2 baseline implements the canonical Pointer-Generator Seq2Seq LSTM baseline, establishing the rigorous empirical floor that motivates Part~3's transformer and schema-linking innovations.
+\textbf{Why these two baselines.} The template parser is the classical
+rule-based reference: lexical matching plus fixed SQL templates, in the
+spirit of PRECISE. The pointer-generator BiLSTM is the canonical
+pre-transformer neural parser. It is the Seq2Seq+Copying family that Yu
+et al.~(2018) evaluated on Spider, so it shows what learning brings over
+rules before any pre-training. Both satisfy the course's definition of a
+classical (pre-transformer) baseline.
 
-\section{Dataset Description, Preprocessing and Serialization}
+\textbf{Implementation.} Python 3.12, PyTorch 2.14 (CUDA 13 on the HPC,
+CPU locally), SQLite through Python's \texttt{sqlite3} (read-only
+connections), and the official Spider evaluator for scoring. The
+environment is pinned with \texttt{uv} (\texttt{uv.lock}), and 87
+\texttt{pytest} unit tests cover loaders, preprocessing, model,
+rendering, metrics and statistics.
 
-\subsection{Dataset Selection and Scope}
-We utilize two authoritative benchmarks across our curriculum:
+\subsection{Training (HPC Job 361547)}\label{training-hpc-job-361547}
 
-\begin{table}[h]
+Hardware: one NVIDIA RTX PRO 6000 Blackwell MPS slice (50\%), 4 CPUs and
+80 GB RAM. The whole job, training plus evaluation, took 50 min of wall
+time (04:41 to 05:31 IST).
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{One Adam optimiser} with constant learning rate \(10^{-3}\),
+  batch 64, gradient-norm clipping at 1.0, teacher forcing ratio 1.0,
+  seed 42 and per-epoch shuffling with seed \(42+\text{epoch}\). There
+  is no learning-rate warm-up or schedule.
+\item
+  \textbf{Stage 1 (WikiSQL):} 55,968 examples, 10 epochs (8,750 steps).
+  Training NLL fell from 1.723 to 0.098. Saved as
+  \texttt{wikisql\_checkpoint.pt}.
+\item
+  \textbf{Stage 2 (Spider):} 7,000 examples, 25 epochs (2,750 steps),
+  continuing from Stage 1. Training NLL fell from 1.841 to 0.040. Saved
+  as \texttt{spider\_checkpoint.pt}.
+\end{itemize}
+
+\begin{figure}
 \centering
-\small
-\begin{tabularx}{\textwidth}{lXX}
-\toprule
-\textbf{Characteristic} & \textbf{WikiSQL \cite{zhong2017seq2sql}} & \textbf{Spider \cite{yu2018spider}} \\
-\midrule
-\textbf{Primary Focus} & Single-table warm-up & Multi-table cross-domain benchmark \\
-\textbf{Number of Databases} & 26,575 isolated tables & 200 multi-table relational databases \\
-\textbf{Domains} & Wikipedia tabular articles & 138 diverse enterprise domains \\
-\textbf{Relational Operations} & Simple \texttt{SELECT}, \texttt{WHERE}, aggregations & Joins, \texttt{GROUP BY}, \texttt{HAVING}, subqueries, sets \\
-\textbf{Cross-Table Joins} & 0\% (Single table) & $>42\%$ of validation queries join $\ge 2$ tables \\
-\textbf{Split Strategy} & Table-split (unseen tables) & Database-split (unseen schemas) \\
-\textbf{Role in Project} & Stage 1 warm-up (55,968 train) & Stage 2 primary training (7,000 train, 1,034 dev) \\
-\bottomrule
-\end{tabularx}
-\caption{Comparison of WikiSQL and Spider benchmarks.}
-\label{tab:dataset_comparison}
-\end{table}
+\includegraphics[width=0.95\linewidth,height=\textheight,keepaspectratio,alt={Training NLL (Job 361547) and per-epoch teacher-forced Spider-dev NLL (replication runs, seeds 7, 13, 42; same recipe as Job 361547).}]{training_loss_curve.png}
+\caption{Training NLL (Job 361547) and per-epoch teacher-forced
+Spider-dev NLL (replication runs, seeds 7, 13, 42; same recipe as Job
+361547).}
+\end{figure}
 
-\subsection{Schema Serialization Contract}
-In multi-table Text-to-SQL, the model must condition on both question $Q$ and schema $\mathcal{S}$. We designed a deterministic, typed schema serializer that introspects SQLite catalogs and generates a standardized textual schema representation:
-\begin{verbatim}
-Table: customers | Columns: id (integer, PK), name (text)
-Table: orders | Columns: id (integer, PK), customer_id (integer) 
-              | Foreign Keys: customer_id -> customers.id
-\end{verbatim}
-The unified prompt input to the encoder concatenates the question and linearized schema separated by special delimiter tokens:
-\begin{equation}
-\mathbf{X} = [\text{<sos>}] \circ Q \circ [\text{<sep>}] \circ \mathcal{S} \circ [\text{<eos>}]
-\end{equation}
+\textbf{Training dynamics.} Training loss alone says nothing about
+transfer, so the replication runs also log a teacher-forced Spider-dev
+NLL after every Stage-2 epoch (seed 7: minimum 0.924 at epoch 3, 1.756
+at epoch 25; seed 13: minimum 0.950 at epoch 2, 1.643 at epoch 25; seed
+42: minimum 0.888 at epoch 3, 1.535 at epoch 25). Dev NLL bottoms out
+within the first few epochs and then rises steadily while training NLL
+keeps falling. A training NLL of 0.04 alongside rising dev NLL and over
+70\% invalid dev SQL indicates \textbf{memorisation of the training
+databases, not successful cross-domain transfer}. Early stopping on a
+database-disjoint validation split is required for Part 3.
 
-\subsection{Tokenization, Vocabulary and Copy Targets}
-We implemented a specialized regex-based SQL lexer that preserves SQL punctuation, table-column dot notations (\texttt{table.column}), and quoted string literals:
+\subsection{Inference pipeline}\label{inference-pipeline}
+
+The final pipeline is decode, then render, then repair. All steps
+operate on the same trained weights.
+
 \begin{enumerate}
-    \item \textbf{Fixed SQL Vocabulary ($\mathcal{V}_{\text{vocab}}$):} Extracted across all training splits using a frequency threshold of 2, augmented with SQL reserved keywords (\texttt{SELECT}, \texttt{FROM}, \texttt{WHERE}, \texttt{JOIN}, \texttt{ON}, \texttt{GROUP}, \texttt{BY}, \texttt{HAVING}, \texttt{ORDER}, \texttt{LIMIT}, \texttt{ASC}, \texttt{DESC}, \texttt{AND}, \texttt{OR}, \texttt{NOT}, \texttt{IN}, \texttt{LIKE}, \texttt{COUNT}, \texttt{SUM}, \texttt{AVG}, \texttt{MIN}, \texttt{MAX}, \texttt{UNION}, \texttt{INTERSECT}, \texttt{EXCEPT}). Total fixed vocabulary size: \textbf{1,402 tokens}.
-    \item \textbf{Dynamic Copy Vocabulary ($\mathcal{V}_{\text{copy}}$):} For each example, question tokens and schema identifiers that do not exist in $\mathcal{V}_{\text{vocab}}$ are assigned temporary dynamic indices offset by $|\mathcal{V}_{\text{vocab}}|$. Target SQL tokens matching any input token are mapped to their corresponding input source position, enabling supervised cross-entropy loss over both generated and copied tokens.
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Schema-markup mask}
+  (\texttt{DecodeOptions.mask\_schema\_markup}), added after inspecting
+  dev errors. Serialisation tokens (\texttt{text}, \texttt{number},
+  \texttt{time}, \texttt{boolean}, \texttt{others}, \texttt{table},
+  \texttt{columns}, \texttt{primary}, \texttt{key}, \ldots) are given
+  probability 0 during decoding unless the current schema really has an
+  identifier of that name. With base decoding, the bare token
+  \texttt{text} appeared in 278 of 1,034 dev predictions.
+\item
+  \textbf{Surface-form rendering} (\texttt{lstm/rendering.py}), also
+  added after inspecting dev errors. Each decoded token is mapped back
+  to its schema spelling (\texttt{School/Club\ Team} is restored and
+  double-quoted). A value token after a comparison operator becomes a
+  single-quoted literal using the question's original casing
+  (\texttt{\textquotesingle{}France\textquotesingle{}}, not
+  \texttt{\textquotesingle{}france\textquotesingle{}}). A multi-word
+  literal stays one literal
+  (\texttt{\textquotesingle{}United\ States\textquotesingle{}}, not
+  \texttt{\textquotesingle{}united\textquotesingle{}\ states}).
+\item
+  \textbf{Schema-aware repair} (\texttt{lstm/sql\_repair.py}, unchanged
+  in substance). It normalises spacing, re-quotes leftover bare
+  literals, replaces hallucinated \texttt{FROM} tables with the schema
+  table sharing the most columns, collapses single-table WikiSQL queries
+  to the sole table, and balances parentheses. It now leaves the inside
+  of quoted literals untouched.
 \end{enumerate}
 
-\subsection{Official Spider Difficulty Classification}
-To evaluate structural query complexity, we implemented difficulty classification strictly following Yale Spider's official evaluation benchmark (\texttt{eval\_hardness}):
+\subsection{Evaluation protocol}\label{evaluation-protocol}
+
+\textbf{Official metrics.} Spider is scored with the official evaluator
+(\texttt{taoyds/test-suite-sql-eval},
+\texttt{evaluation.py\ -\/-etype\ all}) on Spider's own databases.
+\emph{Exact-set match} (EM) compares SQL component by component and
+ignores literal values. \emph{Execution accuracy} (EX) compares result
+multisets, and row order matters only when the gold query has
+\texttt{ORDER\ BY}. Test-suite accuracy (Zhong et al., 2020) needs a
+separate \textasciitilde1 GB set of distilled databases, covering Spider
+dev only. Its official download was over its quota at the time of
+writing, so it is deferred to Part 3. Execution accuracy can therefore
+still contain coincidental matches; §d.9 shows one.
+
+\textbf{Harness metrics.} Our own harness
+(\texttt{evaluation/metrics.py}) records four per-example outcomes for
+every dataset:
+
 \begin{itemize}
-    \item \textbf{Component 1 ($C_1$):} Number of \texttt{WHERE}, \texttt{GROUP BY}, \texttt{ORDER BY}, \texttt{LIMIT}, \texttt{JOIN} (calculated as $\max(0, |\mathcal{T}_{\text{units}}| - 1)$), \texttt{OR}, and \texttt{LIKE} clauses.
-    \item \textbf{Component 2 ($C_2$):} Number of nested subqueries and set operations (\texttt{INTERSECT}, \texttt{UNION}, \texttt{EXCEPT}).
-    \item \textbf{Others ($C_o$):} Total count of aggregations across all clauses ($>1$), multiple projection columns ($>1$), multiple \texttt{WHERE} conditions ($>1$), and multiple \texttt{GROUP BY} columns ($>1$).
+\tightlist
+\item
+  \emph{Strict EX} requires result-column labels (case-insensitive) and
+  row order to agree as well.
+\item
+  \emph{EX with official semantics} ignores labels and compares rows as
+  multisets.
+\item
+  \emph{Normalised string match} (SM) is whitespace-collapsed,
+  lower-cased string equality. It is \textbf{not} Spider's EM, which
+  explains the template's 0\% SM.
+\item
+  \emph{Invalid SQL} counts any SQLite error or empty prediction, and is
+  decomposed by error class.
 \end{itemize}
-Thresholds:
-\begin{itemize}
-    \item \textbf{Easy:} $C_1 \le 1 \land C_o = 0 \land C_2 = 0$
-    \item \textbf{Medium:} $(C_o \le 2 \land C_1 \le 1 \land C_2 = 0) \lor (C_1 \le 2 \land C_o < 2 \land C_2 = 0)$
-    \item \textbf{Hard:} $(C_o > 2 \land C_1 \le 2 \land C_2 = 0) \lor (2 < C_1 \le 3 \land C_o \le 2 \land C_2 = 0) \lor (C_1 \le 1 \land C_o = 0 \land C_2 \le 1)$
-    \item \textbf{Extra-Hard:} All queries exceeding the above thresholds.
-\end{itemize}
 
-Distribution across the 1,034 Spider validation examples:
-\textbf{Easy:} 248 (24.0\%), \textbf{Medium:} 446 (43.1\%), \textbf{Hard:} 174 (16.8\%), \textbf{Extra-Hard:} 166 (16.1\%), \textbf{Unknown:} 0 (0.0\%).
+\textbf{Splits and uncertainty.} All development decisions were made on
+Spider dev. \textbf{Spider test was run once}, after the configuration
+was frozen. WikiSQL dev serves as a single-table diagnostic. Questions
+on the same database are correlated, and Spider pairs most queries with
+a paraphrase, so confidence intervals come from a bootstrap that
+resamples whole \textbf{databases} (10,000 resamples, seed 42). Paired
+comparisons report an exact McNemar test (McNemar, 1947) and a paired
+database-clustered bootstrap (Efron and Tibshirani, 1993). Holm's
+correction (Holm, 1979) is applied across all comparisons in a table.
+Per-question official outcomes are produced by
+\texttt{scripts/official\_per\_example.py}, which mirrors the official
+scoring loop and reproduces its totals exactly. Training was repeated 3
+times (seeds 7, 13, 42) with the identical recipe, as replication runs
+separate from Job 361547; we report mean ± sample standard deviation
+across these seeds.
 
-\section{Methodology, Baseline Architectures, Results and Error Analysis}
+\textbf{Why also strict EX?} Strict EX also requires matching
+result-column labels, which makes it sensitive to how an expression is
+spelled. Quoting identifiers alone moved the template's strict dev EX
+from 5.80\% to 7.06\%. It is reported only as a secondary diagnostic.
+All conclusions rest on the official metrics.
 
-\subsection{Classical Baseline 1: Deterministic Template Parser}
-The deterministic template baseline acts as our high-precision reference floor:
+\textbf{Sanity check.} Submitting the gold SQL as the prediction gives
+\textbf{100\% strict EX} on Spider dev (1,034/1,034) and Spider test
+(2,147/2,147) and WikiSQL dev (8,415/8,415). This check exposed one
+harness bug, now fixed: two dev gold queries on \texttt{wta\_1} crashed
+on non-UTF-8 text and could never be scored. Gold-equals-gold cannot
+detect a gold query that runs but means nothing, so we also checked that
+gold queries return real answers. That exposed a far more serious
+WikiSQL bug, described in §d.11.
+
+\subsection{Main results}\label{main-results}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2737}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2421}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2421}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0842}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0842}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0737}}@{}}
+\caption{Main results on Spider test (held out; run once after freezing
+the configuration). Official metrics with database-clustered 95\% CIs.
+``EM-confirmed EX'' counts questions correct under both EX and EM, which
+excludes coincidental execution matches.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+System
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+EM-conf. EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+System
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+EM-conf. EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\textbf{LSTM, final decoding} & 7.2\% {[}5.0\%, 10.0\%{]} & 5.5\%
+{[}3.6\%, 7.9\%{]} & 5.2\% & 6.52\% & 72.7\% \\
+LSTM, base decoding & 6.8\% {[}4.6\%, 9.4\%{]} & 5.2\% {[}3.4\%,
+7.6\%{]} & 4.8\% & 6.19\% & 76.3\% \\
+Template parser & 9.5\% {[}7.8\%, 11.5\%{]} & 6.7\% {[}5.1\%, 8.5\%{]} &
+6.6\% & 7.69\% & 9.7\% \\
+\end{longtable}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2737}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2421}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2421}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0842}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0842}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0737}}@{}}
+\caption{Results on Spider dev (development set; all fixes were chosen
+here).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+System
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+EM-conf. EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+System
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+EM-conf. EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\textbf{LSTM, final decoding} & 8.1\% {[}5.0\%, 12.1\%{]} & 5.0\%
+{[}3.0\%, 7.8\%{]} & 5.0\% & 6.38\% & 72.1\% \\
+LSTM, base decoding & 7.4\% {[}4.2\%, 11.4\%{]} & 4.9\% {[}3.0\%,
+7.7\%{]} & 4.6\% & 5.90\% & 77.2\% \\
+Template parser & 9.9\% {[}6.5\%, 13.7\%{]} & 5.9\% {[}3.9\%, 8.4\%{]} &
+5.9\% & 7.06\% & 8.9\% \\
+\end{longtable}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0704}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.3380}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0704}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2676}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1268}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1268}}@{}}
+\caption{Paired comparisons on the official metrics (difference in
+points, database-clustered 95\% CI; p-values Holm-adjusted within each
+split).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Split
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Comparison
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Metric
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Difference
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+McNemar p
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Clustered p
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Split
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Comparison
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Metric
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Difference
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+McNemar p
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Clustered p
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+test & LSTM final − LSTM base & EX & +0.4 {[}+0.2, +0.7{]} & 0.047 &
+0.004 \\
+test & LSTM final − LSTM base & EM & +0.3 {[}+0.0, +0.6{]} & 0.089 &
+0.126 \\
+test & LSTM final − template & EX & -2.3 {[}-4.3, -0.1{]} & 0.008 &
+0.136 \\
+test & LSTM final − template & EM & -1.2 {[}-3.2, +1.1{]} & 0.089 &
+0.419 \\
+test & LSTM base − template & EX & -2.7 {[}-4.7, -0.7{]} & 0.001 &
+0.069 \\
+test & LSTM base − template & EM & -1.5 {[}-3.6, +0.8{]} & 0.089 &
+0.419 \\
+dev & LSTM final − LSTM base & EX & +0.8 {[}+0.3, +1.2{]} & 0.047 &
+0.001 \\
+dev & LSTM final − LSTM base & EM & +0.1 {[}+0.0, +0.3{]} & 1.000 &
+0.885 \\
+dev & LSTM final − template & EX & -1.7 {[}-3.8, +0.1{]} & 0.469 &
+0.282 \\
+dev & LSTM final − template & EM & -0.9 {[}-2.7, +0.9{]} & 0.803 &
+0.885 \\
+dev & LSTM base − template & EX & -2.5 {[}-4.5, -0.7{]} & 0.094 &
+0.024 \\
+dev & LSTM base − template & EM & -1.0 {[}-2.8, +0.7{]} & 0.803 &
+0.885 \\
+\end{longtable}
+
+\begin{longtable}[]{@{}llrrr@{}}
+\caption{Seed variability (replication runs of the same recipe, epoch-25
+checkpoint; mean ± sample std over seeds).}\tabularnewline
+\toprule\noalign{}
+Split & Decoding & Official EX & Official EM & Strict EX \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Split & Decoding & Official EX & Official EM & Strict EX \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Spider test & final & 7.6 ± 0.7\% & 6.0 ± 0.9\% & 6.7 ± 0.7\% \\
+Spider test & base decoding & 7.0 ± 0.7\% & 5.7 ± 0.8\% & 6.2 ± 0.6\% \\
+Spider dev & final & 7.5 ± 1.7\% & 4.9 ± 0.7\% & 5.9 ± 1.3\% \\
+Spider dev & base decoding & 6.2 ± 1.9\% & 4.6 ± 0.7\% & 5.0 ± 1.5\% \\
+\end{longtable}
+
+\emph{n = 3 seeds. The Job 361547 checkpoint (§d.6) is a separate,
+earlier run of the same recipe.}
+
+Across seeds, final-decoding official EX on test is 7.6 ± 0.7\% (per
+seed: 8.0\%, 6.8\%, 7.9\%). Every seed stays below the deterministic
+template's 9.5\%, so the Spider ranking does not depend on the training
+seed.
+
+\textbf{Reading the comparison.} On Spider the template is the stronger
+baseline. It leads on official EX on both splits, by 2.3 points on test.
+This is significant by McNemar after correction (p = 0.008), but only
+borderline once questions are clustered by database (p = 0.045
+unadjusted, 0.14 adjusted), so it is a probable rather than decisive
+lead. On official EM the two systems are not significantly different.
+The decoding fixes give a consistent but small LSTM gain on official EX
+(+0.4 points on test, clustered p = 0.004): statistically real,
+practically minor. Neither baseline is good at the task. On WikiSQL the
+ranking reverses (§d.11).
+
+\subsection{Inference ablation (same checkpoint, Spider
+dev)}\label{inference-ablation-same-checkpoint-spider-dev}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.6000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1000}}@{}}
+\caption{Inference ablation on one checkpoint (Spider
+dev).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Configuration
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Configuration
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EX
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Official EM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Raw greedy tokens, no repair & 1.45\% & 5.4\% & 4.4\% & 84.0\% \\
++ repair (\textbf{base decoding}) & 5.90\% & 7.4\% & 4.9\% & 77.2\% \\
++ surface-form rendering & 6.19\% & 7.6\% & 4.9\% & 76.8\% \\
+base + schema-markup mask & 6.09\% & 7.7\% & 5.0\% & 72.6\% \\
+\textbf{+ mask + rendering (final)} & 6.38\% & 8.1\% & 5.0\% & 72.1\% \\
+final + copy feedback as \texttt{\textless{}unk\textgreater{}} & 6.19\%
+& 7.9\% & 5.0\% & 72.7\% \\
+\end{longtable}
+
+The CPU re-decode reproduced 1,031 of the 1,034 Job 361547 GPU
+predictions exactly. The other three are near-tie argmax flips caused by
+GPU vs CPU floating point. Strict EX is identical (61/1,034), so the
+\emph{base decoding} row is Job 361547. Repair accounts for most of the
+gap between \emph{raw} and \emph{base decoding}: strict EX goes from
+1.45\% to 5.90\%. Raw strict EX is especially low because unrepaired
+spacing changes result-column labels such as \texttt{count\ (\ *\ )}. On
+official EX, which ignores labels, the effect of repair is much smaller
+(5.4\% → 7.4\%). The mask and rendering remove a further 5.0 points of
+invalid SQL, but most of those queries become \emph{valid but wrong}
+rather than correct. Example:
+\texttt{WHERE\ text\ =\ \textquotesingle{}france\textquotesingle{}}
+becomes
+\texttt{WHERE\ Is\_male\ =\ \textquotesingle{}France\textquotesingle{}}.
+Of the 52 queries the mask and rendering made valid, only 5 became
+correct. Invalid-SQL rate is therefore a misleading optimisation target:
+the underlying error is schema linking, not syntax. Feeding copied
+tokens back as \texttt{\textless{}unk\textgreater{}} did not help and is
+not used.
+
+\textbf{Epochs.} Our initial 10-epoch run (Job 361487) reached 0.39\%
+SM, and Job 361547, with 25 epochs plus repair, reached 3.29\%. That
+comparison changes several things at once. The table above isolates
+repair on a single checkpoint. To isolate the epoch count, the
+replication runs also saved a checkpoint after Spider epoch 10. With
+identical (final) decoding, epoch 10 vs epoch 25 gives official EX 7.6 ±
+1.1\% vs 7.5 ± 1.7\% on dev and 6.9 ± 0.8\% vs 7.6 ± 0.7\% on test;
+official EM 4.8 ± 0.5\% vs 4.9 ± 0.7\% (dev) and 5.3 ± 0.7\% vs 6.0 ±
+0.9\% (test).
+
+\subsection{Breakdown by difficulty and structure (Spider dev, final
+LSTM)}\label{breakdown-by-difficulty-and-structure-spider-dev-final-lstm}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}@{}}
+\caption{Strict EX by difficulty and query structure (Spider dev, Wilson
+95\% CI).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Slice
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+n
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+LSTM strict EX (95\% CI)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Template strict EX (95\% CI)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Slice
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+n
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+LSTM strict EX (95\% CI)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Template strict EX (95\% CI)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Easy & 248 & 14.92\% {[}11.0\%, 19.9\%{]} & 21.37\% {[}16.7\%,
+26.9\%{]} \\
+Medium & 446 & 4.26\% {[}2.7\%, 6.6\%{]} & 3.81\% {[}2.4\%, 6.0\%{]} \\
+Hard & 174 & 5.75\% {[}3.2\%, 10.3\%{]} & 0.00\% {[}0.0\%, 2.2\%{]} \\
+Extra-hard & 166 & 0.00\% {[}0.0\%, 2.3\%{]} & 1.81\% {[}0.6\%,
+5.2\%{]} \\
+Single-table & 544 & 10.29\% {[}8.0\%, 13.1\%{]} & 12.68\% {[}10.1\%,
+15.7\%{]} \\
+Multi-table (join / set op) & 438 & 1.83\% {[}0.9\%, 3.6\%{]} & 0.91\%
+{[}0.4\%, 2.3\%{]} \\
+Nested (other) & 52 & 3.85\% {[}1.1\%, 13.0\%{]} & 0.00\% {[}0.0\%,
+6.9\%{]} \\
+\end{longtable}
+
+Multi-table queries, the core objective, are essentially unsolved:
+1.83\% {[}0.9\%, 3.6\%{]} strict EX for the LSTM, and SM is 0/438 in
+both the base-decoding and final runs. Single-table queries account for
+56/66 (84.8\%) of all LSTM EX hits, and extra-hard is 0/166, a floor
+effect. Hard EX is slightly above medium EX, but this comes from small
+counts: the 95\% intervals, 4.26\% {[}2.7\%, 6.6\%{]} for medium and
+5.75\% {[}3.2\%, 10.3\%{]} for hard, overlap almost entirely, so the
+ordering should not be interpreted.
+
+\subsection{Error analysis (all 1,034 dev questions, final
+LSTM)}\label{error-analysis-all-1034-dev-questions-final-lstm}
+
+\begin{longtable}[]{@{}lrr@{}}
+\caption{Invalid SQL on Spider dev by SQLite error
+class.}\tabularnewline
+\toprule\noalign{}
+Error class & Base decoding & Final \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Error class & Base decoding & Final \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{no\_such\_column} & 708 & 690 \\
+\texttt{syntax\_error} & 55 & 29 \\
+\texttt{ambiguous\_column} & 6 & 9 \\
+\texttt{incomplete\_input} & 19 & 8 \\
+\texttt{no\_such\_table} & 6 & 5 \\
+\texttt{aggregate\_misuse} & 3 & 4 \\
+\texttt{other} & 1 & 1 \\
+\textbf{Total invalid} & \textbf{798} & \textbf{746} \\
+\end{longtable}
+
+\textbf{Root-cause taxonomy.} Each failed prediction is assigned exactly
+one label: the \emph{first} failing component, in the order invalid SQL
+→ wrong table set → wrong columns → wrong clause structure → wrong
+aggregation → wrong projection count → wrong values. Labels are assigned
+automatically by \texttt{scripts/analyze\_part2.py}, which compares
+literal-stripped signatures of the predicted and gold SQL. They were not
+manually validated.
+
+\begin{longtable}[]{@{}lrr@{}}
+\caption{Root cause of each failed prediction (Spider
+dev).}\tabularnewline
+\toprule\noalign{}
+Root cause & Final LSTM & Template \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Root cause & Final LSTM & Template \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Invalid SQL (or abstention) & 746 & 92 \\
+Wrong table set & 167 & 592 \\
+Wrong columns & 51 & 242 \\
+Wrong clause structure & 3 & 29 \\
+Wrong aggregation & 0 & 3 \\
+Wrong projection count & 1 & 1 \\
+Wrong literal values & 0 & 1 \\
+Other (same signature) & 0 & 1 \\
+\textbf{Total failures} & \textbf{968} & \textbf{961} \\
+\end{longtable}
+
+\textbf{Schema linking.} Identifiers are extracted from each SQL string
+after removing literals, as the words that match a table or column name
+of that database (case-insensitive). Tables are the names after
+\texttt{FROM}/\texttt{JOIN}. Precision and recall are micro-averaged
+over all dev questions. For the LSTM, identifier precision/recall is
+39.9\% / 40.4\% and table precision/recall is 46.8\% / 46.5\%. The
+template is a purely lexical linker (question words matched to schema
+names), so it serves as a lexical baseline: 68.5\% / 29.3\% for
+identifiers and 69.4\% / 41.8\% for tables. The LSTM recalls more schema
+elements than lexical matching but with far lower precision. Choosing
+the wrong column or table is the dominant failure, ahead of syntax.
+
+\textbf{Execution-match audit.} Execution hits that do not string-match
+the gold SQL are classified automatically. A hit is \emph{equivalent}
+when its literal-stripped signature equals the gold one; otherwise it is
+\emph{coincidental}, split by whether the gold result is empty or zero.
+Template: 14 structurally equivalent to gold; 13 coincidental (a gold
+clause is missing or different); 6 coincidental (gold result is empty or
+zero). LSTM: 15 structurally equivalent to gold; 10 coincidental (gold
+result is empty or zero); 7 coincidental (a gold clause is missing or
+different). For example,
+\texttt{SELECT\ DISTINCT\ Country\ FROM\ singer} matches gold
+\texttt{…\ WHERE\ age\ \textgreater{}\ 20} only because every singer is
+over 20. The EM-confirmed EX column of the main results tables is the
+corresponding conservative accuracy.
+
+\textbf{How these errors can be mitigated.} The recurring pattern is
+schema grounding, not syntax. The model knows when to copy but picks the
+wrong table or column, and joins ignore the foreign-key graph. Our
+analysis points to five concrete remedies. (i) A pre-trained encoder
+with explicit question--schema linking (cross-attention, or value
+matching against database contents), aimed at the 40\% identifier
+recall. (ii) Foreign-key-aware or relation-aware decoding (RAT-SQL
+style) for join paths. (iii) Grammar- and schema-constrained decoding
+(PICARD style), so that nonexistent columns and malformed clauses cannot
+be generated. (iv) A vocabulary that leaves schema identifiers to the
+copy path, so that copying \emph{what} is learned and not only
+\emph{when}. (v) Early stopping at the dev-loss minimum, and no input
+truncation during training. Items (i)--(iii) define Part 3 (§d.13).
+
+\subsection{Qualitative cases (Spider dev; base → final
+decoding)}\label{qualitative-cases-spider-dev-base-final-decoding}
+
 \begin{enumerate}
-    \item Introspects database schema tables and columns.
-    \item Identifies projection targets by performing fuzzy token matching between question tokens and column names.
-    \item Detects explicit numeric literals, quoted strings, and comparison keywords.
-    \item Infers basic aggregations (\textit{``how many''} $\to$ \texttt{COUNT}, \textit{``average''} $\to$ \texttt{AVG}).
-    \item Synthesizes a canonical single-table SQL query.
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Correct} (\texttt{spider-dev-20}, medium): \emph{``How many
+  concerts are there in year 2014 or 2015?''} →
+  \texttt{SELECT\ COUNT(*)\ FROM\ concert\ WHERE\ Year\ =\ 2014\ OR\ Year\ =\ 2015}.
+  Both EM and EX are correct. The numeric literals are in-vocabulary
+  tokens, so this case shows correct generation; the copy gate is
+  analysed separately in §c.5.
+\item
+  \textbf{Execution-equivalent} (\texttt{spider-dev-87}, easy): gold
+  \texttt{SELECT\ count(*)\ FROM\ CONTINENTS;} vs
+  \texttt{SELECT\ COUNT(*)\ FROM\ continents}. EX is correct, and the
+  official exact-set match also counts it correct. Our string match does
+  not, because of the trailing semicolon.
+\item
+  \textbf{Projection omission} (\texttt{spider-dev-2}, medium):
+  \emph{``Show name, country, age \ldots{}''} →
+  \texttt{SELECT\ Name,\ Country\ FROM\ singer\ ORDER\ BY\ Age\ DESC}.
+  Valid SQL; the third projected column is dropped.
+\item
+  \textbf{Schema-type token leak, then wrong column}
+  (\texttt{spider-dev-4}, medium). Base decoding produced
+  \texttt{…\ WHERE\ text\ =\ \textquotesingle{}france\textquotesingle{}}.
+  That query is invalid: \texttt{text} is the serialised \emph{type} of
+  \texttt{Country}, and the literal case is wrong. The final
+  configuration produces
+  \texttt{…\ WHERE\ Is\_male\ =\ \textquotesingle{}France\textquotesingle{}}.
+  Casing and validity are fixed, but the column is still wrong.
+  Rendering cannot fix schema linking.
+\item
+  \textbf{Aggregation error} (\texttt{spider-dev-494}, medium):
+  \emph{``What is maximum and minimum death toll \ldots{}''} →
+  \texttt{SELECT\ MAX(caused\_by\_ship\_id),\ MIN(caused\_by\_ship\_id),\ MIN(killed)\ FROM\ death}.
+  The aggregate functions are plausible but attached to the wrong
+  columns, plus an extra projection. Aggregate functions differ from
+  gold in 167 failed predictions; in the root-cause view these failures
+  are attributed to the earlier error, usually a wrong table or column.
+\item
+  \textbf{Join hallucination} (\texttt{spider-dev-24}, extra-hard). Gold
+  joins \texttt{concert} and \texttt{stadium}. The prediction joins
+  \texttt{singer\_in\_concert} and \texttt{singer} on
+  \texttt{Singer\_ID\ =\ concert\_ID} and selects the nonexistent
+  \texttt{t2.stadium}. It shows correct clause skeleton generation with
+  no grounding in the foreign-key graph.
 \end{enumerate}
-If question tokens do not match schema columns with high confidence, the template parser returns an empty prediction rather than hallucinating invalid SQL. On the Spider dev set, it achieves \textbf{5.80\% Execution Accuracy} and \textbf{0.00\% Exact Match}, with an invalid SQL rate of just \textbf{0.58\%}.
 
-\subsection{Classical Baseline 2: Pointer-Generator LSTM Sequence-to-Sequence}
-Our primary baseline implements an autoregressive sequence-to-sequence neural network with pointer-generator attention:
-\begin{itemize}
-    \item \textbf{Encoder:} 2-layer Bidirectional LSTM. Input embedding dimension $d_{\text{emb}} = 256$, hidden dimension $d_{\text{enc}} = 512$ per direction (bidirectional hidden state $H_i \in \mathbb{R}^{1024}$).
-    \item \textbf{Decoder:} 2-layer Unidirectional LSTM with hidden dimension $d_{\text{dec}} = 512$. Initialized from linearly projected encoder final states.
-    \item \textbf{Attention:} Bahdanau additive attention computing alignment score $e_{t,i} = v_a^\top \tanh(W_s s_t + W_h h_i + b_a)$ and context vector $c_t = \sum_i \alpha_{t,i} h_i$.
-    \item \textbf{Pointer-Generator Gate:} $p_{\text{gen}} = \sigma(W_{\text{ptr}}^\top [s_t; c_t; y_{t-1}] + b_{\text{ptr}})$, dynamically blending vocabulary distribution $P_{\text{vocab}}$ with source attention distribution $P_{\text{copy}}$.
-\end{itemize}
+\subsection{WikiSQL: a harness defect and a rendering
+defect}\label{wikisql-a-harness-defect-and-a-rendering-defect}
 
-\subsection{Schema-Aware SQL Post-Processing and Syntax Repair}
-Raw seq2seq outputs frequently suffer from superficial formatting flaws that cause SQLite syntax errors. We developed a post-processing repair engine (\texttt{sql\_repair.py}):
+A natural explanation for the LSTM's 0.04\% WikiSQL EX would be
+catastrophic forgetting during Spider fine-tuning. \textbf{The run log
+rules this out.} Job 361547 scored WikiSQL with
+\texttt{wikisql\_checkpoint.pt}, saved at the end of Stage 1,
+\emph{before any Spider training} (log line:
+\texttt{Loading\ dataset-specific\ checkpoint:\ wikisql\_checkpoint.pt}).
+The predictions are mostly sensible SQL in an unexecutable surface form.
+For example,
+\texttt{SELECT\ player\ FROM\ "table\_1\_10015132\_11"\ WHERE\ no.=\ 42}
+should be \texttt{…\ WHERE\ "No."\ =\ 42}. Multi-word column names were
+emitted unquoted and lower-cased (\texttt{school/club\ team}), and the
+repair step quoted only the first word of multi-word literals
+(\texttt{=\ \textquotesingle{}concord\textquotesingle{}\ hs}). The fault
+lay in the rendering, not the model.
+
+\textbf{Harness defect.} The official WikiSQL database stores each
+table's columns as \texttt{col0\ …\ colN}, with lower-cased text values.
+Our loader, however, wrote gold SQL with the original header names, such
+as
+\texttt{SELECT\ "Position"\ …\ WHERE\ "School/Club\ Team"\ =\ \textquotesingle{}Butler\ CC\ (KS)\textquotesingle{}}.
+SQLite treats a double-quoted name that matches no column as a
+\emph{string literal}. Every gold query therefore executed without error
+but compared constants: 6,007 of 8,415 dev gold queries returned an
+empty result, and any prediction that also returned nothing counted as
+correct. All earlier WikiSQL execution numbers, the template's 7.23\%
+included, were therefore meaningless. The harness now creates, per
+connection, a TEMP VIEW with the table's own name that exposes
+\texttt{colN} under its header. Text columns compare case-insensitively,
+mirroring the official executor, which lower-cases condition values.
+With the view, 7,767 gold queries return real answers. The table below
+re-scores the same predictions with the corrected harness.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}@{}}
+\caption{WikiSQL dev (all 8,415 examples, corrected harness), Stage-1
+checkpoint.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+System
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX (95\% CI)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+SM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+System
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Strict EX (95\% CI)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+SM
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Invalid
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+LSTM Stage-1, raw greedy & 3.11\% {[}2.8\%, 3.5\%{]} & 0.00\% &
+89.5\% \\
+LSTM Stage-1, base decoding & 5.76\% {[}5.3\%, 6.3\%{]} & 0.04\% &
+81.1\% \\
+\textbf{LSTM Stage-1, final decoding} & 17.15\% {[}16.4\%, 18.0\%{]} &
+1.84\% & 32.5\% \\
+Template parser & 2.65\% {[}2.3\%, 3.0\%{]} & 1.26\% & 0.0\% \\
+\end{longtable}
+
+With the same Stage-1 weights, rendering takes strict EX from 5.76\% to
+17.15\% and invalid SQL from 81.1\% to 32.5\% (958 vs 0 questions gained
+vs lost). The remaining invalid queries are 1,890 syntax errors and 822
+unknown columns. The syntax errors typically come from a hallucinated
+multi-word column name: one that exists in some training table but not
+in the current table (e.g.~\texttt{points\ for}, \texttt{year\ born}),
+so it is never quoted. Both are schema-linking failures, as on Spider.
+Unlike on Spider, the LSTM is clearly the stronger system here: the
+template's single-table heuristics reach only 2.65\%. Its previously
+measured 7.23\% came almost entirely from coincidental empty-result
+matches under the broken harness. Both systems remain far below
+published WikiSQL models: Seq2SQL reports 59.4\% and SQLNet 68.0\% test
+execution accuracy (Xu et al., 2017).
+
+\subsection{Demonstration (CLI)}\label{demonstration-cli}
+
+\textbf{Live training.}
+\texttt{uv\ run\ text-to-sql-demo\ -\/-train-demo} trains a small
+pointer-generator (embedding 128, hidden 256) from scratch on the 95
+Spider \emph{train} questions of \texttt{soccer\_2}, for 60 epochs on a
+laptop CPU, which takes about 2--3 minutes. It prints the per-epoch
+training and held-out NLL. It decodes a probe question with random
+weights before training and again after. It then reports execution
+accuracy on 20 questions the model trained on and on 11 held-out
+questions from the same database. In our rehearsal the loss fell from
+4.88 to 0.09, and the model scored 15/20 on seen questions but 0/11 on
+held-out ones. That is the memorisation gap of §d.3 at small scale. The
+saved checkpoint can be queried at once with
+\texttt{-\/-model\ lstm\ -\/-checkpoint\ artifacts/train-demo/spider\_checkpoint.pt}.
+
+\textbf{Inference.} \texttt{-\/-demo\ -\/-model\ template} runs a
+scripted three-case showcase on \texttt{concert\_singer}: a count, a
+filter, and a graceful failure on an unsupported join.
+\texttt{-\/-model\ lstm} loads the evaluated Job 361547 checkpoint with
+the final decoding configuration.
+\texttt{-\/-question\ "…"\ -\/-database\ \textless{}path\textgreater{}}
+answers any question and prints the SQL and the result table. For Spider
+databases, the CLI builds the schema from \texttt{tables.json}, so the
+serialisation matches training exactly.
+\texttt{scripts/show\_preprocessing.py} prints the pipeline stages of
+§c.4 for any example. The proposal planned a GUI; the Part 2 interface
+is this CLI, which the course rubric explicitly allows (``results should
+be shown through a GUI or CLI'').
+
+\subsection{Targets for Part 3}\label{targets-for-part-3}
+
+The proposal fixes the Part 3 plan: fine-tune \textbf{T5} as the modern
+model, and add a novelty, either \emph{constrained decoding} or a
+\emph{self-correction loop}, that must improve execution accuracy over
+that T5 baseline. The targets below are anchored to our measured Part 2
+baselines and to published results. All are scored with the official
+evaluator on Spider test, run once, as mean ± std over at least 3 seeds.
+Early stopping uses a database-disjoint validation split carved from
+Spider \emph{train}.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1765}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1765}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2353}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2353}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1765}}@{}}
+\caption{Numeric targets for Part 3 (Spider test unless
+stated).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Goal
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Metric
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Best Part 2 result
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Part 3 target
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Reference point
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Goal
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Metric
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Best Part 2 result
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Part 3 target
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Reference point
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Modern baseline works & Official EX (dev) & 9.9\% (template) & \(\geq\)
+45\% & T5-Base, schema only: 57.9\% dev EX (Scholak et al., 2021, Table
+1), trained far longer (up to 3,072 epochs, batch 2,048) \\
+Classical → modern gain & Official EX & 9.5\% (template); 7.2\% (LSTM) &
+\(\geq\) 35\%, McNemar p \textless{} 0.05 vs template & --- \\
+Multi-table queries & Strict EX, 908 multi-table questions & 0.7\%
+(LSTM); 0.3\% (template) & \(\geq\) 25\% & --- \\
+Novelty beats T5 baseline & Official EX & --- & Gain with McNemar p
+\textless{} 0.05 in every seed & PICARD: T5-Base 57.9\% → 68.4\% dev EX
+(Scholak et al., 2021) \\
+Valid SQL (diagnostic only) & Invalid-SQL rate & 72.7\% (LSTM) & Report,
+not optimise & PICARD: T5-3B invalid predictions 12\% → 2\% on dev; §d.7
+shows lower invalid rates need not mean higher accuracy \\
+Schema linking & Identifier recall & 45.1\% (LSTM) & \(\geq\) 75\% &
+--- \\
+\end{longtable}
+
+We will also report test-suite accuracy (Zhong et al., 2020) on Spider
+dev once the distilled test-suite databases can be obtained; the
+official download was over its quota at the time of writing.
+
+\section*{Reproducibility}\label{reproducibility}
+\addcontentsline{toc}{section}{Reproducibility}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Artefact
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Command
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Training (3 seeds) &
+\texttt{sbatch\ -\/-export=ALL,SEED=\textless{}s\textgreater{}\ scripts/hpc\_run\_lstm\_seed.sh} \\
+Ablation / test decode &
+\texttt{uv\ run\ python\ -m\ scripts.run\_ablation\ -\/-checkpoint\ \textless{}ckpt\textgreater{}\ -\/-dataset\ spider\ -\/-split\ \{dev,test\}\ -\/-with-template\ -\/-output-dir\ \textless{}dir\textgreater{}} \\
+Official scoring &
+\texttt{uv\ run\ python\ scripts/run\_official\_spider\_eval.py\ -\/-predictions\ \textless{}jsonl\textgreater{}\ -\/-split\ \{dev,test\}\ -\/-output-dir\ \textless{}dir\textgreater{}} \\
+Taxonomy, CIs, McNemar, gold sanity check &
+\texttt{uv\ run\ python\ -m\ scripts.analyze\_part2\ -\/-dataset\ spider\ -\/-split\ dev\ -\/-model\ name=\textless{}jsonl\textgreater{}\ …\ -\/-output-dir\ \textless{}dir\textgreater{}} \\
+\end{longtable}
+}
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
 \begin{enumerate}
-    \item \textbf{Literal Auto-Quoting:} Identifies comparison predicates (\texttt{=}, \texttt{!=}, \texttt{<}, \texttt{>}, \texttt{LIKE}) containing unquoted alphanumeric values (e.g., \texttt{WHERE country = France}) and wraps them in single quotes (\texttt{'France'}).
-    \item \textbf{Identifier Quoting:} Wraps multi-word column names with spaces or slashes in double quotes.
-    \item \textbf{Table Hallucination Correction:} Re-aligns non-existent table tokens to the schema table sharing highest column overlap.
-    \item \textbf{Parentheses and Punctuation Balancing:} Normalizes malformed conjunctions (\texttt{WHERE ... AND}), balances parentheses, and removes whitespace around dots.
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Bahdanau, D., Cho, K., and Bengio, Y. (2015). Neural Machine
+  Translation by Jointly Learning to Align and Translate. \emph{ICLR}.
+\item
+  Efron, B., and Tibshirani, R. J. (1993). \emph{An Introduction to the
+  Bootstrap}. Chapman \& Hall.
+\item
+  Hochreiter, S., and Schmidhuber, J. (1997). Long Short-Term Memory.
+  \emph{Neural Computation} 9(8).
+\item
+  Holm, S. (1979). A Simple Sequentially Rejective Multiple Test
+  Procedure. \emph{Scandinavian Journal of Statistics} 6(2).
+\item
+  Li, H., Zhang, J., Li, C., and Chen, H. (2023). RESDSQL: Decoupling
+  Schema Linking and Skeleton Parsing for Text-to-SQL. \emph{AAAI}.
+\item
+  McNemar, Q. (1947). Note on the sampling error of the difference
+  between correlated proportions or percentages. \emph{Psychometrika}
+  12(2).
+\item
+  Popescu, A.-M., Etzioni, O., and Kautz, H. (2003). Towards a Theory of
+  Natural Language Interfaces to Databases. \emph{IUI}.
+\item
+  Scholak, T., Schucher, N., and Bahdanau, D. (2021). PICARD: Parsing
+  Incrementally for Constrained Auto-Regressive Decoding from Language
+  Models. \emph{EMNLP}.
+\item
+  See, A., Liu, P. J., and Manning, C. D. (2017). Get To The Point:
+  Summarization with Pointer-Generator Networks. \emph{ACL}.
+\item
+  Sutskever, I., Vinyals, O., and Le, Q. V. (2014). Sequence to Sequence
+  Learning with Neural Networks. \emph{NeurIPS}.
+\item
+  Vinyals, O., Fortunato, M., and Jaitly, N. (2015). Pointer Networks.
+  \emph{NeurIPS}.
+\item
+  Wang, B., Shin, R., Liu, X., Polozov, O., and Richardson, M. (2020).
+  RAT-SQL: Relation-Aware Schema Encoding and Linking for Text-to-SQL
+  Parsers. \emph{ACL}.
+\item
+  Wong, Y. W., and Mooney, R. J. (2007). Learning Synchronous Grammars
+  for Semantic Parsing with Lambda Calculus. \emph{ACL}.
+\item
+  Xu, X., Liu, C., and Song, D. (2017). SQLNet: Generating Structured
+  Queries from Natural Language Without Reinforcement Learning.
+  \emph{arXiv:1711.04436}.
+\item
+  Yu, T., et al.~(2018). Spider: A Large-Scale Human-Labeled Dataset for
+  Complex and Cross-Domain Semantic Parsing and Text-to-SQL Task.
+  \emph{EMNLP}.
+\item
+  Zettlemoyer, L. S., and Collins, M. (2005). Learning to Map Sentences
+  to Logical Form. \emph{UAI}.
+\item
+  Zhong, V., Xiong, C., and Socher, R. (2017). Seq2SQL: Generating
+  Structured Queries from Natural Language using Reinforcement Learning.
+  \emph{arXiv:1709.00103}.
+\item
+  Zhong, R., Yu, T., and Klein, D. (2020). Semantic Evaluation for
+  Text-to-SQL with Distilled Test Suites. \emph{EMNLP}.
 \end{enumerate}
-
-\subsection{Training Strategy and Compute Environment}
-Training was executed on the BITS Pilani HPC cluster (\texttt{gpunode8}) under Slurm Job ID \textbf{361547}:
-\begin{itemize}
-    \item \textbf{Hardware:} 1$\times$ NVIDIA A100-PCIE-80GB GPU, 8 CPU cores, 32GB RAM.
-    \item \textbf{Stage 1 (WikiSQL Warm-up):} 55,968 examples, 10 epochs (8,740 steps), batch size 64, Adam optimizer, initial $\eta = 10^{-3}$, cosine decay, gradient clipping $\|\mathbf{g}\|_2 \le 1.0$. Training loss converged $1.72 \to 0.10$.
-    \item \textbf{Stage 2 (Spider Primary):} 7,000 examples, 25 epochs (2,750 steps), batch size 64, $\eta = 5 \times 10^{-4}$ with epoch-based seed shuffling ($42 + \text{epoch}$). Training loss converged $1.82 \to 0.0404$.
-    \item \textbf{Total Training Time:} 49 minutes.
-\end{itemize}
-
-\subsection{Comparative Experimental Benchmarks}
-We evaluated all baseline configurations across all 1,034 Spider validation examples:
-
-\begin{table}[h]
-\centering
-\small
-\begin{tabularx}{\textwidth}{lrrr}
-\toprule
-\textbf{Model / Configuration} & \textbf{Exact Match (EM)} & \textbf{Execution Accuracy} & \textbf{Invalid SQL Rate} \\
-\midrule
-\textbf{Deterministic Template Parser} & 0.00\% (0/1034) & 5.80\% (60/1034) & \textbf{0.58\%} (6/1034) \\
-\textbf{Initial LSTM (Job 361487, 10 epochs, raw)} & 0.39\% (4/1034) & 1.55\% (16/1034) & 85.20\% (881/1034) \\
-\textbf{Optimized Pointer-Gen LSTM (Job 361547)} & \textbf{3.29\% (34/1034)} & \textbf{5.90\% (61/1034)} & \textbf{77.66\% (803/1034)} \\
-\bottomrule
-\end{tabularx}
-\caption{Overall comparative baseline evaluation on full Spider validation set (1,034 examples).}
-\label{tab:comparative_results}
-\end{table}
-
-\noindent \textbf{Key Takeaways:}
-\begin{itemize}
-    \item \textbf{Surpasses Deterministic Baseline:} Execution accuracy of \textbf{5.90\%} beats the template baseline's \textbf{5.80\%}, while delivering \textbf{3.29\% Exact Match} (template achieved 0.00\%).
-    \item \textbf{Matches Published Literature Range:} The seminal Yale Spider paper \cite{yu2018spider} reports standard Seq2Seq baselines achieving \textbf{3.2\% to 5.4\% Exact Match}. Our 3.29\% EM falls directly within this canonical band.
-    \item \textbf{8.4$\times$ Exact Match Surge:} Extending Spider training to 25 epochs and applying syntax repair increased exact match from 0.39\% to 3.29\% (+743\% relative improvement).
-\end{itemize}
-
-\subsection{Quantitative Breakdowns}
-
-\begin{table}[h]
-\centering
-\small
-\begin{tabularx}{\textwidth}{lrrrr}
-\toprule
-\textbf{Difficulty Tier} & \textbf{Examples} & \textbf{Exact Match (EM)} & \textbf{Execution Accuracy} & \textbf{Invalid SQL Rate} \\
-\midrule
-\textbf{Easy} & 248 & \textbf{10.89\%} (27/248) & \textbf{13.31\%} (33/248) & \textbf{62.10\%} (154/248) \\
-\textbf{Medium} & 446 & \textbf{0.22\%} (1/446) & \textbf{4.04\%} (18/446) & \textbf{81.61\%} (364/446) \\
-\textbf{Hard} & 174 & \textbf{3.45\%} (6/174) & \textbf{5.75\%} (10/174) & \textbf{81.03\%} (141/174) \\
-\textbf{Extra-Hard} & 166 & \textbf{0.00\%} (0/166) & \textbf{0.00\%} (0/166) & \textbf{86.75\%} (144/166) \\
-\midrule
-\textbf{Overall} & \textbf{1,034} & \textbf{3.29\%} (34/1034) & \textbf{5.90\%} (61/1034) & \textbf{77.66\%} (803/1034) \\
-\bottomrule
-\end{tabularx}
-\caption{Breakdown by Spider official query difficulty tiers.}
-\label{tab:difficulty_breakdown}
-\end{table}
-
-\begin{table}[h]
-\centering
-\small
-\begin{tabularx}{\textwidth}{lrrrr}
-\toprule
-\textbf{Query Structure} & \textbf{Examples} & \textbf{Exact Match (EM)} & \textbf{Execution Accuracy} & \textbf{Invalid SQL Rate} \\
-\midrule
-\textbf{Single-Table} & 544 & \textbf{5.88\%} (32/544) & \textbf{9.38\%} (51/544) & \textbf{71.51\%} (389/544) \\
-\textbf{Multi-Table Join} & 438 & \textbf{0.00\%} (0/438) & \textbf{1.83\%} (8/438) & \textbf{86.53\%} (379/438) \\
-\textbf{Other (Compound/Subquery)} & 52 & \textbf{3.85\%} (2/52) & \textbf{3.85\%} (2/52) & \textbf{67.31\%} (35/52) \\
-\bottomrule
-\end{tabularx}
-\caption{Breakdown by query relational structure.}
-\label{tab:structure_breakdown}
-\end{table}
-
-\subsection{Qualitative Error Analysis and Case Studies}
-
-\noindent \textbf{Case 1: Literal Copying via Pointer Network (Full Success)}
-\begin{itemize}
-    \item \textbf{Question:} \textit{``How many concerts are there in year 2014 or 2015?''}
-    \item \textbf{Gold:} \texttt{SELECT count(*) FROM concert WHERE YEAR = 2014 OR YEAR = 2015}
-    \item \textbf{Pred:} \texttt{SELECT COUNT(*) FROM concert WHERE year = 2014 OR year = 2015}
-    \item \textbf{Analysis:} Exact Match = True, Exec = True. The copy gate correctly routed numeric tokens \texttt{2014} and \texttt{2015} directly from the question into the filter.
-\end{itemize}
-
-\noindent \textbf{Case 2: Punctuation Invariance (Execution Match Only)}
-\begin{itemize}
-    \item \textbf{Question:} \textit{``How many continents are there?''}
-    \item \textbf{Gold:} \texttt{SELECT count(*) FROM CONTINENTS;}
-    \item \textbf{Pred:} \texttt{SELECT COUNT(*) FROM continents}
-    \item \textbf{Analysis:} Exact Match = False (trailing semicolon), Exec = True (both return \texttt{(5,)}). Proves the necessity of execution metrics over surface string matching.
-\end{itemize}
-
-\noindent \textbf{Case 3: Projection Omission in Long Lists}
-\begin{itemize}
-    \item \textbf{Question:} \textit{``Show name, country, age for all singers ordered by age from the oldest to the youngest.''}
-    \item \textbf{Gold:} \texttt{SELECT name , country , age FROM singer ORDER BY age DESC}
-    \item \textbf{Pred:} \texttt{SELECT name, country FROM singer ORDER BY age DESC}
-    \item \textbf{Analysis:} Captured table, sorting, and two columns, but omitted the final projection item \texttt{age}.
-\end{itemize}
-
-\noindent \textbf{Case 4: Schema Column Hallucination}
-\begin{itemize}
-    \item \textbf{Question:} \textit{``What is the average, minimum, and maximum age of all singers from France?''}
-    \item \textbf{Gold:} \texttt{SELECT avg(age) , min(age) , max(age) FROM singer WHERE country = 'France'}
-    \item \textbf{Pred:} \texttt{SELECT AVG(age), MIN(age), MAX(age) FROM singer WHERE text = 'france'}
-    \item \textbf{Analysis:} Successfully synthesized three aggregations and quoted \texttt{'france'}, but substituted column \texttt{country} with \texttt{text}, failing execution with \texttt{no such column: text}.
-\end{itemize}
-
-\noindent \textbf{Case 5: Multi-Table Join Hallucination}
-\begin{itemize}
-    \item \textbf{Question:} \textit{``Show the stadium name and capacity with most number of concerts in year 2014 or after.''}
-    \item \textbf{Gold:} \texttt{SELECT T2.name , T2.capacity FROM concert AS T1 JOIN stadium AS T2 ON T1.stadium\_id = T2.stadium\_id WHERE T1.year >= 2014 GROUP BY T2.stadium\_id ORDER BY count(*) DESC LIMIT 1}
-    \item \textbf{Pred:} \texttt{SELECT t2.stadium, t1.Singer\_ID, t1.capacity FROM singer\_in\_concert AS t1 JOIN singer AS t2 ON t1.Singer\_ID = t2.concert\_ID WHERE t2.year >= 2014 GROUP BY t1.name ORDER BY COUNT(*) DESC LIMIT 1}
-    \item \textbf{Analysis:} Synthesized complex SQL clauses (\texttt{JOIN}, \texttt{WHERE}, \texttt{GROUP BY}, \texttt{ORDER BY}, \texttt{LIMIT}), but linked unrelated tables (\texttt{singer\_in\_concert} and \texttt{singer} instead of \texttt{concert} and \texttt{stadium}) due to the lack of relational graph inductive bias.
-\end{itemize}
-
-\subsection{Limitations and Part 3 Roadmap}
-The quantitative and qualitative findings identify three architectural gaps to resolve in Part~3:
-\begin{enumerate}
-    \item \textbf{Column Hallucination:} To be solved via cross-attention schema linking, explicitly scoring question token-to-column alignments.
-    \item \textbf{Foreign-Key Join Hallucination:} To be solved via relational graph embeddings (RAT-SQL) or decoupled schema ranking (RESDSQL).
-    \item \textbf{Syntactic Invalidity:} To be eliminated via constrained grammatical decoding (PICARD), ensuring 100\% syntactically valid SQLite queries.
-\end{enumerate}
-
-\bibliographystyle{plain}
-\begin{thebibliography}{10}
-
-\bibitem{bahdanau2015neural}
-D.~Bahdanau, K.~Cho, and Y.~Bengio.
-\newblock Neural machine translation by jointly learning to align and translate.
-\newblock In \emph{ICLR}, 2015.
-
-\bibitem{hochreiter1997long}
-S.~Hochreiter and J.~Schmidhuber.
-\newblock Long short-term memory.
-\newblock \emph{Neural Computation}, 9(8):1735--1780, 1997.
-
-\bibitem{li2023resdsql}
-H.~Li, J.~Zhang, C.~Li, and H.~Chen.
-\newblock {RESDSQL}: Decoupling schema linking and skeleton parsing for text-to-{SQL}.
-\newblock In \emph{AAAI}, 2023.
-
-\bibitem{popescu2003towards}
-A.-M. Popescu, O.~Etzioni, and H.~Kautz.
-\newblock Towards a theory of natural language interfaces to databases.
-\newblock In \emph{IUI}, 2003.
-
-\bibitem{scholak2021picard}
-T.~Scholak, N.~Schucher, and D.~Bahdanau.
-\newblock {PICARD}: Parsing incrementally for constrained auto-regressive decoding from language models.
-\newblock In \emph{EMNLP}, 2021.
-
-\bibitem{see2017get}
-A.~See, P.~J. Liu, and C.~D. Manning.
-\newblock Get to the point: Summarization with pointer-generator networks.
-\newblock In \emph{ACL}, 2017.
-
-\bibitem{sutskever2014sequence}
-I.~Sutskever, O.~Vinyals, and Q.~V. Le.
-\newblock Sequence to sequence learning with neural networks.
-\newblock In \emph{NeurIPS}, 2014.
-
-\bibitem{vinyals2015pointer}
-O.~Vinyals, M.~Fortunato, and N.~Jaitly.
-\newblock Pointer networks.
-\newblock In \emph{NeurIPS}, 2015.
-
-\bibitem{wang2020rat}
-B.~Wang, R.~Shin, X.~Liu, O.~Polozov, and M.~Richardson.
-\newblock {RAT-SQL}: Relation-aware schema encoding and linking for text-to-{SQL} parsers.
-\newblock In \emph{ACL}, 2020.
-
-\bibitem{wong2007learning}
-Y.~W. Wong and R.~J. Mooney.
-\newblock Learning synchronous grammars for semantic parsing with lambda calculus.
-\newblock In \emph{ACL}, 2007.
-
-\bibitem{xu2017sqlnet}
-X.~Xu, C.~Liu, and D.~Song.
-\newblock {SQLNet}: Generating structured queries from natural language without reinforcement learning.
-\newblock \emph{arXiv:1711.04436}, 2017.
-
-\bibitem{yu2018spider}
-T.~Yu, R.~Zhang, K.~Yang, M.~Yasunaga, D.~Wang, Z.~Li, J.~Ma, I.~Li, Q.~Yao, S.~Roman, Z.~Zhang, and D.~Radev.
-\newblock Spider: A large-scale human-labeled dataset for complex and cross-domain semantic parsing and text-to-{SQL}.
-\newblock In \emph{EMNLP}, 2018.
-
-\bibitem{zettlemoyer2005learning}
-L.~S. Zettlemoyer and M.~Collins.
-\newblock Learning to map sentences to logical form: Structured classification with probabilistic categorial grammars.
-\newblock In \emph{UAI}, 2005.
-
-\bibitem{zhong2017seq2sql}
-V.~Zhong, C.~Xiong, and R.~Socher.
-\newblock {Seq2SQL}: Generating structured queries from natural language using reinforcement learning.
-\newblock \emph{arXiv:1709.00103}, 2017.
-
-\end{thebibliography}
 
 \end{document}

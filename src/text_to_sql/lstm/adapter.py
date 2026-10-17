@@ -6,7 +6,9 @@ per example. Falls back to an empty string on any decoding error.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
+from dataclasses import dataclass
 from pathlib import Path
 
 import torch
@@ -23,8 +25,40 @@ from .preprocessing import (
     build_copy_target,
     tokenize_example,
 )
+from .rendering import blocked_markup_tokens, render_sql
 from .sql_repair import repair_sql
 from .training import TrainingConfig, TrainingResult, load_checkpoint, train_smoke
+
+LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class DecodeOptions:
+    """Inference-time switches; none of them change the trained weights.
+
+    - ``repair``: run ``sql_repair.repair_sql`` on the rendered string.
+    - ``mask_schema_markup``: forbid schema-serialization tokens (column types
+      such as ``text``/``number`` and markup such as ``table``) unless the
+      schema really contains an identifier with that name.
+    - ``restore_surface_forms``: render identifiers with their schema spelling
+      and literals as single-quoted question substrings (``'France'``).
+    - ``copy_feedback_unk``: feed copy-only tokens back to the decoder as
+      ``<unk>`` instead of clamping them to the last vocabulary index.
+    """
+
+    repair: bool = True
+    mask_schema_markup: bool = True
+    restore_surface_forms: bool = True
+    copy_feedback_unk: bool = False
+
+
+# Configuration evaluated in Job 361547 (reported in the original Part 2 draft).
+AS_SUBMITTED_DECODING = DecodeOptions(
+    repair=True, mask_schema_markup=False, restore_surface_forms=False, copy_feedback_unk=False
+)
+RAW_DECODING = DecodeOptions(
+    repair=False, mask_schema_markup=False, restore_surface_forms=False, copy_feedback_unk=False
+)
 
 
 class LSTMBaseline:
@@ -40,9 +74,11 @@ class LSTMBaseline:
         self,
         config: TrainingConfig | None = None,
         device: torch.device | None = None,
+        decode_options: DecodeOptions | None = None,
     ) -> None:
         self._config = config or TrainingConfig()
         self._device = device or torch.device("cpu")
+        self.decode_options = decode_options or DecodeOptions()
         self._model: Seq2SeqLSTM | None = None
         self._vocabulary: FixedVocabulary | None = None
 
@@ -56,6 +92,8 @@ class LSTMBaseline:
         checkpoint_dir: Path | None = None,
         spider_examples: Iterable[ExampleRecord] | None = None,
         spider_epochs: int = 0,
+        spider_dev_examples: Iterable[ExampleRecord] | None = None,
+        save_spider_epochs: tuple[int, ...] = (),
     ) -> LSTMBaseline:
         """Train on the provided examples and cache the model in-process.
 
@@ -73,6 +111,8 @@ class LSTMBaseline:
             device=self._device,
             spider_train_records=spider_records,
             spider_epochs=spider_epochs,
+            spider_dev_records=tuple(spider_dev_examples) if spider_dev_examples else None,
+            save_spider_epochs=save_spider_epochs,
         )
         self._model, self._vocabulary = load_checkpoint(result.checkpoint_path, self._device)
         return self
@@ -82,9 +122,10 @@ class LSTMBaseline:
         cls,
         checkpoint_path: Path,
         device: torch.device | None = None,
+        decode_options: DecodeOptions | None = None,
     ) -> LSTMBaseline:
         """Create a new baseline instance loaded from checkpoint."""
-        instance = cls(device=device)
+        instance = cls(device=device, decode_options=decode_options)
         instance.load(checkpoint_path)
         return instance
 
@@ -113,9 +154,10 @@ class LSTMBaseline:
         else:
             schema_text = schema
         try:
-            raw_sql = self._greedy_decode(question, schema_text, database_id)
-            return repair_sql(raw_sql, schema_text, database_id)
-        except Exception:  # noqa: BLE001 — surface all errors as empty predictions
+            tokens = self.decode_tokens(question, schema_text, database_id)
+            return self.postprocess(tokens, question, schema_text, database_id)
+        except (AssertionError, IndexError, KeyError, RuntimeError, ValueError) as error:
+            LOGGER.warning("LSTM decoding failed for database %s: %s", database_id, error)
             return ""
 
     def predict_record(self, example: ExampleRecord) -> Prediction:
@@ -141,7 +183,25 @@ class LSTMBaseline:
     # Greedy decoder
     # ------------------------------------------------------------------
 
-    def _greedy_decode(self, question: str, schema_text: str, database_id: str) -> str:
+    def postprocess(
+        self,
+        tokens: list[str],
+        question: str,
+        schema_text: str,
+        database_id: str = "unknown",
+        options: DecodeOptions | None = None,
+    ) -> str:
+        """Render decoded tokens to SQL and optionally repair them."""
+        options = options or self.decode_options
+        if options.restore_surface_forms:
+            sql = render_sql(tokens, question, schema_text)
+        else:
+            sql = " ".join(tokens)
+        if not options.repair:
+            return sql
+        return repair_sql(sql, schema_text, database_id)
+
+    def decode_tokens(self, question: str, schema_text: str, database_id: str) -> list[str]:
         """Run greedy decoding for a single example (no batching)."""
         assert self._model is not None
         assert self._vocabulary is not None
@@ -191,6 +251,16 @@ class LSTMBaseline:
             if ext_idx is not None:
                 src_ext[0, pos] = ext_idx
 
+        options = self.decode_options
+        blocked_indices: list[int] = []
+        if options.mask_schema_markup:
+            for token in blocked_markup_tokens(schema_text):
+                index = vocabulary.token_to_index.get(token)
+                if index is None:
+                    index = copy_target.copy_index_by_token.get(token)
+                if index is not None:
+                    blocked_indices.append(index)
+
         model.eval()
         with torch.no_grad():
             encoder_outputs, decoder_state = model.encoder(src, src_lengths)
@@ -213,18 +283,25 @@ class LSTMBaseline:
                 )
                 full_dist[:, unk_idx] = -float("inf")
                 full_dist[:, pad_idx] = -float("inf")
+                if blocked_indices:
+                    full_dist[:, blocked_indices] = -float("inf")
                 token_idx = full_dist.argmax(-1).item()
                 if token_idx == eos_idx:
                     break
                 decoded_indices.append(token_idx)
-                prev_token = torch.tensor(
-                    [min(token_idx, model.vocab_size - 1)], dtype=torch.long, device=device
-                )
+                if token_idx < model.vocab_size:
+                    feedback_idx = token_idx
+                elif options.copy_feedback_unk:
+                    feedback_idx = unk_idx
+                else:
+                    feedback_idx = model.vocab_size - 1
+                prev_token = torch.tensor([feedback_idx], dtype=torch.long, device=device)
 
-        return self._render_tokens(decoded_indices, copy_target)
+        return self._decoded_tokens(decoded_indices, copy_target)
 
-    def _render_tokens(self, indices: list[int], copy_target: CopyTarget) -> str:
-        """Convert decoded indices back to a SQL string."""
+    @staticmethod
+    def _decoded_tokens(indices: list[int], copy_target: CopyTarget) -> list[str]:
+        """Convert decoded indices back to surface tokens."""
         extended_tokens = copy_target.extended_tokens
         tokens: list[str] = []
         for idx in indices:
@@ -232,4 +309,4 @@ class LSTMBaseline:
                 tok = extended_tokens[idx]
                 if tok not in ("<pad>", "<unk>", "<bos>", "<eos>", "<schema_sep>"):
                     tokens.append(tok)
-        return " ".join(tokens)
+        return tokens

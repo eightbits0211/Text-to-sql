@@ -91,6 +91,7 @@ def _compute_batch_loss(
     batch: object,
     device: torch.device,
     teacher_forcing_ratio: float,
+    unk_index: int | None = None,
 ) -> torch.Tensor:
     """NLL over non-padding target positions, averaged per token."""
     output = model.forward(
@@ -101,6 +102,7 @@ def _compute_batch_loss(
         src_token_indices=batch.src_token_indices,
         extended_vocab_size=batch.extended_vocab_size,
         teacher_forcing_ratio=teacher_forcing_ratio,
+        unk_index=unk_index,
     )
     # output: (batch, tgt_len-1, extended_vocab_size)
     # target: tgt[:, 1:]
@@ -115,6 +117,30 @@ def _compute_batch_loss(
     return loss
 
 
+def evaluate_nll(
+    model: Seq2SeqLSTM,
+    records: list[ExampleRecord] | tuple[ExampleRecord, ...],
+    vocabulary: FixedVocabulary,
+    device: torch.device,
+    batch_size: int = 64,
+) -> float:
+    """Teacher-forced per-token NLL on held-out records (no gradient)."""
+    unk_index = vocabulary.token_to_index.get("<unk>", 1)
+    was_training = model.training
+    model.eval()
+    total, batches = 0.0, 0
+    with torch.no_grad():
+        for start in range(0, len(records), batch_size):
+            batch = collate_batch(list(records[start : start + batch_size]), vocabulary, device)
+            loss = _compute_batch_loss(model, batch, device, 1.0, unk_index=unk_index)
+            if math.isfinite(loss.item()):
+                total += loss.item()
+                batches += 1
+    if was_training:
+        model.train()
+    return total / max(batches, 1)
+
+
 def train_smoke(
     train_records: tuple[ExampleRecord, ...],
     checkpoint_dir: Path,
@@ -122,10 +148,14 @@ def train_smoke(
     device: torch.device | None = None,
     spider_train_records: tuple[ExampleRecord, ...] | None = None,
     spider_epochs: int = 0,
+    spider_dev_records: tuple[ExampleRecord, ...] | None = None,
+    save_spider_epochs: tuple[int, ...] = (),
 ) -> TrainingResult:
     """Train the LSTM on a bounded smoke slice and save a checkpoint.
 
     Supports sequenced training: WikiSQL warm-up first, then Spider primary training.
+    ``spider_dev_records`` enables a per-epoch held-out NLL curve during Stage 2;
+    ``save_spider_epochs`` saves extra Stage 2 checkpoints after those epochs.
     """
     if config is None:
         config = TrainingConfig()
@@ -164,6 +194,18 @@ def train_smoke(
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
 
     epoch_losses: list[float] = []
+    spider_dev_losses: list[float] = []
+
+    def _save(path: Path) -> None:
+        torch.save(
+            {
+                "model_state_dict": model.state_dict(),
+                "config": config.to_dict(),
+                "vocab_size": len(vocabulary),
+                "vocab_tokens": list(vocabulary.tokens),
+            },
+            path,
+        )
 
     def _train_dataset_epochs(
         dataset_name: str,
@@ -209,10 +251,16 @@ def train_smoke(
 
             epoch_loss = total_loss / max(total_batches, 1)
             epoch_losses.append(epoch_loss)
-            print(
-                f"  [{dataset_name}] epoch {epoch + 1}/{num_epochs}  loss={epoch_loss:.4f}",
-                flush=True,
-            )
+            message = f"  [{dataset_name}] epoch {epoch + 1}/{num_epochs}  loss={epoch_loss:.4f}"
+            if dataset_name == "Spider" and spider_dev_records:
+                dev_loss = evaluate_nll(
+                    model, spider_dev_records, vocabulary, device, config.batch_size
+                )
+                spider_dev_losses.append(dev_loss)
+                message += f"  dev_loss={dev_loss:.4f}"
+            print(message, flush=True)
+            if dataset_name == "Spider" and (epoch + 1) in save_spider_epochs:
+                _save(checkpoint_dir / f"spider_epoch{epoch + 1}_checkpoint.pt")
 
     # Stage 1: WikiSQL warm-up training
     wikisql_checkpoint_path = checkpoint_dir / "wikisql_checkpoint.pt"
@@ -222,15 +270,7 @@ def train_smoke(
             flush=True,
         )
         _train_dataset_epochs("WikiSQL", list(wikisql_examples), config.max_epochs)
-        torch.save(
-            {
-                "model_state_dict": model.state_dict(),
-                "config": config.to_dict(),
-                "vocab_size": len(vocabulary),
-                "vocab_tokens": list(vocabulary.tokens),
-            },
-            wikisql_checkpoint_path,
-        )
+        _save(wikisql_checkpoint_path)
         print(f"  Saved WikiSQL checkpoint to {wikisql_checkpoint_path}", flush=True)
 
     # Stage 2: Spider primary training
@@ -241,28 +281,12 @@ def train_smoke(
             flush=True,
         )
         _train_dataset_epochs("Spider", list(spider_train_records), spider_epochs)
-        torch.save(
-            {
-                "model_state_dict": model.state_dict(),
-                "config": config.to_dict(),
-                "vocab_size": len(vocabulary),
-                "vocab_tokens": list(vocabulary.tokens),
-            },
-            spider_checkpoint_path,
-        )
+        _save(spider_checkpoint_path)
         print(f"  Saved Spider checkpoint to {spider_checkpoint_path}", flush=True)
 
     # Save primary/latest checkpoint
     checkpoint_path = checkpoint_dir / "lstm_smoke.pt"
-    torch.save(
-        {
-            "model_state_dict": model.state_dict(),
-            "config": config.to_dict(),
-            "vocab_size": len(vocabulary),
-            "vocab_tokens": list(vocabulary.tokens),
-        },
-        checkpoint_path,
-    )
+    _save(checkpoint_path)
 
     # Save run metadata
     total_train_count = len(wikisql_examples) + (
@@ -272,6 +296,7 @@ def train_smoke(
         "train_examples": total_train_count,
         "vocab_size": len(vocabulary),
         "epoch_losses": epoch_losses,
+        "spider_dev_losses": spider_dev_losses,
         "final_loss": epoch_losses[-1] if epoch_losses else float("nan"),
         "config": config.to_dict(),
         "checkpoint": str(checkpoint_path),

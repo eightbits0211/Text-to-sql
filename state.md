@@ -4,12 +4,35 @@ This file is the persistent end-of-session handoff. The agent must update it
 before ending every work session.
 
 ## In-Flight Execution Ledger (Context Continuity)
-- **Active Role:** Context & State Tracking Agent / Lead Agent
-- **Current Milestone:** Part 2 Complete (Verification, CLI Hardening & Sub-Agent Protocol Gate)
-- **Active Task:** Formalize context sub-agent, harden interactive CLI, commit and push to remote branch
-- **Last Completed Action:** Implemented Rule 3.15, added Context Sub-Agent to `docs/sub-agent-coordination-plan.md`, enhanced `LSTMBaseline.predict` and `cli.py`, verified 63 unit tests pass and Ruff checks pass
-- **Immediate Next Action:** Commit staged changes, push to `spec/agent-governance-rules`, and review final Part 2 submission package against rubric
+- **Active Role:** Lead Agent
+- **Current Milestone:** Part 2 critical-review remediation (submission 2026-10-12)
+- **Active Task:** Part 2 complete (report, code bundle, demo)
+- **Last Completed Action:** Spider dev/test ablations, official-evaluator scoring, statistical analysis, docs rewrite
+- **Immediate Next Action:** None outstanding. Upload ~/Desktop/CS-F429-Part2-LMS/ files to LMS; rehearse the viva (docs/viva-qa-prep.md). All HPC jobs (389817-389819, 389932, 389954) completed and synced.
 - **Resumption Invariant:** If session compacts, token limits expire, or models switch, inspect this ledger first to resume seamlessly.
+
+### Remediation pass (2026-10-11): key facts
+- The evaluated LSTM checkpoint is `artifacts-lstm-gpu-run/lstm-checkpoint/spider_checkpoint.pt` (copied from HPC).
+  The local `lstm_smoke.pt` is a stale pre-361547 model. The CLI now loads `spider_checkpoint.pt`.
+- The WikiSQL 0.04% used `wikisql_checkpoint.pt` (Stage 1, before Spider), so the forgetting claim is withdrawn.
+  The cause is unquoted multi-word identifiers and split literals in rendering.
+- Final Spider test (2,147, run once): LSTM final 7.2% official EX / 5.5% official EM; as submitted 6.8% / 5.2%;
+  template 9.5% / 0.0% (6.7% EM with identifier quotes stripped). Fixed vs as submitted on strict EX: McNemar p = 0.039.
+- Dev: final LSTM vs template strict EX, p = 0.58. Seed-42 replication dev NLL is minimal at epoch 3 (0.888) and reaches 1.535 at epoch 25.
+- WikiSQL harness bug fixed: gold SQL used header names while `dev.db` stores `col0..colN`, so 6,007/8,415 gold
+  queries returned nothing. Fixed via per-example TEMP VIEW `execution_prelude`. Corrected WikiSQL dev: LSTM
+  Stage-1 final 17.15% strict EX (base 5.76%), template 2.65%.
+- Live training demo: `uv run text-to-sql-demo --train-demo` (soccer_2, 60 epochs, ~2.5 min CPU).
+- Final evaluation (second review round): official EX/EM per question (`scripts/official_per_example.py`),
+  database-clustered CIs + McNemar + Holm (`scripts/official_stats.py`). Template quoting fixed (official EM
+  5.9% dev / 6.7% test). Spider test: template 9.5% EX / 6.7% EM vs LSTM final 7.2% / 5.5%; 3 replication
+  seeds 7.6 +- 0.7% EX, all below template. Copy gate measured (`scripts/measure_copy_gate.py`): copies at 96%
+  of copy-only targets but 0.17 probability on the right token. 30 s execution timeout added.
+- Report: sections lettered a-d, 10pt, 15 pages, built from Markdown via `scripts/build_report.sh`.
+  LMS bundle: `scripts/make_lms_bundle.sh` -> ~/Desktop/CS-F429-Part2-LMS/.
+- Results live outside Git: `/Users/roshini/datasets/text-to-sql/{ablation,analysis,artifacts-seeds}/`;
+  official evaluator in `/Users/roshini/datasets/text-to-sql/tools/`.
+- Report: `docs/part-2-report.md` is the single source; build with `scripts/build_report.sh` (pandoc + xelatex).
 
 ## What was completed
 
@@ -239,7 +262,7 @@ before ending every work session.
 - Implemented four-tier optimization for LSTM baseline (Commit `bdfde4b`):
   1. `src/text_to_sql/lstm/sql_repair.py`: schema-aware literal quoting, multi-word identifier quoting, table hallucination correction, single-table WikiSQL pruning, and balanced parentheses.
   2. `src/text_to_sql/lstm/adapter.py`: integrated `repair_sql()`, masked `<unk>`/`<pad>` tokens during generation.
-  3. `src/text_to_sql/lstm/training.py`: saved separate `wikisql_checkpoint.pt` and `spider_checkpoint.pt` to eliminate catastrophic forgetting.
+  3. `src/text_to_sql/lstm/training.py`: saved separate `wikisql_checkpoint.pt` and `spider_checkpoint.pt` (the forgetting rationale was later refuted; see the ledger).
   4. `scripts/run_lstm_comparison.py`: automatic dataset-specific checkpoint resolution during evaluation.
   5. `scripts/hpc_run_lstm_gpu.sh`: increased Spider training to 25 epochs.
   6. `tests/test_sql_repair.py`: 6 unit tests added; full suite of 56 tests passing in 3.06s; Ruff clean.
@@ -280,14 +303,11 @@ before ending every work session.
 
 | Field | Value |
 |---|---|
-| Last updated | 2026-09-24 |
-| Active branch | `spec/agent-governance-rules` |
-| Primary baseline | Pointer-Generator LSTM Seq2Seq (Optimized: 5.90% Exec, 3.29% EM) |
-| Fallback baseline | Deterministic Template Parser (5.80% Exec, 0.00% EM) |
+| Last updated | 2026-10-11 |
+| Active branch | `feature/part2-final-deliverables` |
+| Primary baseline | Pointer-Generator LSTM (Spider test: 7.2% official EX, 5.5% official EM) |
+| Fallback baseline | Template parser (Spider test: 9.5% official EX) |
 | Overall estimate | 100% (Part 2 Milestone Complete) |
 | HPC Job ID | `361547` (COMPLETED, synchronized locally) |
-| Test suite status | 63 passed, 0 failed, Ruff clean |
+| Test suite status | 87 passed, 0 failed, Ruff clean (2026-10-11) |
 | Next review point | Part 2 final freeze review |
-
-
-

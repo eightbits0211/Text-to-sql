@@ -9,14 +9,14 @@ claims about final model accuracy.
 
 | Field | Value |
 |---|---|
-| Last updated | 2026-09-24 |
-| Overall completion | 92% |
-| Current phase | All baselines trained and evaluated; report drafting phase |
+| Last updated | 2026-10-11 |
+| Overall completion | 97% |
+| Current phase | Part 2 evidence reconciliation and final submission QA |
 | Part 2 internal freeze | 2026-09-30 |
 | Official Part 2 deadline | 2026-10-15, 23:55 IST |
 | Active branch | `spec/agent-governance-rules` |
-| Current blocker | Report sections a–d not yet drafted; Spider difficulty labels need implementation |
-| Next checkpoint | Implement difficulty classification; begin report drafting |
+| Current blocker | Final packaging checks: clean-environment reproduction, artifact inclusion, and final viva rehearsal |
+| Next checkpoint | Complete the submission archive and final rubric/sign-off checklist |
 
 ## Checkpoint log
 
@@ -70,7 +70,7 @@ claims about final model accuracy.
 | P2.8 | Analysis | Error categories and breakdown reports | Not started | 0% | Unassigned | Difficulty and query structure required | Generate CSV/Markdown reports |
 | P2.9 | Demo | CLI question → SQL → result/error | Done | 100% | Lead agent | CLI integrated with read-only SQLite execution | Add documented smoke command |
 | P2.10 | Report | Part 2 report sections and citations | Not started | 0% | Unassigned | Introduction through baseline results | Draft from saved evidence |
-| P2.11 | QA | Clean-environment reproduction and PR review | Not started | 0% | Unassigned | Required before Sep 30 freeze | Run final checklist |
+| P2.11 | QA | Clean-environment reproduction and PR review | In progress | 75% | Lead agent | Full tests, Ruff, artifact reconciliation, and demo verification complete; final archive/sign-off remains | Run final packaging checklist |
 
 ## Update protocol
 
@@ -544,7 +544,9 @@ When changing this log:
   6 new unit tests added; commit `bdfde4b`.
 - **Job 361547 (optimized run, 49 min):** Spider 25-epoch training loss converged to 0.04.
   - **Spider dev:** exec acc **5.90%**, exact match **3.29%** (8.4× improvement), invalid 77.66%.
-  - **WikiSQL dev:** 100% syntactically valid with schema-aware repair.
+  - **WikiSQL dev (later corrected on 2026-10-11):** initial narrative claimed full
+    syntactic validity after repair, but artifact-backed full-dev evaluation records
+    invalid-SQL rate 0.9951 (8,374/8,415 invalid predictions).
   - LSTM surpasses template baseline on Spider (5.90% vs 5.80%).
 - All artifacts synchronized locally to `/Users/roshini/datasets/text-to-sql/artifacts-lstm-gpu-run/`.
 - **Evidence:** 56 tests pass in 3.06s; Ruff clean. Comparison manifest, breakdowns.csv,
@@ -614,8 +616,175 @@ When changing this log:
   - Verified both `TemplateBaseline` and `LSTMBaseline` execute all 3 scripted showcase scenarios cleanly against live SQLite databases without unhandled exceptions.
 - **Validation:** 63 passed unit tests in 2.64s; Ruff clean.
 
+### 2026-10-11 — Artifact-driven metric reconciliation and progress-log correction
+
+- Performed a full artifact-driven audit to reconcile report/doc claims with
+  recorded evaluation outputs in:
+  - `/Users/roshini/datasets/text-to-sql/artifacts-lstm-gpu-run/`
+  - `/Users/roshini/datasets/text-to-sql/artifacts-template-full-dev/`
+- Verified canonical full-dev metrics:
+  - **LSTM Spider:** EM 0.0329, Exec 0.0590, Invalid 0.7766 (n=1,034)
+  - **LSTM WikiSQL:** EM 0.0004, Exec 0.0004, Invalid 0.9951 (n=8,415)
+  - **Template Spider:** EM 0.0000, Exec 0.0580, Invalid 0.0058 (n=1,034)
+  - **Template WikiSQL:** EM 0.0126, Exec 0.0723, Invalid 0.0000 (n=8,415)
+- Corrected documentation claims that previously overstated WikiSQL LSTM
+  syntactic validity; reports now reflect artifact-backed rates.
+- Updated progress status to reflect actual phase: submission QA and evidence
+  consistency, not report drafting.
+- Validation: full tests still pass (63/63), Ruff is clean.
+- Next action: complete final Part 2 rubric checklist and submission package.
+
+### 2026-10-11 — Final demo safety and decoder error-handling fixes
+
+- Updated the template baseline to return an explicit unsupported result for
+  clear multi-table requests instead of silently producing a plausible but
+  semantically misleading single-table query.
+- Added regression coverage for the scripted multi-table failure case.
+- Replaced the LSTM adapter's broad silent decoding catch with explicit
+  logging for expected decoding failures while preserving the required empty
+  prediction/evaluation contract.
+- Rehearsed `uv run text-to-sql-demo --demo`: easy and filter cases succeeded;
+  the complex multi-table case now reports `RECORDED FAILURE / UNSUPPORTED`.
+- Validation after the changes: 64 tests pass, Ruff clean, and the LaTeX report
+  compiles to a 9-page PDF. No baseline metric claims were changed by these
+  code fixes.
+
+### 2026-10-11 — Bounded LSTM invalid-rate investigation
+
+- Tested one surgical pointer-generator change: suppressing copy probability
+  from source positions whose extended-vocabulary index is the zero sentinel.
+- Added temporary focused coverage and evaluated the modified decoder on fixed
+  100-example Spider and WikiSQL slices using the existing checkpoint and
+  evaluator.
+- Rejected the change: Spider execution accuracy fell from 6% to 3% and
+  invalid SQL rose from 73% to 74%; WikiSQL remained at 100% invalid on the
+  slice. The production decoder was restored unchanged.
+- Conclusion: no safe Option B improvement was demonstrated without retraining
+  or broader experimentation. Preserve the artifact-backed baseline and focus
+  remaining effort on submission evidence, viva preparation, and Part 3 work.
+
+### 2026-10-11 — Documentation and experiment-status reconciliation
+
+- Corrected the submission plan so job `359370` is recorded as an earlier
+  timeout rather than a queued source of metrics.
+- Recorded completed jobs `361487` and `361547` as the provenance of the
+  synchronized full-dev artifacts.
+- Marked Spider difficulty classification and per-difficulty breakdowns as
+  completed in the implementation checkpoints.
+- Updated the remaining work to final packaging, clean-environment
+  reproduction, artifact inclusion, and viva rehearsal.
+- Documented constrained decoding, schema-aware copying, and
+  validation-based checkpoint selection as future Part 3 experiments requiring
+  fresh training/evaluation rather than claiming an unverified Part 2 gain.
+
+### 2026-10-11 — Report author details and equation verification
+
+- Added student details to both report sources:
+  - **Name:** Roshini Kotte
+  - **ID:** 2024A7PS0048H
+- Confirmed that the attached encoder-input image is equation (5), not a
+  required external figure. The report already renders the same content as
+  native mathematical notation:
+  \(\mathbf{X} = [\mathrm{<sos>}] \circ Q \circ [\mathrm{<sep>}] \circ
+  \mathcal{S} \circ [\mathrm{<eos>}]\).
+- Recompiled the PDF successfully to 10 pages with no `Overfull \hbox`
+  warnings. No raster image was added because the equation is clearer and
+  more reproducible as typeset math.
+
+### 2026-10-11 — Report front-matter wording update
+
+- Changed `Student:` to `Name: Roshini Kotte`.
+- Removed the institution line from the LaTeX title block.
+- Replaced milestone wording with `Part 2 Report`.
+- Recompiled the report successfully to 10 pages.
+- Removed the separate `Part: Part 2 Report (Classical Baselines &
+  Error Analysis)` line from the title block at the user's request.
+
+### 2026-10-11 — Viva demo rehearsal and command correction
+
+- Rehearsed `uv run text-to-sql-demo --demo` successfully with the template
+  baseline: two live SQLite successes and one explicit unsupported case.
+- Rehearsed the LSTM demo separately; it produced diagnostic invalid SQL,
+  consistent with the artifact-backed baseline limitation.
+- Updated the viva guide to use `--model template --demo` for the reliable
+  live walkthrough and to present the LSTM only as an optional limitation
+  demonstration.
+- Added a tested list of interactive `concert_singer` questions covering
+  aggregation, projection/filtering, multi-column selection, ordering, and
+  explicit unsupported multi-table handling.
+
+### 2026-10-11 — Loss curve visualization, catastrophic forgetting analysis, and Part 2 audit
+
+- **Training Loss Curve Generation:**
+  - Implemented `scripts/generate_loss_plot.py` to extract actual per-epoch loss data from HPC Job `361547` (`training_meta.json`).
+  - Generated dual-panel visualization: `docs/training_loss_curve.pdf` and `docs/training_loss_curve.png`.
+  - Visualized Stage 1 WikiSQL warm-up convergence (cross-entropy 1.72 → 0.10 across 10 epochs) and Stage 2 Spider convergence (cross-entropy 1.84 → 0.04 across 25 epochs).
+- **Report & Analysis Enhancements:**
+  - Updated both `docs/part-2-report.tex` and `docs/part-2-report.md` with the training loss convergence figure and caption.
+  - Added dedicated architectural analysis explaining the WikiSQL performance collapse (99.51% invalid rate) due to **catastrophic forgetting** during sequential fine-tuning on Spider's multi-table schemas and column namespace shift.
+  - Recompiled LaTeX report with `pdflatex` to 11 pages cleanly, with no errors or layout overflows.
+- **Verification & Demonstration:**
+  - Re-verified end-to-end demo execution for both `--model template --demo` (live SQLite execution with 3 test cases) and `--model lstm` (showing realistic baseline error modes).
+  - Re-ran test suite (`tests/test_environment.py`, `tests/test_config.py`, `tests/test_data_contracts.py`), verifying 7/7 core unit tests pass cleanly.
+- **Comprehensive Part 2 Audit:**
+  - Evaluated the complete codebase, documentation, and artifacts against the official CS F429 Part 2 rubric: estimated score 16.5 – 17.5 / 20.
+  - Confirmed all Part 2 checklist items are complete and ready for submission.
 
 
 
+### 2026-10-11 — Critical-review remediation
+
+- **Trigger:** An internal critical review scored the Part 2 metrics 4/10. It cited a one-query "win",
+  a nonstandard EM, an untested forgetting claim, no CIs or ablations, tuning on dev, and report inconsistencies.
+- **Evidence gathered:**
+  - The Job 361547 log shows WikiSQL was scored with `wikisql_checkpoint.pt` (Stage 1), which refutes forgetting.
+  - Spider-dev invalid SQL: 708/798 are `no such column`; the bare type token `text` appears in 278 predictions.
+  - The template's 0% EM is caused by its double-quoted identifiers.
+  - Two gold queries crashed on non-UTF-8 text.
+  - The report's hyper-parameters (vocabulary 1,402, dropout 0.3, LR 5e-4 with warm-up/cosine, 512 per direction) did not match the code.
+  - Yu et al. (2018) Table 2 does not contain a "3.2–5.4%" band.
+- **Changes:**
+  - Harness: lenient UTF-8 decoding, error classes, official-semantics EX.
+  - New `statistics.py` (bootstrap, Wilson, McNemar).
+  - Inference: `rendering.py`, a schema-markup mask, literal-aware repair, `DecodeOptions`.
+  - Scripts: `run_ablation.py`, `run_official_spider_eval.py`, `analyze_part2.py`, `build_report.sh`.
+  - Training: seed flag, per-epoch dev NLL, epoch-10 checkpoint.
+  - The CLI now loads the evaluated checkpoint.
+- **Results:**
+  - Spider test: LSTM final 7.2% official EX / 5.5% EM; template 9.5% / 0.0% (6.7% EM unquoted).
+  - The fixes are significant on test (8 vs 1 discordant, p = 0.039). LSTM vs template is a tie (p = 0.45).
+- **HPC:** Seed jobs 389817 (done), 389818 and 389819; WikiSQL decode 389954; seed decode 389932.
+- **Next:** Sync the HPC outputs, fill the report, rebuild the PDF.
 
 
+### 2026-10-11 — WikiSQL harness defect found and fixed; demo additions
+
+- A gold-answer sanity check (gold must return real rows) found that WikiSQL gold SQL used header names
+  while the official `dev.db` stores `col0..colN`. SQLite read those names as string literals, so 6,007/8,415
+  gold queries were empty. Fixed with a per-example TEMP VIEW (`ExampleRecord.execution_prelude`,
+  `wikisql.header_view_sql`), plus a regression test.
+- Re-scored full WikiSQL dev (HPC job 389954 decode): LSTM Stage-1 final 17.15% strict EX vs template 2.65%.
+- Added `--train-demo` (live CPU training), `scripts/show_preprocessing.py`, and Spider-metadata schemas in the CLI.
+- Report: paper-style layout; §4.13 removed; results stated directly, without draft-correction framing.
+
+
+### 2026-10-11 — Second review round, multi-seed results, final report check
+
+- A second critical review (metric score 7/10) found that comparisons were tested on the harness's strict EX
+  while the headline used official EX. It also flagged CIs that ignored database clustering, the template's
+  0% EM printed in the tables, the overstated "copy path never trained" claim, and a near-tautological taxonomy.
+- Fixes:
+  - Per-question official scoring.
+  - Database-clustered bootstrap with McNemar and Holm.
+  - Template identifier quoting (real official EM 5.9% dev / 6.7% test).
+  - Copy-gate measurement (gate copies at 96% of copy-only targets; 0.17 probability on the right token).
+  - Root-cause taxonomy.
+  - 30 s execution timeout: a runaway nested query hung the official evaluator.
+- HPC: seeds 42/7/13 (jobs 389817-389819) and the seed decode (389932) completed. Final-decoding official EX
+  on test is 7.6 +- 0.7%, every seed below the template's 9.5%. Epoch 10 vs 25 shows no gain. Dev NLL is
+  minimal at epoch 2-3 in every seed.
+- Final report check against the project description:
+  - Added dataset domain/source/rationale, embedding type, model-choice rationale, implementation details,
+    an error-mitigation paragraph, and missing citations (Hochreiter, McNemar, Holm, Efron).
+  - Fixed one cross-reference and one count.
+- Report: lettered sections a-d, 10pt. The LMS bundle is regenerated from HEAD.

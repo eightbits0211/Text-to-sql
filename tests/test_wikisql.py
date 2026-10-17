@@ -90,3 +90,32 @@ def test_load_wikisql_rejects_join_query(tmp_path: Path) -> None:
     result = load_wikisql(source_path, tmp_path, split=DatasetSplit.TRAIN)
 
     assert result.exclusions[0].reason is ExclusionReason.UNSUPPORTED_QUERY_STRUCTURE
+
+
+def test_header_view_executes_header_sql_against_col_storage(tmp_path: Path) -> None:
+    import sqlite3
+
+    from text_to_sql.data.wikisql import header_view_sql
+    from text_to_sql.evaluation.metrics import execute_read_only
+
+    database_path = tmp_path / "dev.db"
+    connection = sqlite3.connect(database_path)
+    connection.execute("CREATE TABLE table_1_2 (col0 text, col1 real)")
+    connection.execute("INSERT INTO table_1_2 VALUES ('art long', 42), ('voshon lenard', 7)")
+    connection.commit()
+    connection.close()
+    prelude = (header_view_sql("table_1_2", ["Player", "No."], ["text", "real"]),)
+
+    without_view = execute_read_only(
+        'SELECT "Player" FROM "table_1_2" WHERE "No." = 42', database_path
+    )
+    with_view = execute_read_only(
+        """SELECT "Player" FROM "table_1_2" WHERE "No." = '42'""", database_path, prelude
+    )
+    case_insensitive = execute_read_only(
+        "SELECT \"No.\" FROM table_1_2 WHERE Player = 'Art Long'", database_path, prelude
+    )
+
+    assert without_view.rows == ()  # header names are string literals without the view
+    assert with_view.rows == (("art long",),)
+    assert case_insensitive.rows == ((42.0,),)

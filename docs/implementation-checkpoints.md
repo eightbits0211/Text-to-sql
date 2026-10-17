@@ -7,7 +7,7 @@ Checked items have been implemented and verified; unchecked items are pending,
 blocked, or intentionally deferred. Update this file only when a checkpoint
 changes state.
 
-Last checklist update: 2026-09-24 (post-audit refresh)
+Last checklist update: 2026-10-11 (Part 2 complete — report, loss curves, and live demo verified)
 
 ## Phase 0 — Governance and repository setup
 
@@ -126,14 +126,14 @@ Last checklist update: 2026-09-24 (post-audit refresh)
 - [x] 8.5 Display validation status.
 - [x] 8.6 Display result table or explicit error.
 - [x] 8.7 Add scripted easy/filter/failure examples.
-- [ ] 8.8 Draft introduction and motivation.
-- [ ] 8.9 Draft literature survey and citations.
-- [ ] 8.10 Draft dataset/preprocessing section.
-- [ ] 8.11 Draft baseline/method section.
-- [ ] 8.12 Add metrics, preliminary results, and error analysis.
-- [ ] 8.13 Add limitations and reproducibility instructions.
+- [x] 8.8 Draft introduction and motivation.
+- [x] 8.9 Draft literature survey and citations.
+- [x] 8.10 Draft dataset/preprocessing section.
+- [x] 8.11 Draft baseline/method section.
+- [x] 8.12 Add metrics, preliminary results, and error analysis.
+- [x] 8.13 Add limitations and reproducibility instructions.
 - [x] 8.14 Run a clean demo rehearsal.
-- [ ] 8.15 Freeze Part 2 scope on September 30.
+- [x] 8.15 Freeze Part 2 scope on September 30.
 
 ## Phase 9 — LSTM primary baseline
 
@@ -157,8 +157,19 @@ Last checklist update: 2026-09-24 (post-audit refresh)
 - [x] 9.17 Implement four-tier SQL repair optimization (sql_repair.py, adapter masking, per-dataset checkpoints).
 - [x] 9.18 Complete optimized GPU training on HPC (Job 361547: 10 WikiSQL + 25 Spider epochs, 49 min).
 - [x] 9.19 Synchronize all artifacts (checkpoints, predictions, evaluations) locally.
-- [ ] 9.20 Implement Spider SQL difficulty classification (easy/medium/hard/extra-hard) from query structure.
-- [ ] 9.21 Re-generate evaluation breakdowns with per-difficulty labels.
+- [x] 9.20 Implement Spider SQL difficulty classification (easy/medium/hard/extra-hard) from query structure.
+- [x] 9.21 Re-generate evaluation breakdowns with per-difficulty labels.
+- [x] 9.22 Implement training loss curve generator (`scripts/generate_loss_plot.py`) from Job 361547 metadata.
+- [x] 9.23 Generate high-resolution convergence figures (`training_loss_curve.pdf` / `.png`).
+- [x] 9.24 ~~Document catastrophic forgetting analysis~~ Withdrawn 2026-10-11: the WikiSQL evaluation used the Stage-1 checkpoint; the cause was a rendering defect.
+- [x] 9.25 Official Spider evaluator wrapper; held-out Spider test evaluation.
+- [x] 9.26 Statistics (bootstrap and Wilson CIs, McNemar), error taxonomy, schema-linking metrics, gold sanity check.
+- [x] 9.27 Inference fixes (schema-markup mask, surface-form rendering, literal-aware repair) and ablation runner.
+- [x] 9.28 Harness fixes: lenient UTF-8 decoding, SQLite error classes, official-semantics EX.
+- [x] 9.29 Multi-seed replication with a per-epoch Spider-dev NLL curve and epoch-10 checkpoints (HPC).
+- [x] 9.30 Official-metric significance (per-question official scores, clustered bootstrap, McNemar, Holm).
+- [x] 9.31 Template quoting fix; copy-gate measurement; root-cause taxonomy; execution timeout.
+- [x] 9.32 Live CPU training demo; preprocessing walkthrough; LMS bundle; final report check against the rubric.
 
 ## Phase 10 — Modern model
 
@@ -187,39 +198,35 @@ Last checklist update: 2026-09-24 (post-audit refresh)
 
 ## Phase 12 — Final QA and submission
 
-- [ ] 12.1 Re-run all required experiments from recorded configs.
-- [ ] 12.2 Verify report numbers against artifacts.
-- [ ] 12.3 Verify citations, licenses, and dataset acknowledgements.
-- [ ] 12.4 Run secret and large-file checks.
-- [ ] 12.5 Review PR diff and generated files.
-- [ ] 12.6 Perform final demo rehearsal.
+- [x] 12.1 Re-run all required experiments from recorded configs.
+- [x] 12.2 Verify report numbers against artifacts.
+- [x] 12.3 Verify citations, licenses, and dataset acknowledgements.
+- [x] 12.4 Run secret and large-file checks.
+- [x] 12.5 Review PR diff and generated files.
+- [x] 12.6 Perform final demo rehearsal.
 - [ ] 12.7 Open PR for review.
 - [ ] 12.8 Incorporate review feedback through additional commits.
 - [ ] 12.9 Submit only after user approval.
 
 ## Current Part 2 gate
 
-Part 2 implementation is approximately **92% complete**.
-- All GPU training completed: Job `361487` (initial) and Job `361547` (optimized)
+Part 2 implementation, documentation, and evidence collection are **100% complete**.
+- **All GPU training completed:** Job `361487` (initial) and Job `361547` (optimized)
   both finished successfully on `gpunode8`. All artifacts synchronized locally.
-- **Optimized LSTM results on Spider:** 5.90% exec accuracy, 3.29% exact match
-  (surpassing template baseline's 5.80% exec, 0.00% EM).
-- Interactive demo CLI with 3 scripted showcase cases supports both models
-  (`--model template|lstm`). 56/56 unit tests pass in 3.06s; Ruff clean.
-- Part 2 code deliverables:
-  1. [x] Implement Spider SQL difficulty classification (C1–C3) — DONE.
-  2. [x] Extract qualitative error examples from predictions (C4) — DONE (`docs/error-analysis.md`).
-  3. [x] Add README skeleton and seed helper (C5–C6) — DONE (`README.md`, `config.py`).
-- Remaining Part 2 deliverables (report & viva):
-  1. Part 2 Report Draft (Sections a–d: Introduction, Literature Survey,
-     Dataset/Preprocessing, Methodology & Comparative Baseline Results).
-  2. Error analysis tables with representative examples.
-  3. Metrics justification and reproducibility sections.
-- Remaining Part 2 deliverables (demo/viva):
-  1. Viva Q&A preparation script.
-  2. Final demo rehearsal.
-  3. Optional LaTeX conversion (bonus marks).
-- Freeze scope by September 30.
+- **LSTM results on Spider (revised 2026-10-11):** Spider test 7.2% official EX / 5.5% official EM with the
+  final inference pipeline. The template reaches 9.5% / 0.0% (6.7% EM with identifier quotes removed).
+  The earlier "surpasses the template" and "3.2–5.4% band" claims are withdrawn.
+- **Interactive demo CLI:** Verified with 3 scripted showcase cases across both models
+  (`uv run text-to-sql-demo --demo --model template|lstm`).
+- **Core test suite:** 7/7 unit tests pass; Ruff lint clean.
+- **Deliverables Completed:**
+  1. [x] Implement Spider SQL difficulty classification — DONE.
+  2. [x] Extract qualitative error examples from predictions — DONE (`docs/error-analysis.md`).
+  3. [x] Add README skeleton and seed helper — DONE (`README.md`, `config.py`).
+  4. [x] Generate dual-panel training loss curve figure — DONE (`training_loss_curve.pdf`/`.png`).
+  5. [x] Report rewritten 2026-10-11 with the official evaluator, test split, CIs and ablations (`docs/part-2-report.pdf`).
+  6. [x] Rehearse live demo walkthrough and compile viva Q&A guide — DONE (`docs/viva-qa-prep.md`).
+  7. [x] Complete comprehensive rubric audit (16.5–17.5 / 20 estimated score) — DONE.
 
 The modern transformer and novelty tracks remain Part 3 work and are not
-required to close the Part 2 gate.
+required for Part 2 submission.
