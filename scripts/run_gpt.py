@@ -56,6 +56,7 @@ def main() -> int:
     parser.add_argument("--shots", default="0,3")
     parser.add_argument("--split", choices=("dev", "test"), default="dev")
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--reasoning-effort", default="low")
     parser.add_argument("--max-new-tokens", type=int, default=1024)
@@ -64,7 +65,10 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
 
-    records = load_records("spider", args.split, args.limit)
+    records = load_records("spider", args.split, None)
+    # --offset/--limit shard a split across jobs (the 2-hour limit); shards are
+    # written to separate output directories and concatenated afterwards.
+    records = records[args.offset :][: args.limit] if args.limit else records[args.offset :]
     pool = load_train(None, include_others=False)
     base = GPTConfig(
         model_id=args.model_id,

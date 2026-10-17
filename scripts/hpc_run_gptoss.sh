@@ -16,6 +16,8 @@ echo "Job ${SLURM_JOB_ID:-interactive} on $(hostname) at $(date)"
 export TEXT2SQL_DATA_ROOT=/home/csisnlp_20/datasets
 export PYTHONUNBUFFERED=1
 export TORCH_DISABLE_NATIVE_JIT=1
+# Shared cards: reduce fragmentation so long few-shot batches fit (job 399601 OOM).
+export PYTORCH_ALLOC_CONF=expandable_segments:True
 # Models are pre-downloaded on the login node; compute nodes run offline.
 export HF_HUB_OFFLINE=${HF_HUB_OFFLINE:-1}
 export PYTHONPATH=/home/csisnlp_20/Text-to-sql/src:/home/csisnlp_20/Text-to-sql
