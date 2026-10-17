@@ -788,3 +788,22 @@ When changing this log:
     an error-mitigation paragraph, and missing citations (Hochreiter, McNemar, Holm, Efron).
   - Fixed one cross-reference and one count.
 - Report: lettered sections a-d, 10pt. The LMS bundle is regenerated from HEAD.
+
+
+### 2026-10-16/17 — Part 3 started: T5-base, gpt-oss-20b, novelty A + B
+
+- Branch `feature/part3-modern-models`; plan and checklist in `docs/part-3-plan.md`
+  (deadline 2026-11-21, freeze 2026-11-14). Training and decoding run on the HPC.
+- T5-base fine-tuned on Spider train (jobs 398812, 398846). Dev NLL bottomed at epoch 2 while
+  outputs were still degenerate, so checkpoints are now chosen by dev EX (best: epoch 14).
+- Novelty A (schema-constrained beam pruning + EXPLAIN check) and B (execution rerank; error
+  feedback for the LLM). The constraint rejects 0/1,034 dev and 1/7,000 train gold queries.
+- Official dev: T5 beam 54.1% EX / 52.1% EM; T5 + A + B 64.4% / 59.5%
+  (+10.3 EX, CI [7.5, 13.3], Holm p 1e-27; 110 fixed, 3 broken).
+- gpt-oss-20b 0-shot (bf16, job 398898): 78.6% EX / 20.1% EM; error feedback adds +0.1.
+  3-shot rerun after an out-of-memory failure on a shared card (job 399601).
+- CLI: `--model t5 | t5+ab | gpt | all` and a schema-linking novelty case; gpt answers are
+  precomputed on the HPC. Live training demo as a short HPC job with an offline local fallback.
+- Error analysis (`docs/part-3-error-analysis.md`), challenges log (11 entries), viva-day checklist.
+- Next: score 3-shot, then the one-time Spider test run (`scripts/hpc_test_run.sh`).
+

@@ -34,6 +34,32 @@ On Spider the template is the stronger baseline (significant by McNemar; borderl
 database-clustered bootstrap). On WikiSQL the LSTM is far stronger (17.2% vs 2.7% EX). Both
 fail on multi-table queries; the dominant error is schema linking.
 
+### Part 3 (in progress, due 2026-11-21): modern models and novelty
+
+3. **Fine-tuned T5-base (`T5Baseline`, [`transformer/`](src/text_to_sql/transformer/))**: input
+   `question | db | table : col , ... | fk : ...`; `<` added to the vocabulary; checkpoint chosen by dev EX.
+4. **Novelty (A + B):**
+   - **A, schema-constrained decoding** ([`constrained.py`](src/text_to_sql/transformer/constrained.py)):
+     beams that complete an identifier not in the schema, question or SQL keywords are pruned; finished
+     candidates must compile under SQLite `EXPLAIN`.
+   - **B, execution-guided correction** ([`exec_correction.py`](src/text_to_sql/generation/exec_correction.py)):
+     rerank T5 beams by execution; for the LLM, feed SQLite errors back for at most 2 retries.
+5. **gpt-oss-20b, instruction-tuned LLM (`GPTBaseline`, [`llm/`](src/text_to_sql/llm/))**: zero/few-shot,
+   DAIL-SQL-style `CREATE TABLE` prompts with sample rows; run on the HPC in bf16.
+
+**Spider dev (1,034), official evaluator** (test-set numbers will follow the one-time test run):
+
+| System | Official EX | Official EM |
+|---|---:|---:|
+| T5-base, beam | 54.1% | 52.1% |
+| T5-base + A + B | **64.4%** | 59.5% |
+| gpt-oss-20b, 0-shot | 78.6% | 20.1% |
+
+A + B vs beam: +10.3 EX, 95% database-clustered CI [7.5, 13.3], Holm-adjusted McNemar p = 1e-27
+(110 questions fixed, 3 broken). Details: [`docs/part-3-error-analysis.md`](docs/part-3-error-analysis.md);
+plan and checklist: [`docs/part-3-plan.md`](docs/part-3-plan.md); challenges:
+[`docs/part-3-challenges.md`](docs/part-3-challenges.md); viva: [`docs/viva-day-checklist.md`](docs/viva-day-checklist.md).
+
 ---
 
 ## 2. Repository Layout
@@ -89,6 +115,9 @@ uv run text-to-sql-demo --train-demo            # live training (~2-3 min CPU), 
 uv run text-to-sql-demo --demo --model template # scripted CLI showcase
 uv run text-to-sql-demo --demo --model lstm     # same showcase with the trained LSTM
 uv run text-to-sql-demo --demo --model both     # template vs LSTM, each checked against gold SQL
+uv run --extra modern text-to-sql-demo --demo --model all       # + T5, T5 + A + B, gpt-oss (Part 3)
+uv run --extra modern text-to-sql-demo --train-demo --model t5  # live t5-small training (~3 min)
+scripts/viva_train_demo.sh                      # same training as a short HPC job, local fallback
 uv run python -m scripts.show_preprocessing     # preprocessing walkthrough and corpus statistics
 ```
 
@@ -106,6 +135,9 @@ cd NLPproject
 
 # Sync dependencies (Python 3.12, PyTorch, pytest, ruff)
 uv sync
+
+# Part 3 models (transformers, accelerate, sentencepiece)
+uv sync --extra modern
 ```
 
 ---
@@ -138,7 +170,10 @@ To test queries interactively against live SQLite databases:
 uv run text-to-sql-demo --demo
 
 # Or specify a model and evaluate a single question
-uv run text-to-sql-demo --model lstm --dataset spider --question "How many singers do we have?"
+uv run text-to-sql-demo --model lstm --question "How many singers do we have?"
+
+# Part 3: every system side by side on one question
+uv run --extra modern text-to-sql-demo --model all --question "How many singers do we have?"
 ```
 
 ### Reproduce Smoke Evaluation
