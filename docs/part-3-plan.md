@@ -58,12 +58,12 @@ tests, lint and the viva live-training demo.
 
 ### Phase 3: final evaluation (Nov 8–13)
 - [ ] Spider test (2,147), run once per final system
-- [ ] Stats: `official_stats.py` (clustered CIs, McNemar, Holm)
+- [ ] Stats on test: `official_stats.py` (clustered CIs, McNemar, Holm); dev done: A+B +10.3 EX [7.5, 13.3], Holm p 1e-27
 - [ ] Error analysis: difficulty, single vs multi-table, schema linking / join / aggregation / nesting
 - [ ] Qualitative examples where novelty fixes or breaks a query
-- [ ] CLI: `--model t5 | t5+novelty | gpt | all`; gold-checked `--demo`
-- [ ] CLI: `--train-demo --model t5` (t5-small, one database, a few minutes)
-- [ ] Copy final checkpoints from HPC to `$TEXT2SQL_DATA_ROOT`
+- [x] CLI: `--model t5 | t5+ab | gpt | all`; gold-checked `--demo` with novelty Case 4 (`146d5c3`)
+- [x] Live training demo: HPC job with local fallback (`scripts/viva_train_demo.sh`), and `--train-demo --model t5`; both rehearsed
+- [x] Copy best T5 checkpoint from HPC to `$TEXT2SQL_DATA_ROOT/part3/t5-base-ex/best`
 
 ### Phase 4: report, demo, viva (Nov 14–21)
 - [ ] Freeze code (Nov 14)
