@@ -74,7 +74,7 @@ PICARD needs a full SQL parser that checks every partial query. Ours only checks
 No. It only changes how we pick among the model's candidates.
 
 **Q: How do you know it really helps?**
-+10.3 points EX on 1,034 dev questions, with a 95% confidence interval of [7.5, 13.3] that never touches zero, and McNemar's test p < 10^-26. It fixed 110 questions and broke 3. EM also went up by 7.4, so the SQL is genuinely better, not just luckier.
+On the held-out test set (2,147 questions, run once): +9.0 points EX (53.4% → 62.4%), 95% confidence interval [7.3, 10.9] that never touches zero, McNemar p < 10^-50. It fixed 196 questions and broke 3. Dev showed the same (+10.3). EM also rose by 7.1, so the SQL is genuinely better, not just luckier.
 
 **Q: What are its hyperparameters?**
 8 beams; check every step; EXPLAIN on finished queries; rerank timeout 5 seconds; 2 retries for the LLM.

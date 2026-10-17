@@ -47,12 +47,15 @@ fail on multi-table queries; the dominant error is schema linking.
 5. **gpt-oss-20b, instruction-tuned LLM (`GPTBaseline`, [`llm/`](src/text_to_sql/llm/))**: zero/few-shot,
    DAIL-SQL-style `CREATE TABLE` prompts with sample rows; run on the HPC in bf16.
 
-**Spider dev (1,034), official evaluator** (test-set numbers will follow the one-time test run):
+**Spider dev (1,034), official evaluator** (gpt-oss test run pending):
 
 | System | Official EX | Official EM |
 |---|---:|---:|
 | T5-base, beam | 54.1% | 52.1% |
 | T5-base + A + B | **64.4%** | 59.5% |
+
+**Spider test (2,147, held out, run once):** T5-base beam 53.4% EX / 49.6% EM; T5-base + A + B **62.4%** / 56.7%
+(+9.0 EX, CI [7.3, 10.9], 196 fixed, 3 broken).
 | gpt-oss-20b, 0-shot | 78.6% | 20.1% |
 
 A + B vs beam: +10.3 EX, 95% database-clustered CI [7.5, 13.3], Holm-adjusted McNemar p = 1e-27
