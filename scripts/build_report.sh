@@ -8,7 +8,7 @@ NAME=${1:-part-3-report}
 pandoc "${NAME}.md" \
   --from markdown+tex_math_dollars+pipe_tables+implicit_figures+table_captions \
   --standalone --number-sections --pdf-engine=xelatex \
-  -V documentclass=article -V fontsize=10pt -V geometry:margin=1in -V monofont=Menlo \
+  -V documentclass=article -V fontsize=10pt -V geometry:margin=0.85in -V monofont=Menlo \
   -V colorlinks=true -V linkcolor=blue!60!black -V urlcolor=blue!60!black \
   -V header-includes='\usepackage{float}\floatplacement{figure}{H}\renewcommand{\thesection}{\alph{section}}' \
   -o ${NAME}.tex
