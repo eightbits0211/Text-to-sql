@@ -151,8 +151,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--epochs",
         type=int,
-        default=60,
-        help="Epochs for --train-demo (default: 60, about 2-3 minutes on a laptop CPU).",
+        default=None,
+        help=(
+            "Epochs for --train-demo (default: 60 for the LSTM, about 2-3 minutes; "
+            "15 for --model t5, about 3 minutes)."
+        ),
     )
     parser.add_argument(
         "--train-databases",
@@ -393,12 +396,15 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.train_demo:
+        databases = tuple(db.strip() for db in args.train_databases.split(",") if db.strip())
+        if args.model == "t5":
+            # Local fallback for the viva; scripts/viva_train_demo.sh runs it on the HPC.
+            from .transformer import train_demo
+
+            return train_demo.run(databases, args.epochs or 15, "google-t5/t5-small", show=6)
         from .lstm.train_demo import run_training_demo
 
-        return run_training_demo(
-            databases=tuple(db.strip() for db in args.train_databases.split(",") if db.strip()),
-            epochs=args.epochs,
-        )
+        return run_training_demo(databases=databases, epochs=args.epochs or 60)
 
     db_path = args.database or DEFAULT_DEMO_DB
     if not db_path.is_file():

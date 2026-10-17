@@ -12,9 +12,10 @@ HPC="csisnlp_20@hpc.bits-hyderabad.ac.in"
 SSH=(ssh -q -o BatchMode=yes -o ConnectTimeout=15 -i "$HOME/.ssh/csisnlp_20" "$HPC")
 
 run_local() {
-    echo "Running the same demo locally."
+    echo "Running the same demo locally (text-to-sql-demo --train-demo --model t5)."
     cd "$(dirname "$0")/.."
-    TRANSFORMERS_VERBOSITY=error uv run --extra modern python -m text_to_sql.transformer.train_demo \
+    # t5-small is cached locally, so the fallback also works without internet.
+    HF_HUB_OFFLINE=1 TRANSFORMERS_VERBOSITY=error uv run --extra modern python -m text_to_sql.transformer.train_demo \
         ${DEMO_ARGS:-} 2>&1 | grep -v -E "it/s\]|Loading weights|HTTP Request"
 }
 
