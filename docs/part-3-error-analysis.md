@@ -84,7 +84,8 @@ schema linking is the main failure. A + B removes 55% of them.
 3. *"Which of the countries has the most car makers?"* (car_1)
    - beam: `SELECT CountryName FROM car_makers ...` (CountryName lives in countries)
    - A + B: adds the join to `countries` (correct)
-4. Residual error, *"Find the last name of the student who has a cat that is age 3."*:
-   A + B produces valid SQL with `pet_age = 3 AND pet_age = 3`, dropping the
-   pet-type condition. It executes and returns nothing, so the reranker keeps it as the
-   only candidate that runs; this is the valid-but-wrong failure mode above.
+4. Execution false positive, *"Find the last name of the student who has a cat that is age 3."*
+   (pets_1): A + B produces `... WHERE T2.pet_age = 3 AND T2.pet_age = 3`, dropping the
+   pet-type condition, yet it is scored correct by EX. The only pet aged 3 in the database is a
+   cat, so the wrong query returns the gold answer (`Smith`) by coincidence. EM rejects it.
+   This is the "EX can overstate" limitation in practice, and why EM-confirmed EX is reported.
