@@ -12,6 +12,9 @@ import torch
 DATA_ROOT = Path(os.environ.get("TEXT2SQL_DATA_ROOT", "/Users/roshini/datasets/text-to-sql"))
 SPIDER_ROOT = DATA_ROOT / "spider" / "spider_data"
 LSTM_CHECKPOINT_DIR = DATA_ROOT / "artifacts-lstm-gpu-run" / "lstm-checkpoint"
+# Part 3: best T5-base checkpoint (job 398846) and precomputed gpt-oss-20b answers.
+T5_CHECKPOINT_DIR = DATA_ROOT / "part3" / "t5-base-ex" / "best"
+GPT_ANSWERS_PATH = DATA_ROOT / "part3" / "gpt_answers.json"
 
 
 def seed_everything(seed: int = 42) -> None:

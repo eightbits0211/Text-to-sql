@@ -143,6 +143,27 @@ class T5Baseline:
         del database_id
         return self.generate_candidates(question, schema)[0]
 
+    def predict_improved(
+        self,
+        question: str,
+        schema: str | DatabaseSchema,
+        database_path: Path,
+        k: int = 8,
+        prelude: tuple[str, ...] = (),
+    ) -> str:
+        """Novelty A + B: schema-constrained k-beam search, then execution rerank."""
+        from transformers import LogitsProcessorList
+
+        from ..generation.exec_correction import execution_rerank
+        from .constrained import SchemaConstraintProcessor
+
+        schema_text = schema if isinstance(schema, str) else serialize_schema(schema)
+        processor = SchemaConstraintProcessor(self._tokenizer, schema_text, question)
+        candidates = self.generate_candidates(
+            question, schema_text, k, k, LogitsProcessorList([processor])
+        )
+        return execution_rerank(candidates, database_path, prelude).sql
+
     def predict_record(self, example: ExampleRecord) -> Prediction:
         return Prediction(
             example_id=example.example_id,

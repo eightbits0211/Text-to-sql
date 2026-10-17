@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from pathlib import Path
 from unittest.mock import patch
@@ -74,7 +75,27 @@ def test_run_scripted_demo_cases(tmp_path: Path) -> None:
 
     exit_code = run_scripted_demo(db_path=db_path, database_id="test", model_name="template")
     assert exit_code == 0
-    assert len(SCRIPTED_DEMO_CASES) == 3
+    assert len(SCRIPTED_DEMO_CASES) == 4
+    assert SCRIPTED_DEMO_CASES[-1].category == "novelty"
+
+
+def test_gpt_answers_are_looked_up_by_normalized_question(tmp_path: Path, monkeypatch) -> None:
+    from text_to_sql import cli
+    from text_to_sql.data.schema import ColumnSpec, DatabaseSchema, TableSpec
+
+    answers = tmp_path / "gpt_answers.json"
+    key = cli.gpt_answer_key("shop", "How many  Customers?")
+    answers.write_text(json.dumps({key: "SELECT count(*) FROM customers"}))
+    monkeypatch.setattr(cli, "GPT_ANSWERS_PATH", answers)
+    cli._gpt_answers.cache_clear()
+    schema = DatabaseSchema("shop", (TableSpec("customers", (ColumnSpec("id", "INTEGER"),)),))
+    try:
+        assert cli.predict_sql("how many customers?", schema, "gpt") == (
+            "SELECT count(*) FROM customers"
+        )
+        assert cli.predict_sql("Something else?", schema, "gpt") is None
+    finally:
+        cli._gpt_answers.cache_clear()
 
 
 def test_cli_main_demo_flag(tmp_path: Path) -> None:
