@@ -19,6 +19,8 @@
    Case 4 (plain T5 "no such column", T5 + A + B correct).
 3. **Free question** from the examiners: `uv run text-to-sql-demo --model all --question "..."`
    (gpt-oss shows "NOT PRECOMPUTED" for new questions: it needs ~42 GB of GPU memory).
+   The 25 questions in `docs/viva-questions.tsv` have gpt-oss answers precomputed; steer free
+   questions towards them, or say plainly that gpt-oss runs only on the HPC.
 4. **Results slide / report table**: dev ablation with CIs and McNemar, then the held-out test numbers.
 
 ## If something fails
