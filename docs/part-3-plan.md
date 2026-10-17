@@ -67,11 +67,11 @@ tests, lint and the viva live-training demo.
 
 ### Phase 4: report, demo, viva (Nov 14–21)
 - [ ] Freeze code (Nov 14)
-- [ ] Report: complete sections e (experiments) and f (conclusion), novelty method, challenges section
+- [x] Report draft: `docs/part-3-report.md` (sections a-f, 10 pages); [ ] fill [TEST] and [PENDING] cells
 - [ ] Build PDF via `scripts/build_report.sh` (LaTeX bonus), 6–10 pages
 - [ ] Update README, `state.md`, `docs/project-progress-log.md`
 - [ ] LMS bundle (`scripts/make_lms_bundle.sh`)
-- [ ] Viva prep: extend `docs/viva-qa-prep.md` with Part 3 questions; rehearse demo end to end
+- [x] Viva Q&A: `docs/viva-qa-part3.md` (plain answers); [ ] rehearse demo end to end
 - [ ] Submit by Nov 21, 23:55 IST
 
 ## Risks
