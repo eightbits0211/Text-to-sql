@@ -61,3 +61,13 @@ def test_extract_sql_and_final_channel():
     assert extract_sql("no sql here") == ""
     raw = "<|channel|>analysis<|message|>think<|end|><|start|>assistant<|channel|>final<|message|>```sql\nSELECT 1\n```<|return|>"
     assert final_answer(raw) == "```sql\nSELECT 1\n```"
+
+
+def test_foreign_key_without_target_column(tmp_path):
+    from text_to_sql.llm.prompts import create_table_schema
+
+    path = tmp_path / "fk.sqlite"
+    with sqlite3.connect(path) as connection:
+        connection.execute("CREATE TABLE parent (id INTEGER PRIMARY KEY)")
+        connection.execute("CREATE TABLE child (pid INTEGER REFERENCES parent)")
+    assert 'FOREIGN KEY ("pid") REFERENCES "parent"' in create_table_schema(path, "fk")

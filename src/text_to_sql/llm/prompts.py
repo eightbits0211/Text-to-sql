@@ -38,9 +38,11 @@ def create_table_schema(database_path: Path, database_id: str, sample_rows: int 
     schema = load_sqlite_schema(database_path, database_id)
     foreign_keys: dict[str, list[str]] = {}
     for fk in schema.foreign_keys:
+        # SQLite allows "REFERENCES parent" with no column (it means the parent's
+        # primary key); PRAGMA foreign_key_list then reports the column as None.
+        target = f"({_quote(fk.target_column)})" if fk.target_column else ""
         foreign_keys.setdefault(fk.source_table, []).append(
-            f"  FOREIGN KEY ({_quote(fk.source_column)}) REFERENCES "
-            f"{_quote(fk.target_table)}({_quote(fk.target_column)})"
+            f"  FOREIGN KEY ({_quote(fk.source_column)}) REFERENCES {_quote(fk.target_table)}{target}"
         )
     blocks = []
     connection = sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) if sample_rows else None
