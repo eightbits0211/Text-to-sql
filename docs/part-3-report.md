@@ -198,8 +198,6 @@ Classical: template parser and pointer-generator LSTM. Modern: T5-base with beam
 | Pointer-generator LSTM | Classical neural | 8.1% | 5.0% | 7.2% | 5.5% |
 | T5-base, beam | Fine-tuned transformer | 54.1% | 52.1% | 53.4% | 49.6% |
 | **T5-base + A + B (proposed)** | Fine-tuned + novelty | **64.4%** | **59.5%** | **62.4%** | **56.7%** |
-| gpt-oss-20b, 0-shot | LLM, no training | 78.6% | 20.1% | — | — |
-| gpt-oss-20b, 0-shot + B | LLM + error feedback | 78.7% | 20.1% | — | — |
 | gpt-oss-20b, 3-shot | LLM, no training | 81.2% | 32.5% | 79.3% | 36.8% |
 | gpt-oss-20b, 3-shot + B | LLM + error feedback | 81.5% | 32.6% | 79.7% | 36.8% |
 
@@ -226,7 +224,7 @@ The table shows how the field has moved. Rules and LSTMs answer fewer than one q
 |---|---|---:|---:|---:|---:|---:|
 | T5-base, beam | dev | 77.8% | 56.5% | 39.1% | 27.7% | 54.1% |
 | T5-base + A + B | dev | 83.5% | 70.6% | 51.1% | 33.1% | 64.4% |
-| gpt-oss-20b, 0-shot | dev | 90.7% | 83.6% | 71.8% | 54.2% | 78.6% |
+| gpt-oss-20b, 3-shot | dev | 93.1% | 85.4% | 77.0% | 56.6% | 81.2% |
 | T5-base, beam | test | 79.4% | 54.8% | 40.6% | 32.5% | 53.4% |
 | T5-base + A + B | test | 83.6% | 65.9% | 49.0% | 43.4% | 62.4% |
 | gpt-oss-20b, 3-shot | test | 90.0% | 83.7% | 73.0% | 62.7% | 79.3% |
@@ -235,7 +233,16 @@ A + B helps most on medium, hard and extra-hard questions (+8 to +14 points), wh
 
 **By query structure (dev, strict EX).** A + B lifts multi-table questions from 25.6% to 39.7% (+14.1) but single-table ones only from 68.2% to 73.5% (+5.3): join queries name more tables and columns, so they have more chances to name a wrong one.
 
-**gpt-oss-20b: examples and error feedback.** Three solved examples in the prompt raise EX from 78.6% to 81.2% and EM from 20.1% to 32.5%: the examples show the model Spider's SQL style, which it then imitates, confirming that its low EM is about style rather than correctness. Since 3-shot was best on dev, it is the setting run on test. The LLM writes almost no invalid SQL (8 of 1,034), so feeding errors back fixes little: invalid SQL drops to 0 but EX rises only 0.1 points. Option B is valuable for models that make schema errors, like T5, not for one that rarely does.
+**Choosing the gpt-oss prompt (Spider dev, official evaluator).** Like A and B for T5, the prompt setting was chosen on dev; only the chosen setting (3-shot) was run on test.
+
+| gpt-oss-20b setting | EX | EM | Invalid SQL |
+|---|---:|---:|---:|
+| 0-shot | 78.6% | 20.1% | 0.8% |
+| 0-shot + B (error feedback) | 78.7% | 20.1% | 0.0% |
+| **3-shot (chosen)** | **81.2%** | **32.5%** | 0.5% |
+| 3-shot + B | 81.5% | 32.6% | 0.0% |
+
+Three solved examples raise EX by 2.6 points and EM by 12.4: the examples show the model Spider's SQL style, which it then imitates, confirming that its low EM is about style rather than correctness. Error feedback (B) adds at most 0.3 points because the LLM almost never writes invalid SQL; B is valuable for a model that makes schema errors, like T5, not for one that rarely does.
 
 **Training dynamics (T5-base).** Training loss falls steadily, but dev loss is lowest at epoch 2 and then rises, while dev accuracy keeps improving until about epoch 14. The model grows more confident on wrong tokens (raising loss) while getting more queries right, so I select the checkpoint by accuracy, not loss.
 
@@ -255,22 +262,22 @@ A + B helps most on medium, hard and extra-hard questions (+8 to +14 points), wh
 
 A + B halves the invalid queries (662 → 328). Of the 334 queries it rescues, 193 become correct and 141 run but give the wrong answer, so the remaining errors shift from "does not run" to "wrong meaning".
 
-| Failure type (dev, out of 1,034) | T5 beam | T5 + A + B | gpt-oss 0-shot |
+| Failure type (dev, out of 1,034) | T5 beam | T5 + A + B | gpt-oss 3-shot |
 |----------------------------------------|----------:|----------:|----------:|
-| Query does not run | 317 | 135 | 8 |
+| Query does not run | 317 | 135 | 5 |
 | ... "no such column" | 275 | 123 | 3 |
 | ... "no such table" | 21 | 7 | 0 |
-| Runs, but wrong tables | 44 | 80 | 69 |
-| Runs, but wrong columns | 68 | 98 | 114 |
-| Runs, but wrong clause structure | 20 | 31 | 68 |
-| Runs, but wrong values | 12 | 11 | 67 |
+| Runs, but wrong tables | 44 | 80 | 65 |
+| Runs, but wrong columns | 68 | 98 | 92 |
+| Runs, but wrong clause structure | 20 | 31 | 57 |
+| Runs, but wrong values | 12 | 11 | 60 |
 
 **Recurring patterns.**
 
 - **Schema linking dominates T5's errors.** Most invalid queries reference columns that exist in a *different* table, e.g. `ORDER BY age` in `pets` when `age` is a student column and the pet column is `pet_age`. A + B removes 55% of them.
 - **Valid but wrong.** A + B turns many crashing queries into ones that run, but some of those now use the wrong table or column. Execution checks cannot detect a query that runs but answers a different question; this is the method's main limit.
 - **Long schemas.** 24% of training inputs exceed T5's 512-token limit and lose their last tables, so the model learns less about large databases.
-- **gpt-oss fails on meaning, not syntax.** Its errors are wrong values, extra columns and different conventions. Its EM (20.1%) is far below its EX (78.6%) because it writes correct SQL in its own style, e.g. `COUNT(*) AS total_singers`, `LEFT JOIN`, explicit table aliases, which exact match counts as wrong.
+- **gpt-oss fails on meaning, not syntax.** Its errors are wrong values, extra columns and different conventions. Its EM (36.8% on test) is far below its EX (79.3%) because it writes correct SQL in its own style, e.g. `COUNT(*) AS total_singers`, `LEFT JOIN`, explicit table aliases, which exact match counts as wrong.
 
 **Qualitative examples.**
 

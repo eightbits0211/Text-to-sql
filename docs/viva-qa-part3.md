@@ -95,7 +95,7 @@ gpt-oss almost never writes invalid SQL (8 of 1,034), so there is almost nothing
 **Q: Why execution accuracy?**
 It checks the answer, not the wording. Any correct query counts. Weakness: a wrong query can give the right answer by coincidence (my pets_1 "cat aged 3" example).
 
-**Q: Why does gpt-oss have 79% EX but only 20% EM?**
+**Q: Why does gpt-oss have 79% EX but only 37% EM on test?**
 It writes correct SQL in its own style, with aliases like `AS total_singers` or `LEFT JOIN`. Exact match compares structure with Spider's gold query, so it marks those wrong. That's a limitation of exact match, not of the model.
 
 **Q: Why didn't you use BLEU?**
@@ -106,6 +106,9 @@ After every epoch I measured dev execution accuracy and kept the best (epoch 14)
 
 **Q: Isn't choosing on dev cheating?**
 It makes dev scores slightly optimistic, which is why the final claims use the test set, run once at the end.
+
+**Q: Why only 3-shot gpt-oss on the test set? What about 0-shot?**
+I compared 0-shot and 3-shot on dev (78.6% vs 81.2%) and only ran the winner on test. Running every variant on test and then picking the best would be choosing on the test set, which inflates the result. The 0-shot numbers are in the small prompt-settings table as a dev ablation, like A and B for T5.
 
 **Q: Where does A + B help most?**
 Joins: 25.6% → 39.7% on multi-table questions versus 68.2% → 73.5% on single-table ones. Joins name more tables and columns, so they have more chances to name a wrong one.

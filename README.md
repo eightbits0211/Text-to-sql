@@ -56,7 +56,7 @@ fail on multi-table queries; the dominant error is schema linking.
 
 **Spider test (2,147, held out, run once):** T5-base beam 53.4% EX / 49.6% EM; T5-base + A + B **62.4%** / 56.7%
 (+9.0 EX, CI [7.3, 10.9], 196 fixed, 3 broken); gpt-oss-20b 3-shot **79.3%** / 36.8% (81.2% / 32.5% on dev).
-| gpt-oss-20b, 0-shot | 78.6% | 20.1% |
+| gpt-oss-20b, 3-shot | 81.2% | 32.5% |
 
 A + B vs beam: +10.3 EX, 95% database-clustered CI [7.5, 13.3], Holm-adjusted McNemar p = 1e-27
 (110 questions fixed, 3 broken). Details: [`docs/part-3-error-analysis.md`](docs/part-3-error-analysis.md);
