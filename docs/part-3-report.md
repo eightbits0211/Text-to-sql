@@ -171,7 +171,7 @@ gpt-oss-20b (OpenAI, 2025) is an open-weight transformer **decoder** (24 layers,
 *Check that A never blocks correct SQL.* Applied to the gold queries themselves, the constraint rejects 0 of 1,034 dev and 1 of 7,000 train queries; that one names a table missing from its database (a Spider annotation error).
 
 ## Implementation
-Python 3.12, PyTorch 2.14, Hugging Face Transformers 5.20, SQLite (read-only connections) and the official Spider evaluator; training and decoding ran as Slurm jobs on the BITS HPC, and evaluation and the demo run on a laptop. The environment is pinned with `uv`; 106 unit tests cover data loading, the models, the constraint, the reranker and the metrics.
+Python 3.12, PyTorch 2.14, Hugging Face Transformers 5.20, SQLite via Python's `sqlite3` (read-only connections), and the official Spider evaluator. Training and decoding ran as Slurm jobs on the BITS HPC (half an NVIDIA RTX PRO 6000 Blackwell, 80 GB RAM); evaluation and the demo run on a laptop. The environment is pinned with `uv`, and 106 unit tests cover data loading, the models, the constraint, the reranker and the metrics.
 
 # Experiments
 
@@ -203,7 +203,7 @@ Classical: template parser and pointer-generator LSTM. Modern: T5-base with beam
 | gpt-oss-20b, 3-shot | LLM, no training | 81.2% | 32.5% | [TEST] | [TEST] |
 
 
-The table shows how the field has moved. Rules and LSTMs answer fewer than one question in ten; fine-tuning a pre-trained transformer answers over half; our decoding raises that to about two thirds; an instruction-tuned LLM answers about four in five with no task-specific training.
+The table shows how the field has moved. Rules and LSTMs answer fewer than one question in ten; fine-tuning a pre-trained transformer answers over half; our decoding raises that to about two thirds; an instruction-tuned LLM answers about four in five with no task-specific training. (On WikiSQL, Part 2 found the LSTM far stronger than the template, 17.2% vs 2.7% EX on dev, since single-table questions suit it.)
 
 **Ablation of A and B (T5-base, 8 beams, official evaluator).**
 
@@ -237,7 +237,7 @@ A + B helps most on medium, hard and extra-hard questions (+8 to +14 points), wh
 
 **Training dynamics (T5-base).** Training loss falls steadily, but dev loss is lowest at epoch 2 and then rises, while dev accuracy keeps improving until about epoch 14. The model grows more confident on wrong tokens (raising loss) while getting more queries right, so we select the checkpoint by accuracy, not loss.
 
-![T5-base training (HPC job 398846). Left: greedy dev execution accuracy per epoch. Right: training and dev cross-entropy loss.](t5_training_curve.png){ width=80% }
+![T5-base training (HPC job 398846). Left: greedy dev execution accuracy per epoch. Right: training and dev cross-entropy loss.](t5_training_curve.png){ width=95% }
 
 ## Error analysis
 
@@ -301,8 +301,6 @@ Our contribution, schema-constrained beam search plus execution-guided reranking
 
 
 # References {-}
-
-\footnotesize
 
 - Bahdanau, D., Cho, K., Bengio, Y. (2015). Neural machine translation by jointly learning to align and translate. *ICLR*.
 - Chen, X., Lin, M., Schärli, N., Zhou, D. (2024). Teaching large language models to self-debug. *ICLR*.

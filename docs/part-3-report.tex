@@ -623,12 +623,13 @@ Spider annotation error).
 
 \subsection{Implementation}\label{implementation}
 
-Python 3.12, PyTorch 2.14, Hugging Face Transformers 5.20, SQLite
-(read-only connections) and the official Spider evaluator; training and
-decoding ran as Slurm jobs on the BITS HPC, and evaluation and the demo
-run on a laptop. The environment is pinned with \texttt{uv}; 106 unit
-tests cover data loading, the models, the constraint, the reranker and
-the metrics.
+Python 3.12, PyTorch 2.14, Hugging Face Transformers 5.20, SQLite via
+Python's \texttt{sqlite3} (read-only connections), and the official
+Spider evaluator. Training and decoding ran as Slurm jobs on the BITS
+HPC (half an NVIDIA RTX PRO 6000 Blackwell, 80 GB RAM); evaluation and
+the demo run on a laptop. The environment is pinned with \texttt{uv},
+and 106 unit tests cover data loading, the models, the constraint, the
+reranker and the metrics.
 
 \section{Experiments}\label{experiments}
 
@@ -725,7 +726,9 @@ The table shows how the field has moved. Rules and LSTMs answer fewer
 than one question in ten; fine-tuning a pre-trained transformer answers
 over half; our decoding raises that to about two thirds; an
 instruction-tuned LLM answers about four in five with no task-specific
-training.
+training. (On WikiSQL, Part 2 found the LSTM far stronger than the
+template, 17.2\% vs 2.7\% EX on dev, since single-table questions suit
+it.)
 
 \textbf{Ablation of A and B (T5-base, 8 beams, official evaluator).}
 
@@ -836,7 +839,7 @@ checkpoint by accuracy, not loss.
 
 \begin{figure}
 \centering
-\includegraphics[width=0.8\linewidth,height=\textheight,keepaspectratio,alt={T5-base training (HPC job 398846). Left: greedy dev execution accuracy per epoch. Right: training and dev cross-entropy loss.}]{t5_training_curve.png}
+\includegraphics[width=0.95\linewidth,height=\textheight,keepaspectratio,alt={T5-base training (HPC job 398846). Left: greedy dev execution accuracy per epoch. Right: training and dev cross-entropy loss.}]{t5_training_curve.png}
 \caption{T5-base training (HPC job 398846). Left: greedy dev execution
 accuracy per epoch. Right: training and dev cross-entropy loss.}
 \end{figure}
@@ -1035,8 +1038,6 @@ question.
 
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
-
-\footnotesize
 
 \begin{itemize}
 \tightlist
