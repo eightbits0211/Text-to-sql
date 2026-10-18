@@ -5,11 +5,19 @@ before ending every work session.
 
 ## In-Flight Execution Ledger (Context Continuity)
 - **Active Role:** Lead Agent
-- **Current Milestone:** Part 2 critical-review remediation (submission 2026-10-12)
-- **Active Task:** Part 2 complete (report, code bundle, demo)
-- **Last Completed Action:** Spider dev/test ablations, official-evaluator scoring, statistical analysis, docs rewrite
-- **Immediate Next Action:** None outstanding. Upload ~/Desktop/CS-F429-Part2-LMS/ files to LMS; rehearse the viva (docs/viva-qa-prep.md). All HPC jobs (389817-389819, 389932, 389954) completed and synced.
+- **Current Milestone:** Part 3 (deadline 2026-11-21 23:55 IST; internal freeze 2026-11-14). Branch `feature/part3-modern-models`.
+- **Active Task:** Part 3 content-complete; viva rehearsal and submission remain.
+- **Last Completed Action:** gpt-oss 3-shot Spider test scored (79.3% EX / 36.8% EM); every report number final (test: template 9.5, LSTM 7.2, T5 53.4, T5+A+B 62.4, gpt-oss 3-shot 79.3 official EX).
+- **Immediate Next Action:** User reads the report and rehearses (docs/viva-day-checklist.md). Before Nov 21: open the Part 3 PR (only on request), build the LMS bundle (scripts/make_lms_bundle.sh), submit. No co-author trailers in commits or PRs.
 - **Resumption Invariant:** If session compacts, token limits expire, or models switch, inspect this ledger first to resume seamlessly.
+
+### Part 3 (2026-10-16/17): key facts
+- Plan and checklist: `docs/part-3-plan.md`; challenges log: `docs/part-3-challenges.md`; viva checklist: `docs/viva-day-checklist.md`.
+- All training/decoding runs on the HPC (user preference). Code synced by rsync to `/home/csisnlp_20/Text-to-sql`; artifacts in `/home/csisnlp_20/artifacts/part3/`, copied locally to `$TEXT2SQL_DATA_ROOT/part3/`.
+- HPC: one GPU job per user (`QOSMaxGRESPerUser`); `--export` values must not contain commas; models cached on the login node, jobs run with `HF_HUB_OFFLINE=1` (gpt-oss jobs use 0 for the kernel lookup); gpt-oss-20b only runs dequantized to bf16 (no Python.h for Triton).
+- T5-base (job 398846, checkpoint chosen by dev EX, epoch 14) official dev: beam 54.1% EX / 52.1% EM; +A+B 64.4% / 59.5%. A+B vs beam +10.3 EX [7.5, 13.3], Holm McNemar p 1e-27; fixes 110, breaks 3. Stats: `$TEXT2SQL_DATA_ROOT/part3/analysis/dev_stats.json`.
+- gpt-oss-20b 0-shot (job 398898) official dev 78.6% EX / 20.1% EM (style mismatch); error correction adds +0.1.
+- No OpenAI API key: the GPT comparison is open-weight only.
 
 ### Remediation pass (2026-10-11): key facts
 - The evaluated LSTM checkpoint is `artifacts-lstm-gpu-run/lstm-checkpoint/spider_checkpoint.pt` (copied from HPC).

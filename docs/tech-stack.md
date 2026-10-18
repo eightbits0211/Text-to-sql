@@ -53,10 +53,15 @@ configuration or command-line arguments.
 ### Part 3 modern model
 
 - PyTorch for tensor computation and training.
-- Hugging Face Transformers for tokenizer, checkpoint, fine-tuning, and
-  inference **in the planned Part 3 modern model**; no Hugging Face model has
-  been installed or trained yet.
-- T5 or a BERT-based schema-aware parser, selected after a small compute smoke test.
+- Hugging Face Transformers 5.20.1 (optional `modern` dependency group, with
+  accelerate and sentencepiece) for T5 fine-tuning and LLM inference.
+- Fine-tuned T5-base (`google-t5/t5-base`, 220M parameters) with a plain PyTorch
+  AdamW loop; t5-small for the live training demo.
+- Instruction-tuned LLM: `openai/gpt-oss-20b`, loaded dequantized to bf16 on the
+  HPC (the MXFP4 Triton kernels need `Python.h`, which the nodes lack). No hosted
+  API models are used.
+- HPC environment: torch 2.14.0+cu130, transformers 5.20.1, kernels 0.17.2,
+  triton 3.8.0, on an NVIDIA RTX PRO 6000 Blackwell (`--gres=mps:50`).
 
 Model checkpoint names, cache directories, maximum sequence lengths, batch sizes,
 seeds, and learning rates must be configuration values rather than source-code

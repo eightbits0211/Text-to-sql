@@ -1,4 +1,4 @@
-"""Command-line demo and scripted rehearsal for Part 2 Text-to-SQL baselines."""
+"""Command-line demo for the Text-to-SQL systems (Part 2 baselines and Part 3 models)."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from .baselines.template import TemplateBaseline
-from .config import LSTM_CHECKPOINT_DIR, SPIDER_ROOT
+from .config import GPT_ANSWERS_PATH, LSTM_CHECKPOINT_DIR, SPIDER_ROOT, T5_CHECKPOINT_DIR
 from .data.schema import DatabaseSchema
 from .data.spider import _schema_from_metadata
 from .data.sqlite_schema import load_sqlite_schema
@@ -19,6 +19,18 @@ from .evaluation.metrics import ExecutionResult, _rows_match_official, execute_r
 
 DEFAULT_DEMO_DB = SPIDER_ROOT / "database" / "concert_singer" / "concert_singer.sqlite"
 DEFAULT_CHECKPOINT = LSTM_CHECKPOINT_DIR / "spider_checkpoint.pt"
+
+MODEL_CHOICES = ("template", "lstm", "t5", "t5+ab", "gpt", "both", "all")
+# "both" is the Part 2 comparison; "all" adds the Part 3 systems.
+MODEL_GROUPS = {
+    "both": ("template", "lstm"),
+    "all": ("template", "lstm", "t5", "t5+ab", "gpt"),
+}
+# Official EX on Spider for the closing summary of the scripted demo.
+REPORTED_RESULTS = (
+    "Spider test (2,147): template 9.5%, LSTM 7.2% official EX.",
+    "Spider dev (1,034): T5-base 54.1%, T5-base + A + B 64.4%, gpt-oss-20b 0-shot 78.6%.",
+)
 
 
 @dataclass(frozen=True)
@@ -55,6 +67,19 @@ SCRIPTED_DEMO_CASES: tuple[DemoCase, ...] = (
             "ON T1.Stadium_ID = T2.Stadium_ID GROUP BY T1.Stadium_ID"
         ),
     ),
+    DemoCase(
+        name="Case 4 (Schema Linking)",
+        category="novelty",
+        question="List singer names and number of concerts for each singer.",
+        description=(
+            "Spider dev question. Plain T5 joins on concert.singer_id, which does not exist; "
+            "constrained beams + execution rerank (A+B) pick singer_in_concert instead."
+        ),
+        gold_sql=(
+            "SELECT T2.name, count(*) FROM singer_in_concert AS T1 JOIN singer AS T2 "
+            "ON T1.singer_id = T2.singer_id GROUP BY T2.singer_id"
+        ),
+    ),
 )
 
 # Verdict label -> ANSI colour code.
@@ -63,6 +88,7 @@ VERDICT_COLOURS = {
     "WRONG ANSWER": "1;31",
     "EXECUTION ERROR": "1;31",
     "NO SQL (refused)": "1;33",
+    "NOT PRECOMPUTED": "1;33",
     "RAN (not checked)": "1;36",
 }
 
@@ -100,13 +126,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--demo",
         action="store_true",
-        help="Run the scripted 3-case demonstration (easy, filter, failure case).",
+        help="Run the scripted demonstration (easy, filter, join, and a schema-linking novelty case).",
     )
     parser.add_argument(
         "--model",
-        choices=["template", "lstm", "both"],
+        choices=MODEL_CHOICES,
         default="template",
-        help="Baseline model to use; 'both' compares template and LSTM side by side (default: template).",
+        help=(
+            "Model to use. 'both' compares template and LSTM; 'all' adds T5, T5 + novelty "
+            "(schema-constrained beams + execution rerank) and gpt-oss-20b (precomputed answers)."
+        ),
     )
     parser.add_argument(
         "--checkpoint",
@@ -122,8 +151,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--epochs",
         type=int,
-        default=60,
-        help="Epochs for --train-demo (default: 60, about 2-3 minutes on a laptop CPU).",
+        default=None,
+        help=(
+            "Epochs for --train-demo (default: 60 for the LSTM, about 2-3 minutes; "
+            "15 for --model t5, about 3 minutes)."
+        ),
     )
     parser.add_argument(
         "--train-databases",
@@ -184,18 +216,52 @@ def _load_lstm(checkpoint_path: Path | None):
     return LSTMBaseline()
 
 
+@lru_cache(maxsize=1)
+def _load_t5(checkpoint_dir: Path):
+    from .transformer.t5_adapter import T5Baseline
+
+    if not (checkpoint_dir / "config.json").is_file():
+        raise FileNotFoundError(
+            f"T5 checkpoint not found at {checkpoint_dir}; copy it from the HPC "
+            "(/home/csisnlp_20/artifacts/part3/t5-base-ex/best) or set TEXT2SQL_DATA_ROOT."
+        )
+    return T5Baseline.from_checkpoint(checkpoint_dir)
+
+
+@lru_cache(maxsize=1)
+def _gpt_answers() -> dict[str, str]:
+    """gpt-oss-20b answers precomputed on the HPC (it needs ~42 GB of GPU memory)."""
+    if not GPT_ANSWERS_PATH.is_file():
+        return {}
+    return json.loads(GPT_ANSWERS_PATH.read_text(encoding="utf-8"))
+
+
+def gpt_answer_key(database_id: str, question: str) -> str:
+    return f"{database_id}\t{' '.join(question.lower().split())}"
+
+
 def predict_sql(
     question: str,
     schema: DatabaseSchema,
     model_name: str = "template",
     checkpoint_path: Path | str | None = None,
-) -> str:
+    db_path: Path | None = None,
+) -> str | None:
+    """One SQL string; ``None`` means gpt-oss has no precomputed answer for this question."""
     if model_name == "template":
         return TemplateBaseline().predict(question, schema)
     if model_name == "lstm":
         target_ckpt = Path(checkpoint_path) if checkpoint_path else DEFAULT_CHECKPOINT
         db_id = getattr(schema, "database_id", "unknown")
         return _load_lstm(target_ckpt).predict(question, schema, database_id=db_id)
+    if model_name == "t5":
+        return _load_t5(T5_CHECKPOINT_DIR).predict(question, schema)
+    if model_name == "t5+ab":
+        if db_path is None:
+            raise ValueError("t5+ab needs the database file for execution reranking")
+        return _load_t5(T5_CHECKPOINT_DIR).predict_improved(question, schema, db_path)
+    if model_name == "gpt":
+        return _gpt_answers().get(gpt_answer_key(schema.database_id, question))
     raise ValueError(f"Unsupported model: {model_name}")
 
 
@@ -232,7 +298,9 @@ def run_query(
 ) -> tuple[str, bool, str]:
     """Generate SQL, validate, and execute. Returns (sql, is_success, output_display)."""
     db_path = Path(db_path)
-    sql = predict_sql(question, schema, model_name, checkpoint_path)
+    sql = predict_sql(question, schema, model_name, checkpoint_path, db_path)
+    if sql is None:
+        return ("", False, "NOT PRECOMPUTED: no gpt-oss-20b answer for this question.")
 
     if not sql or not sql.strip():
         return (
@@ -250,10 +318,15 @@ def run_query(
 def _print_prediction(
     model_name: str, sql: str, verdict: str, exec_result: ExecutionResult | None
 ) -> None:
-    print(f"  {_style(model_name.upper(), '1')}")
+    label = model_name.upper() + (" (precomputed on HPC)" if model_name == "gpt" else "")
+    print(f"  {_style(label, '1')}")
     print(f"    SQL    : {_style(sql, '36') if sql else '(none)'}")
     print(f"    Verdict: {_style(verdict, VERDICT_COLOURS[verdict])}")
-    if exec_result is None:
+    if verdict == "NOT PRECOMPUTED":
+        print(
+            "    (gpt-oss-20b needs ~42 GB of GPU memory; only HPC-precomputed answers are shown)"
+        )
+    elif exec_result is None:
         print("    (no SQL: the question is outside the template grammar, so nothing is run)")
     elif exec_result.status != "success":
         print(f"    Error  : {exec_result.error}")
@@ -268,7 +341,7 @@ def run_scripted_demo(
     model_name: str = "template",
     checkpoint_path: Path | str | None = None,
 ) -> int:
-    """Execute the scripted 3-case demonstration required by Part 2."""
+    """Execute the scripted demonstration (Part 2 cases plus a Part 3 novelty case)."""
     db_path = Path(db_path)
     if checkpoint_path is not None:
         checkpoint_path = Path(checkpoint_path)
@@ -276,17 +349,18 @@ def run_scripted_demo(
         print(f"Error: Demo database file not found at {db_path}", file=sys.stderr)
         return 1
 
-    models = ["template", "lstm"] if model_name == "both" else [model_name]
+    models = list(MODEL_GROUPS.get(model_name, (model_name,)))
     schema = load_demo_schema(db_path, database_id)
     bar = "=" * 70
     print(_style(bar, "2"))
-    print(_style(f"  TEXT-TO-SQL PART 2 DEMO   model: {' vs '.join(models)}", "1"))
+    print(_style(f"  TEXT-TO-SQL DEMO   model: {' vs '.join(models)}", "1"))
     print(f"  Database : {database_id}")
     print(f"  Tables   : {', '.join(t.name for t in schema.tables)}")
     print("  Verdicts compare each query's result with the gold query's result (as EX does).")
     print(_style(bar, "2"))
 
     scores = {name: 0 for name in models}
+    unanswered = {name: 0 for name in models}
     for case in SCRIPTED_DEMO_CASES:
         print()
         print(_style(f"--- {case.name} [{case.category.upper()}] ---", "1;35"))
@@ -295,17 +369,24 @@ def run_scripted_demo(
         if case.gold_sql:
             print(_style(f"  Gold SQL: {case.gold_sql}", "2"))
         for name in models:
-            sql = predict_sql(case.question, schema, name, checkpoint_path)
-            verdict, exec_result = judge(sql, db_path, case.gold_sql)
+            sql = predict_sql(case.question, schema, name, checkpoint_path, db_path)
+            if sql is None:
+                verdict, exec_result, sql = "NOT PRECOMPUTED", None, ""
+                unanswered[name] += 1
+            else:
+                verdict, exec_result = judge(sql, db_path, case.gold_sql)
             scores[name] += verdict == "CORRECT"
             _print_prediction(name, sql, verdict, exec_result)
 
     print()
     print(_style(bar, "2"))
-    print(_style("  SCORE (execution match on these 3 questions)", "1"))
+    print(_style(f"  SCORE (execution match on these {len(SCRIPTED_DEMO_CASES)} questions)", "1"))
     for name in models:
-        print(f"    {name:<9}: {scores[name]}/{len(SCRIPTED_DEMO_CASES)}")
-    print("  Full Spider test (2,147 questions): template EX 9.5%, LSTM EX 7.2%.")
+        answered = len(SCRIPTED_DEMO_CASES) - unanswered[name]
+        score = f"{scores[name]}/{answered}" if answered else "n/a (not precomputed)"
+        print(f"    {name:<9}: {score}")
+    for line in REPORTED_RESULTS:
+        print(f"  {line}")
     print(_style(bar, "2"))
     return 0
 
@@ -315,12 +396,15 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.train_demo:
+        databases = tuple(db.strip() for db in args.train_databases.split(",") if db.strip())
+        if args.model == "t5":
+            # Local fallback for the viva; scripts/viva_train_demo.sh runs it on the HPC.
+            from .transformer import train_demo
+
+            return train_demo.run(databases, args.epochs or 15, "google-t5/t5-small", show=6)
         from .lstm.train_demo import run_training_demo
 
-        return run_training_demo(
-            databases=tuple(db.strip() for db in args.train_databases.split(",") if db.strip()),
-            epochs=args.epochs,
-        )
+        return run_training_demo(databases=databases, epochs=args.epochs or 60)
 
     db_path = args.database or DEFAULT_DEMO_DB
     if not db_path.is_file():
@@ -348,11 +432,14 @@ def main() -> int:
 
     database_id = args.database_id if args.database_id != "demo-database" else db_path.stem
     schema = load_demo_schema(db_path, database_id)
-    if args.model == "both":
+    if args.model in MODEL_GROUPS:
         print(f"Question: {args.question}")
-        for name in ("template", "lstm"):
-            sql = predict_sql(args.question, schema, name, args.checkpoint)
-            verdict, exec_result = judge(sql, db_path, None)
+        for name in MODEL_GROUPS[args.model]:
+            sql = predict_sql(args.question, schema, name, args.checkpoint, db_path)
+            if sql is None:
+                verdict, exec_result, sql = "NOT PRECOMPUTED", None, ""
+            else:
+                verdict, exec_result = judge(sql, db_path, None)
             _print_prediction(name, sql, verdict, exec_result)
         return 0
     sql, success, display = run_query(

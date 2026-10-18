@@ -18,8 +18,9 @@ assistant session working in this repository.
    requests that action and repository policy permits it.
 6. Before opening a PR, inspect the diff, run the smallest relevant validation,
    and summarize known limitations.
-7. Keep commits focused and descriptive. Include the required Copilot
-   co-author trailer when creating commits, unless the user explicitly opts out.
+7. Keep commits focused and descriptive. Do not add co-author trailers
+   (Claude, Copilot or any tool) or tool attribution lines to commits or PRs:
+   the repository owner is the sole author.
 8. If the workspace is not a Git repository or remote/branch creation is
    unavailable, do not pretend that a branch or PR exists. Report the blocker
    and preserve changes without committing.
