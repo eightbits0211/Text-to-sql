@@ -980,46 +980,153 @@ valid-but-wrong queries.
 
 \subsection{Challenges}\label{challenges}
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Stage
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Challenge
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-How we solved it
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Tokenisation & T5's vocabulary has no \texttt{\textless{}}, so 320
-training queries could never be generated correctly & Added
-\texttt{\textless{}} and \texttt{\textless{}=} as new tokens before
-fine-tuning \\
-Model selection & Dev \emph{loss} was best at epoch 2, but that model
-still wrote broken SQL (41\% EX) & Selected the checkpoint by dev
-\emph{execution accuracy} after every epoch (epoch 14, 51\%) \\
-Long inputs & 24\% of training schemas exceed 512 tokens & Kept
-truncation; noted as a limitation (schema ranking is the fix) \\
-LLM on the HPC & gpt-oss's 4-bit kernels need C headers missing on the
-cluster & Loaded the model in 16-bit precision (about 42 GB) \\
-Shared GPUs & Few-shot prompts ran out of memory when other users shared
-the card & Smaller batches, a memory-allocator setting, and splitting
-the run into halves \\
-Cluster limits & One GPU job per user and a 2-hour time limit & One job
-per setting; checkpoint saved after every improving epoch \\
-Live demo & The HPC queue can delay live training during the viva & Demo
-trains t5-small on the laptop (about 3 minutes), with the HPC run as an
-option \\
-Fair evaluation & Dev chose the checkpoint and settings, so dev scores
-are optimistic & Final claims use the test set, run once \\
-\end{longtable}
-}
+We list the main problems met at each stage of the project (Parts 2 and
+3), how each was detected, what we did, and the measured effect.
+
+\textbf{Data and evaluation harness}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{A silent scoring bug on WikiSQL (Part 2).} \emph{Found:} a
+  sanity check that gold queries return real answers. The official
+  WikiSQL database stores columns as \texttt{col0\ …\ colN}, but our
+  gold SQL used the header names; SQLite read those as string constants,
+  so 6,007 of 8,415 dev gold queries returned nothing and any empty
+  prediction scored as correct. \emph{Fix:} a per-question view that
+  exposes each column under its header name, plus a regression test.
+  \emph{Effect:} 7,767 gold queries now return real answers; all earlier
+  WikiSQL scores were discarded and recomputed.
+\item
+  \textbf{Errors in the benchmark itself.} \emph{Found:} running our
+  schema constraint over every gold query. One Spider training query
+  refers to a table that does not exist in its database, and gold SQL
+  mixes quoting and capitalisation styles. \emph{Fix:} we report on
+  execution-based metrics, which are insensitive to these styles, and
+  document the annotation error rather than silently dropping it.
+\end{enumerate}
+
+\textbf{Preprocessing}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{2}
+\tightlist
+\item
+  \textbf{A character the model could not write.} \emph{Found:}
+  tokenising the gold SQL. T5's vocabulary has no \texttt{\textless{}},
+  so \texttt{age\ \textless{}\ 30} became
+  \texttt{age\ \textless{}unk\textgreater{}\ 30}; 320 of 7,000 training
+  and 42 of 1,034 dev queries were affected. \emph{Fix:} added
+  \texttt{\textless{}} and \texttt{\textless{}=} as new tokens and
+  enlarged the embedding table before fine-tuning. \emph{Effect:} no
+  gold query contains an unknown token.
+\item
+  \textbf{Schemas too long for the model (partly unsolved).}
+  \emph{Found:} token statistics. 24\% of training inputs exceed T5's
+  512-token limit and lose their last tables. \emph{Status:} we kept
+  truncation; schema ranking before decoding (as in RESDSQL) is the
+  proper fix and is left as future work.
+\end{enumerate}
+
+\textbf{Modelling}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{4}
+\tightlist
+\item
+  \textbf{The LSTM memorised instead of generalising (Part 2).}
+  \emph{Found:} training loss reached 0.04 while dev loss rose after
+  epoch 3 and 72\% of dev queries were invalid; the copy mechanism
+  switched to copying at the right time but put only 0.17 probability on
+  the correct schema name. \emph{Fix:} moved to a pre-trained
+  transformer, which brings language knowledge learned from far more
+  text. \emph{Effect:} 7.2\% → 53.4\% test execution accuracy.
+\item
+  \textbf{The fine-tuned model still invented column names.}
+  \emph{Found:} error analysis of T5: 317 of 1,034 dev queries did not
+  run, 275 with ``no such column''. \emph{Fix:} our novelty,
+  schema-constrained decoding (A) plus execution-guided reranking (B),
+  after first checking that the constraint never rejects a correct query
+  (0 of 1,034 dev gold queries). \emph{Effect:} invalid test queries 662
+  → 328; test accuracy 53.4\% → 62.4\%.
+\end{enumerate}
+
+\textbf{Training and model selection}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{6}
+\tightlist
+\item
+  \textbf{Lowest loss did not mean best model.} \emph{Found:} per-epoch
+  logs. Dev loss was lowest at epoch 2, yet that checkpoint wrote
+  degenerate SQL such as repeated \texttt{avg(T2.avg(...}. \emph{Fix:}
+  measured dev execution accuracy after every epoch and kept the best
+  (epoch 14). \emph{Effect:} greedy dev accuracy 41.6\% → 53.8\% with
+  the same training run.
+\item
+  \textbf{Choosing settings on dev makes dev scores optimistic.}
+  \emph{Fix:} every choice (checkpoint, beam size, 0- vs 3-shot
+  prompting) was made on dev; the 2,147-question test set was run once
+  at the end. \emph{Effect:} the gains held on test (+9.0 points, versus
+  +10.3 on dev).
+\end{enumerate}
+
+\textbf{Evaluation}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{8}
+\tightlist
+\item
+  \textbf{Exact match misjudges LLM output, and execution accuracy can
+  be fooled.} \emph{Found:} gpt-oss-20b scored 79.3\% execution accuracy
+  but 36.8\% exact match on test, because it writes correct SQL in its
+  own style; separately, one wrong query returned the right answer by
+  coincidence on a small database. \emph{Fix:} execution accuracy as the
+  main metric, exact match alongside it, and paired significance tests
+  on per-question results.
+\end{enumerate}
+
+\textbf{Compute and engineering}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{9}
+\tightlist
+\item
+  \textbf{Running a 20-billion-parameter model on a shared GPU.}
+  \emph{Found:} failed jobs. The faster 4-bit kernels needed C headers
+  missing on the cluster; few-shot prompts then ran out of memory when
+  other users shared the card; and the cluster allows one GPU job per
+  user for at most two hours. \emph{Fix:} loaded the model in 16-bit
+  precision, used batch size 1 with a memory-allocator setting, and
+  split runs into halves that fit the time limit. \emph{Effect:} all LLM
+  runs completed on dev and test.
+\item
+  \textbf{A crash part-way through the test run.} \emph{Found:} the job
+  stopped after 515 questions: one test database declares a foreign key
+  without naming the target column, which our prompt builder did not
+  expect. \emph{Fix:} handled the case, added a regression test, checked
+  prompts for all 40 test databases, and reran only the failed half.
+\end{enumerate}
+
+\textbf{Demonstration}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{11}
+\tightlist
+\item
+  \textbf{Showing training live without depending on the cluster queue.}
+  \emph{Fix:} the demo trains t5-small on one database on the laptop
+  (about 3 minutes, works offline); the same script can submit a short
+  HPC job, falling back to the laptop if no GPU is free within two
+  minutes.
+\end{enumerate}
 
 \section{Conclusion}\label{conclusion}
 

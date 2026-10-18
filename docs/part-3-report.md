@@ -283,16 +283,40 @@ A + B halves the invalid queries (662 → 328). Of the 334 queries it rescues, 1
 
 ## Challenges
 
-| Stage | Challenge | How we solved it |
-|---|---|---|
-| Tokenisation | T5's vocabulary has no `<`, so 320 training queries could never be generated correctly | Added `<` and `<=` as new tokens before fine-tuning |
-| Model selection | Dev *loss* was best at epoch 2, but that model still wrote broken SQL (41% EX) | Selected the checkpoint by dev *execution accuracy* after every epoch (epoch 14, 51%) |
-| Long inputs | 24% of training schemas exceed 512 tokens | Kept truncation; noted as a limitation (schema ranking is the fix) |
-| LLM on the HPC | gpt-oss's 4-bit kernels need C headers missing on the cluster | Loaded the model in 16-bit precision (about 42 GB) |
-| Shared GPUs | Few-shot prompts ran out of memory when other users shared the card | Smaller batches, a memory-allocator setting, and splitting the run into halves |
-| Cluster limits | One GPU job per user and a 2-hour time limit | One job per setting; checkpoint saved after every improving epoch |
-| Live demo | The HPC queue can delay live training during the viva | Demo trains t5-small on the laptop (about 3 minutes), with the HPC run as an option |
-| Fair evaluation | Dev chose the checkpoint and settings, so dev scores are optimistic | Final claims use the test set, run once |
+We list the main problems met at each stage of the project (Parts 2 and 3), how each was detected, what we did, and the measured effect.
+
+**Data and evaluation harness**
+
+1. **A silent scoring bug on WikiSQL (Part 2).** *Found:* a sanity check that gold queries return real answers. The official WikiSQL database stores columns as `col0 … colN`, but our gold SQL used the header names; SQLite read those as string constants, so 6,007 of 8,415 dev gold queries returned nothing and any empty prediction scored as correct. *Fix:* a per-question view that exposes each column under its header name, plus a regression test. *Effect:* 7,767 gold queries now return real answers; all earlier WikiSQL scores were discarded and recomputed.
+2. **Errors in the benchmark itself.** *Found:* running our schema constraint over every gold query. One Spider training query refers to a table that does not exist in its database, and gold SQL mixes quoting and capitalisation styles. *Fix:* we report on execution-based metrics, which are insensitive to these styles, and document the annotation error rather than silently dropping it.
+
+**Preprocessing**
+
+3. **A character the model could not write.** *Found:* tokenising the gold SQL. T5's vocabulary has no `<`, so `age < 30` became `age <unk> 30`; 320 of 7,000 training and 42 of 1,034 dev queries were affected. *Fix:* added `<` and `<=` as new tokens and enlarged the embedding table before fine-tuning. *Effect:* no gold query contains an unknown token.
+4. **Schemas too long for the model (partly unsolved).** *Found:* token statistics. 24% of training inputs exceed T5's 512-token limit and lose their last tables. *Status:* we kept truncation; schema ranking before decoding (as in RESDSQL) is the proper fix and is left as future work.
+
+**Modelling**
+
+5. **The LSTM memorised instead of generalising (Part 2).** *Found:* training loss reached 0.04 while dev loss rose after epoch 3 and 72% of dev queries were invalid; the copy mechanism switched to copying at the right time but put only 0.17 probability on the correct schema name. *Fix:* moved to a pre-trained transformer, which brings language knowledge learned from far more text. *Effect:* 7.2% → 53.4% test execution accuracy.
+6. **The fine-tuned model still invented column names.** *Found:* error analysis of T5: 317 of 1,034 dev queries did not run, 275 with "no such column". *Fix:* our novelty, schema-constrained decoding (A) plus execution-guided reranking (B), after first checking that the constraint never rejects a correct query (0 of 1,034 dev gold queries). *Effect:* invalid test queries 662 → 328; test accuracy 53.4% → 62.4%.
+
+**Training and model selection**
+
+7. **Lowest loss did not mean best model.** *Found:* per-epoch logs. Dev loss was lowest at epoch 2, yet that checkpoint wrote degenerate SQL such as repeated `avg(T2.avg(...`. *Fix:* measured dev execution accuracy after every epoch and kept the best (epoch 14). *Effect:* greedy dev accuracy 41.6% → 53.8% with the same training run.
+8. **Choosing settings on dev makes dev scores optimistic.** *Fix:* every choice (checkpoint, beam size, 0- vs 3-shot prompting) was made on dev; the 2,147-question test set was run once at the end. *Effect:* the gains held on test (+9.0 points, versus +10.3 on dev).
+
+**Evaluation**
+
+9. **Exact match misjudges LLM output, and execution accuracy can be fooled.** *Found:* gpt-oss-20b scored 79.3% execution accuracy but 36.8% exact match on test, because it writes correct SQL in its own style; separately, one wrong query returned the right answer by coincidence on a small database. *Fix:* execution accuracy as the main metric, exact match alongside it, and paired significance tests on per-question results.
+
+**Compute and engineering**
+
+10. **Running a 20-billion-parameter model on a shared GPU.** *Found:* failed jobs. The faster 4-bit kernels needed C headers missing on the cluster; few-shot prompts then ran out of memory when other users shared the card; and the cluster allows one GPU job per user for at most two hours. *Fix:* loaded the model in 16-bit precision, used batch size 1 with a memory-allocator setting, and split runs into halves that fit the time limit. *Effect:* all LLM runs completed on dev and test.
+11. **A crash part-way through the test run.** *Found:* the job stopped after 515 questions: one test database declares a foreign key without naming the target column, which our prompt builder did not expect. *Fix:* handled the case, added a regression test, checked prompts for all 40 test databases, and reran only the failed half.
+
+**Demonstration**
+
+12. **Showing training live without depending on the cluster queue.** *Fix:* the demo trains t5-small on one database on the laptop (about 3 minutes, works offline); the same script can submit a short HPC job, falling back to the laptop if no GPU is free within two minutes.
 
 
 # Conclusion

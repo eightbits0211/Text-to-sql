@@ -120,10 +120,14 @@ Each test question is correct, ran-but-wrong, or invalid. A + B halves the inval
 
 ---
 
-## Challenges (have two ready)
+## Challenges (have three ready; report §e has all twelve)
 
-1. **The `<` token**: found it, added it to the vocabulary.
-2. **Loss vs accuracy**: dev loss said epoch 2, accuracy said epoch 14; we switched to accuracy.
-3. **gpt-oss on the HPC**: its 4-bit kernels needed C headers the cluster lacks, so we ran it in 16-bit.
-4. **Shared GPU out of memory**: smaller batches and splitting the run into halves.
-5. **One GPU job per user**: we ran jobs one at a time and keep the queue empty for the viva.
+Tell each as: what happened, how we noticed, what we did, what changed.
+
+1. **WikiSQL scoring bug (Part 2).** Gold queries used column names the database didn't have, so SQLite read them as text constants and 6,007 of 8,415 returned nothing. Empty predictions were being counted correct. We noticed by checking that gold answers are real, fixed it with a view that renames the columns, and recomputed every WikiSQL score.
+2. **The LSTM memorised.** Training loss went to 0.04 but dev loss rose and 72% of dev queries didn't run. That's why we moved to a pre-trained transformer: 7.2% → 53.4% on test.
+3. **Loss vs accuracy.** Dev loss said epoch 2 was best, but that model wrote broken SQL. Choosing by dev accuracy instead (epoch 14) took greedy dev accuracy from 41.6% to 53.8%, same training run.
+4. **The `<` token.** T5 couldn't write "less than"; 320 training queries affected. We added the token.
+5. **Inventing columns.** 275 of T5's 317 invalid dev queries were "no such column". That's the problem our novelty solves: invalid test queries 662 → 328.
+6. **Test-run crash.** One test database had a foreign key with no column named; the job crashed after 515 questions. Fixed, added a test, reran only that half.
+7. **Honest limit:** 24% of training schemas are longer than T5's 512-token input, so the end gets cut off. Not solved; schema ranking would fix it.
