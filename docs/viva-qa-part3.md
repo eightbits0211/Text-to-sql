@@ -112,6 +112,14 @@ Joins: 25.6% → 39.7% on multi-table questions versus 68.2% → 73.5% on single
 
 ---
 
+**Q: Explain the training-curve figure.**
+Left: dev execution accuracy after each epoch; it climbs fast, then levels off around 48–51%, best at epoch 14. Right: training loss keeps falling, but dev loss is lowest at epoch 2 and then rises. Rising dev loss means the model is becoming over-confident on the tokens it gets wrong, yet it still gets more whole queries right. That's why we chose the checkpoint by accuracy, not loss.
+
+**Q: What does the outcome-by-difficulty table show?**
+Each test question is correct, ran-but-wrong, or invalid. A + B halves the invalid ones (662 → 328). Of the 334 it rescues, 193 become correct and 141 run but give the wrong answer. So our method fixes "doesn't run" errors; what's left is mostly "wrong meaning".
+
+---
+
 ## Challenges (have two ready)
 
 1. **The `<` token**: found it, added it to the vocabulary.
