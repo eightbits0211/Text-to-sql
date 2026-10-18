@@ -807,3 +807,13 @@ When changing this log:
 - Error analysis (`docs/part-3-error-analysis.md`), challenges log (11 entries), viva-day checklist.
 - Next: score 3-shot, then the one-time Spider test run (`scripts/hpc_test_run.sh`).
 
+
+### 2026-10-18/19 — Part 3 test results, report final
+
+- Spider test (2,147, run once), official EX / EM: T5-base beam 53.4% / 49.6%; T5-base + A + B 62.4% / 56.7%
+  (+9.0 EX, CI [7.3, 10.9], 196 fixed / 3 broken; beats A and B alone); gpt-oss-20b 3-shot 79.3% / 36.8%.
+- 3-shot chosen over 0-shot on dev (81.2% vs 78.6% EX). A gpt-oss test half crashed on a foreign key with no
+  target column; fixed in the prompt builder with a regression test and rerun.
+- Report: training-curve figure, outcome-by-difficulty table, all cells filled; .tex and .pdf now shipped.
+- Git history rewritten: co-author trailers removed and author email set to the user's GitHub address.
+

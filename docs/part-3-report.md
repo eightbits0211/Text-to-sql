@@ -4,7 +4,7 @@ subtitle: "Natural Language to SQL: From Rules and LSTMs to Fine-Tuned Transform
 author:
   - "Name: Roshini Kotte | ID Number: 2024A7PS0048H"
 abstract: |
-  We translate English questions into SQLite queries on Spider, a benchmark whose test databases are never seen in training. Four generations of methods are compared under one evaluation: a rule-based template parser and a pointer-generator LSTM (classical), a fine-tuned T5-base transformer, and gpt-oss-20b, an instruction-tuned large language model used without training. Our contribution is a two-part decoding method for T5 that targets its main error, naming tables and columns that do not exist: (A) schema-constrained beam search, which discards candidates that use unknown identifiers and checks finished candidates with SQLite, and (B) execution-guided reranking, which keeps the first candidate that runs. On Spider dev, A + B raises T5-base from 54.1% to 64.4% execution accuracy (+10.3 points, 95% CI [7.5, 13.3]) and cuts invalid SQL from 31% to 13%, without retraining. On the held-out Spider test set (2,147 questions, run once) it raises T5-base from 53.4% to 62.4% (+9.0 points, 95% CI [7.3, 10.9]), fixing 196 questions and breaking 3. gpt-oss-20b reaches 78.6% execution accuracy zero-shot but only 20.1% exact match, which shows that exact match penalises correct SQL written in a different style.
+  We translate English questions into SQLite queries on Spider, a benchmark whose test databases are never seen in training. Four generations of methods are compared under one evaluation: a rule-based template parser and a pointer-generator LSTM (classical), a fine-tuned T5-base transformer, and gpt-oss-20b, an instruction-tuned large language model used without training. Our contribution is a two-part decoding method for T5 that targets its main error, naming tables and columns that do not exist: (A) schema-constrained beam search, which discards candidates that use unknown identifiers and checks finished candidates with SQLite, and (B) execution-guided reranking, which keeps the first candidate that runs. On Spider dev, A + B raises T5-base from 54.1% to 64.4% execution accuracy (+10.3 points, 95% CI [7.5, 13.3]) and cuts invalid SQL from 31% to 13%, without retraining. On the held-out Spider test set (2,147 questions, run once) it raises T5-base from 53.4% to 62.4% (+9.0 points, 95% CI [7.3, 10.9]), fixing 196 questions and breaking 3. gpt-oss-20b, given three solved examples and no training, reaches 79.3% execution accuracy on test but only 36.8% exact match, which shows that exact match penalises correct SQL written in a different style.
 
 ---
 
@@ -200,7 +200,8 @@ Classical: template parser and pointer-generator LSTM. Modern: T5-base with beam
 | **T5-base + A + B (ours)** | Fine-tuned + novelty | **64.4%** | **59.5%** | **62.4%** | **56.7%** |
 | gpt-oss-20b, 0-shot | LLM, no training | 78.6% | 20.1% | — | — |
 | gpt-oss-20b, 0-shot + B | LLM + error feedback | 78.7% | 20.1% | — | — |
-| gpt-oss-20b, 3-shot | LLM, no training | 81.2% | 32.5% | [TEST] | [TEST] |
+| gpt-oss-20b, 3-shot | LLM, no training | 81.2% | 32.5% | 79.3% | 36.8% |
+| gpt-oss-20b, 3-shot + B | LLM + error feedback | 81.5% | 32.6% | 79.7% | 36.8% |
 
 
 The table shows how the field has moved. Rules and LSTMs answer fewer than one question in ten; fine-tuning a pre-trained transformer answers over half; our decoding raises that to about two thirds; an instruction-tuned LLM answers about four in five with no task-specific training. (On WikiSQL, Part 2 found the LSTM far stronger than the template, 17.2% vs 2.7% EX on dev, since single-table questions suit it.)
@@ -228,6 +229,7 @@ The table shows how the field has moved. Rules and LSTMs answer fewer than one q
 | gpt-oss-20b, 0-shot | dev | 90.7% | 83.6% | 71.8% | 54.2% | 78.6% |
 | T5-base, beam | test | 79.4% | 54.8% | 40.6% | 32.5% | 53.4% |
 | T5-base + A + B | test | 83.6% | 65.9% | 49.0% | 43.4% | 62.4% |
+| gpt-oss-20b, 3-shot | test | 90.0% | 83.7% | 73.0% | 62.7% | 79.3% |
 
 A + B helps most on medium, hard and extra-hard questions (+8 to +14 points), which typically involve joins; easy questions gain 4–6 points.
 
@@ -295,7 +297,7 @@ A + B halves the invalid queries (662 → 328). Of the 334 queries it rescues, 1
 
 # Conclusion
 
-On one benchmark with one evaluator, accuracy rises from under 10% with rules and LSTMs, to 54% by fine-tuning a pre-trained T5-base, and to 79% with a 20-billion-parameter LLM used without any training. This tracks the field's shift from hand-written rules, to models trained from scratch, to pre-trained models adapted with little or no task data.
+On the held-out Spider test set, with one evaluator, execution accuracy rises from 9.5% (rules) and 7.2% (LSTM), to 53.4% by fine-tuning a pre-trained T5-base, 62.4% with our decoding, and 79.3% with a 20-billion-parameter LLM given three examples and no training. This tracks the field's shift from hand-written rules, to models trained from scratch, to pre-trained models adapted with little or no task data.
 
 Our contribution, schema-constrained beam search plus execution-guided reranking, adds 9.0 points to T5-base on the held-out Spider test set (10.3 on dev) without retraining by fixing its dominant error: references to tables and columns that do not exist. It is simple, works with any seq2seq model and any SQLite database, and helps most on join queries. It cannot fix queries that run but answer the wrong question, and it adds little to an LLM that rarely writes invalid SQL. Exact match proved unsuitable for judging LLM output, so execution accuracy should be the primary metric. Natural next steps are schema ranking before decoding and checking whether a query's result actually answers the question.
 

@@ -6,9 +6,9 @@ before ending every work session.
 ## In-Flight Execution Ledger (Context Continuity)
 - **Active Role:** Lead Agent
 - **Current Milestone:** Part 3 (deadline 2026-11-21 23:55 IST; internal freeze 2026-11-14). Branch `feature/part3-modern-models`.
-- **Active Task:** Final gpt-oss numbers, then report polish and viva rehearsal.
-- **Last Completed Action:** T5 Spider test run scored (beam 53.4% -> A+B 62.4% official EX, +9.0, 196 fixed / 3 broken); report filled and at 10 pages; 3-shot beat 0-shot on full dev (74.3% vs 72.4% official-style EX).
-- **Immediate Next Action:** When HPC jobs 401780 + 401781 (gpt-oss 3-shot test, two halves) finish: merge halves, score officially, fill the last report cells (gpt-oss test row, 3-shot dev row), rebuild PDF, push. HPC hostname may not resolve on campus Wi-Fi: use `ssh -o HostKeyAlias=hpc.bits-hyderabad.ac.in csisnlp_20@125.22.54.219`.
+- **Active Task:** Part 3 content-complete; viva rehearsal and submission remain.
+- **Last Completed Action:** gpt-oss 3-shot Spider test scored (79.3% EX / 36.8% EM); every report number final (test: template 9.5, LSTM 7.2, T5 53.4, T5+A+B 62.4, gpt-oss 3-shot 79.3 official EX).
+- **Immediate Next Action:** User reads the report and rehearses (docs/viva-day-checklist.md). Before Nov 21: open the Part 3 PR (only on request), build the LMS bundle (scripts/make_lms_bundle.sh), submit. No co-author trailers in commits or PRs.
 - **Resumption Invariant:** If session compacts, token limits expire, or models switch, inspect this ledger first to resume seamlessly.
 
 ### Part 3 (2026-10-16/17): key facts

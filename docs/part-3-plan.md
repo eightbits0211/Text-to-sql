@@ -57,7 +57,7 @@ tests, lint and the viva live-training demo.
 - [x] Not needed: EX improved (+10.3 dev, +9.0 test)
 
 ### Phase 3: final evaluation (Nov 8–13)
-- [x] Spider test (2,147), run once: T5 + ablation (job 399725); [ ] gpt-oss 3-shot (second half done, first half rerun as job 402228)
+- [x] Spider test (2,147), run once: T5 + ablation (job 399725); gpt-oss 3-shot (jobs 401781, 402228): 79.3% EX / 36.8% EM
 - [x] Stats on test: A+B +9.0 EX [7.3, 10.9], 196 fixed / 3 broken; `official_stats.py` (clustered CIs, McNemar, Holm); dev done: A+B +10.3 EX [7.5, 13.3], Holm p 1e-27
 - [x] Error analysis: difficulty, single vs multi-table, error types (`docs/part-3-error-analysis.md`, report §e)
 - [x] Qualitative examples (report §e: fixes, an LLM convention mismatch, an EX false positive)
@@ -67,9 +67,9 @@ tests, lint and the viva live-training demo.
 
 ### Phase 4: report, demo, viva (Nov 14–21)
 - [ ] Freeze code (Nov 14)
-- [x] Report draft: `docs/part-3-report.md` (sections a-f, 10 pages); [ ] fill [TEST] and [PENDING] cells
+- [x] Report: `docs/part-3-report.md` (sections a-f, 10 pages), all results filled
 - [x] Build PDF via `scripts/build_report.sh` (LaTeX bonus), 10 pages; .tex and .pdf tracked in git
-- [x] README, `state.md` updated; [ ] final progress-log entry after the gpt-oss test run
+- [x] README, `state.md`, progress log updated
 - [ ] LMS bundle (`scripts/make_lms_bundle.sh`)
 - [x] Viva Q&A: `docs/viva-qa-part3.md` (plain answers); [ ] rehearse demo end to end
 - [ ] Submit by Nov 21, 23:55 IST

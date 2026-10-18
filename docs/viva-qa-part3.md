@@ -11,7 +11,7 @@ For the demo order and commands, see `docs/viva-day-checklist.md`.
 Two modern models and one improvement. (1) T5-base, a pre-trained transformer we fine-tuned on Spider. (2) gpt-oss-20b, a large language model we only prompted, no training. (3) Our novelty: two decoding steps for T5 (A and B) that stop it from using tables and columns that don't exist. A + B raised T5 from 54.1% to 64.4% execution accuracy on Spider dev.
 
 **Q: What does the results table show about how NLP has evolved?**
-Rules and LSTMs: under 10%. Fine-tuned pre-trained transformer: 54%. With our decoding: 64%. Instruction-tuned LLM with no training: 79%. Each generation needs less task-specific work and does better.
+On the test set: rules 9.5%, LSTM 7.2%, fine-tuned T5-base 53.4%, with our decoding 62.4%, instruction-tuned LLM with three examples and no training 79.3%. Each generation needs less task-specific work and does better.
 
 ---
 

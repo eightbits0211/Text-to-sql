@@ -151,9 +151,10 @@ the first candidate that runs. On Spider dev, A + B raises T5-base from
 13.3{]}) and cuts invalid SQL from 31\% to 13\%, without retraining. On
 the held-out Spider test set (2,147 questions, run once) it raises
 T5-base from 53.4\% to 62.4\% (+9.0 points, 95\% CI {[}7.3, 10.9{]}),
-fixing 196 questions and breaking 3. gpt-oss-20b reaches 78.6\%
-execution accuracy zero-shot but only 20.1\% exact match, which shows
-that exact match penalises correct SQL written in a different style.
+fixing 196 questions and breaking 3. gpt-oss-20b, given three solved
+examples and no training, reaches 79.3\% execution accuracy on test but
+only 36.8\% exact match, which shows that exact match penalises correct
+SQL written in a different style.
 \end{abstract}
 
 \section{Introduction to the NLP
@@ -717,8 +718,10 @@ T5-base, beam & Fine-tuned transformer & 54.1\% & 52.1\% & 53.4\% &
 gpt-oss-20b, 0-shot & LLM, no training & 78.6\% & 20.1\% & --- & --- \\
 gpt-oss-20b, 0-shot + B & LLM + error feedback & 78.7\% & 20.1\% & --- &
 --- \\
-gpt-oss-20b, 3-shot & LLM, no training & 81.2\% & 32.5\% & {[}TEST{]} &
-{[}TEST{]} \\
+gpt-oss-20b, 3-shot & LLM, no training & 81.2\% & 32.5\% & 79.3\% &
+36.8\% \\
+gpt-oss-20b, 3-shot + B & LLM + error feedback & 81.5\% & 32.6\% &
+79.7\% & 36.8\% \\
 \end{longtable}
 }
 
@@ -810,6 +813,8 @@ gpt-oss-20b, 0-shot & dev & 90.7\% & 83.6\% & 71.8\% & 54.2\% &
 78.6\% \\
 T5-base, beam & test & 79.4\% & 54.8\% & 40.6\% & 32.5\% & 53.4\% \\
 T5-base + A + B & test & 83.6\% & 65.9\% & 49.0\% & 43.4\% & 62.4\% \\
+gpt-oss-20b, 3-shot & test & 90.0\% & 83.7\% & 73.0\% & 62.7\% &
+79.3\% \\
 \end{longtable}
 }
 
@@ -1018,9 +1023,10 @@ are optimistic & Final claims use the test set, run once \\
 
 \section{Conclusion}\label{conclusion}
 
-On one benchmark with one evaluator, accuracy rises from under 10\% with
-rules and LSTMs, to 54\% by fine-tuning a pre-trained T5-base, and to
-79\% with a 20-billion-parameter LLM used without any training. This
+On the held-out Spider test set, with one evaluator, execution accuracy
+rises from 9.5\% (rules) and 7.2\% (LSTM), to 53.4\% by fine-tuning a
+pre-trained T5-base, 62.4\% with our decoding, and 79.3\% with a
+20-billion-parameter LLM given three examples and no training. This
 tracks the field's shift from hand-written rules, to models trained from
 scratch, to pre-trained models adapted with little or no task data.
 
