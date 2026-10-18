@@ -6,9 +6,9 @@ before ending every work session.
 ## In-Flight Execution Ledger (Context Continuity)
 - **Active Role:** Lead Agent
 - **Current Milestone:** Part 3 (deadline 2026-11-21 23:55 IST; internal freeze 2026-11-14). Branch `feature/part3-modern-models`.
-- **Active Task:** Phase 1-3 of `docs/part-3-plan.md`: gpt-oss 3-shot, then the one-time Spider test run.
-- **Last Completed Action:** CLI with T5 / T5+A+B / gpt; live training demo (HPC + local) rehearsed; dev significance tests.
-- **Immediate Next Action:** Wait for HPC jobs 399601 (gpt-oss 3-shot dev) and 399610 (gpt answers for the CLI); score 3-shot officially; then submit the Spider test run (T5 plain, T5+A+B, best gpt-oss).
+- **Active Task:** Final gpt-oss numbers, then report polish and viva rehearsal.
+- **Last Completed Action:** T5 Spider test run scored (beam 53.4% -> A+B 62.4% official EX, +9.0, 196 fixed / 3 broken); report filled and at 10 pages; 3-shot beat 0-shot on full dev (74.3% vs 72.4% official-style EX).
+- **Immediate Next Action:** When HPC jobs 401780 + 401781 (gpt-oss 3-shot test, two halves) finish: merge halves, score officially, fill the last report cells (gpt-oss test row, 3-shot dev row), rebuild PDF, push. HPC hostname may not resolve on campus Wi-Fi: use `ssh -o HostKeyAlias=hpc.bits-hyderabad.ac.in csisnlp_20@125.22.54.219`.
 - **Resumption Invariant:** If session compacts, token limits expire, or models switch, inspect this ledger first to resume seamlessly.
 
 ### Part 3 (2026-10-16/17): key facts
