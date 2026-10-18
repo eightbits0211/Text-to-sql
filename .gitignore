@@ -32,5 +32,7 @@ checkpoints/
 *.toc
 !docs/part-2-report.tex
 !docs/part-2-report.pdf
+!docs/part-3-report.tex
+!docs/part-3-report.pdf
 !docs/training_loss_curve.pdf
 .kiro/

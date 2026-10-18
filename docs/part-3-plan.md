@@ -43,7 +43,7 @@ tests, lint and the viva live-training demo.
 ### Phase 1: modern baselines (Oct 21–27)
 - [x] `scripts/hpc_run_t5.sh` (jobs 398812 loss-selected, 398846 EX-selected, best epoch 14): T5-base on Spider train, dev loss per epoch, best checkpoint kept
 - [x] Greedy and beam decoding on Spider dev, done inside `run_t5.py` (dev official-style EX 51.3% greedy, 51.5% beam-4)
-- [ ] Score T5 dev with the official evaluator (`run_official_spider_eval.py`, `official_per_example.py`)
+- [x] Score T5 dev with the official evaluator (`run_official_spider_eval.py`, `official_per_example.py`)
 - [x] `src/text_to_sql/llm/prompts.py` and `gpt_adapter.py` (local HF/vLLM backend)
 - [x] `scripts/hpc_run_gptoss.sh` (full dev: 0-shot job 398898, 3-shot job 398899, each with correction): gpt-oss-20b zero-shot and few-shot on Spider dev
 - [ ] Optional: T5 on WikiSQL dev for the cross-dataset table
@@ -53,14 +53,14 @@ tests, lint and the viva live-training demo.
 - [x] `generation/exec_correction.py`: beam reranking for T5, error-feedback retries for GPT (B)
 - [x] Unit tests for trie, constraint and retry stopping conditions (no GPU, no network)
 - [x] Ablation on dev via `run_t5.py --novelty-k 8` (job 398846): beam 51.4%, +A 60.0%, +B 59.6%, +A+B 61.0% official-style EX; invalid 30.7% to 13.1%
-- [ ] Tune beam size and retry budget on dev only
-- [ ] Fallback if EX does not improve: report invalid-SQL reduction
+- [x] Beam size (8) and retry budget (2) fixed on dev only
+- [x] Not needed: EX improved (+10.3 dev, +9.0 test)
 
 ### Phase 3: final evaluation (Nov 8–13)
-- [ ] Spider test (2,147), run once per final system
-- [ ] Stats on test: `official_stats.py` (clustered CIs, McNemar, Holm); dev done: A+B +10.3 EX [7.5, 13.3], Holm p 1e-27
-- [ ] Error analysis: difficulty, single vs multi-table, schema linking / join / aggregation / nesting
-- [ ] Qualitative examples where novelty fixes or breaks a query
+- [x] Spider test (2,147), run once: T5 + ablation (job 399725); [ ] gpt-oss 3-shot (second half done, first half rerun as job 402228)
+- [x] Stats on test: A+B +9.0 EX [7.3, 10.9], 196 fixed / 3 broken; `official_stats.py` (clustered CIs, McNemar, Holm); dev done: A+B +10.3 EX [7.5, 13.3], Holm p 1e-27
+- [x] Error analysis: difficulty, single vs multi-table, error types (`docs/part-3-error-analysis.md`, report §e)
+- [x] Qualitative examples (report §e: fixes, an LLM convention mismatch, an EX false positive)
 - [x] CLI: `--model t5 | t5+ab | gpt | all`; gold-checked `--demo` with novelty Case 4 (`146d5c3`)
 - [x] Live training demo: HPC job with local fallback (`scripts/viva_train_demo.sh`), and `--train-demo --model t5`; both rehearsed
 - [x] Copy best T5 checkpoint from HPC to `$TEXT2SQL_DATA_ROOT/part3/t5-base-ex/best`
@@ -68,8 +68,8 @@ tests, lint and the viva live-training demo.
 ### Phase 4: report, demo, viva (Nov 14–21)
 - [ ] Freeze code (Nov 14)
 - [x] Report draft: `docs/part-3-report.md` (sections a-f, 10 pages); [ ] fill [TEST] and [PENDING] cells
-- [ ] Build PDF via `scripts/build_report.sh` (LaTeX bonus), 6–10 pages
-- [ ] Update README, `state.md`, `docs/project-progress-log.md`
+- [x] Build PDF via `scripts/build_report.sh` (LaTeX bonus), 10 pages; .tex and .pdf tracked in git
+- [x] README, `state.md` updated; [ ] final progress-log entry after the gpt-oss test run
 - [ ] LMS bundle (`scripts/make_lms_bundle.sh`)
 - [x] Viva Q&A: `docs/viva-qa-part3.md` (plain answers); [ ] rehearse demo end to end
 - [ ] Submit by Nov 21, 23:55 IST

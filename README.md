@@ -109,10 +109,15 @@ override with `export TEXT2SQL_DATA_ROOT=/path/to/text-to-sql`):
 $TEXT2SQL_DATA_ROOT/spider/spider_data/{train_spider.json,dev.json,test.json,tables.json,test_tables.json,database/,test_database/}
 $TEXT2SQL_DATA_ROOT/wikisql/data/{dev.jsonl,dev.tables.jsonl,dev.db,...}
 $TEXT2SQL_DATA_ROOT/artifacts-lstm-gpu-run/lstm-checkpoint/{spider_checkpoint.pt,wikisql_checkpoint.pt,vocabulary.json}
+$TEXT2SQL_DATA_ROOT/part3/t5-base-ex/best/{config.json,model.safetensors,tokenizer files,t5_config.json}   # Part 3 T5-base
+$TEXT2SQL_DATA_ROOT/part3/gpt_answers.json            # gpt-oss-20b answers precomputed on the HPC
 ```
 
+The Part 3 live training demo downloads `google-t5/t5-small` from Hugging Face on first use
+(about 240 MB), then runs offline.
+
 ```bash
-uv sync                                         # install the pinned environment
+uv sync --extra modern                          # install the pinned environment (with Part 3 models)
 uv run pytest                                   # unit tests
 uv run text-to-sql-demo --train-demo            # live training (~2-3 min CPU), then evaluation
 uv run text-to-sql-demo --demo --model template # scripted CLI showcase
@@ -124,8 +129,10 @@ scripts/viva_train_demo.sh                      # same training as a short HPC j
 uv run python -m scripts.show_preprocessing     # preprocessing walkthrough and corpus statistics
 ```
 
-The report is [`docs/part-2-report.pdf`](docs/part-2-report.pdf), built from
-[`docs/part-2-report.md`](docs/part-2-report.md) by `scripts/build_report.sh`.
+The final report is [`docs/part-3-report.pdf`](docs/part-3-report.pdf) (LaTeX source
+[`docs/part-3-report.tex`](docs/part-3-report.tex)), built from
+[`docs/part-3-report.md`](docs/part-3-report.md) by `scripts/build_report.sh`. The Part 2 report is
+[`docs/part-2-report.pdf`](docs/part-2-report.pdf) (`scripts/build_report.sh part-2-report`).
 
 ## 3. Installation & Setup
 
