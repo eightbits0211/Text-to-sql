@@ -7,11 +7,11 @@ For the demo order and commands, see `docs/viva-day-checklist.md`.
 
 ## The big picture
 
-**Q: What did you build in Part 3?**
-Two modern models and one improvement. (1) T5-base, a pre-trained transformer we fine-tuned on Spider. (2) gpt-oss-20b, a large language model we only prompted, no training. (3) Our novelty: two decoding steps for T5 (A and B) that stop it from using tables and columns that don't exist. A + B raised T5 from 54.1% to 64.4% execution accuracy on Spider dev.
+**Q: What did you build in Part 3?** *(I did this project alone; say "I", not "we".)*
+Two modern models and one improvement. (1) T5-base, a pre-trained transformer I fine-tuned on Spider. (2) gpt-oss-20b, a large language model I only prompted, no training. (3) My novelty: two decoding steps for T5 (A and B) that stop it from using tables and columns that don't exist. A + B raised T5 from 54.1% to 64.4% execution accuracy on Spider dev.
 
 **Q: What does the results table show about how NLP has evolved?**
-On the test set: rules 9.5%, LSTM 7.2%, fine-tuned T5-base 53.4%, with our decoding 62.4%, instruction-tuned LLM with three examples and no training 79.3%. Each generation needs less task-specific work and does better.
+On the test set: rules 9.5%, LSTM 7.2%, fine-tuned T5-base 53.4%, with my decoding 62.4%, instruction-tuned LLM with three examples and no training 79.3%. Each generation needs less task-specific work and does better.
 
 ---
 
@@ -21,10 +21,10 @@ On the test set: rules 9.5%, LSTM 7.2%, fine-tuned T5-base 53.4%, with our decod
 They started as small random numbers. For each training example the model predicted the gold SQL one token at a time. The loss is how unlikely it found the correct token (cross-entropy). Backpropagation works out, for every weight, which direction reduces that loss, and the Adam optimiser nudges each weight a little in that direction. Repeating this over all examples for many epochs gives the trained weights. Nothing was pre-trained.
 
 **Q: How are T5's weights learned? How is that different?**
-Same loss and same backpropagation, but T5 does not start random. Google first pre-trained it on a huge web text corpus by hiding chunks of text and making it fill them in, so its weights already encode English and some code. We load those weights and fine-tune all 220 million of them on our 7,000 question → SQL pairs. Because it starts from knowledge, it learns much more from little data. The only new weights are the embeddings for the two tokens we added (`<`, `<=`).
+Same loss and same backpropagation, but T5 does not start random. Google first pre-trained it on a huge web text corpus by hiding chunks of text and making it fill them in, so its weights already encode English and some code. I load those weights and fine-tune all 220 million of them on my 7,000 question → SQL pairs. Because it starts from knowledge, it learns much more from little data. The only new weights are the embeddings for the two tokens I added (`<`, `<=`).
 
 **Q: Were any weights frozen?**
-T5: no, all trainable. gpt-oss: all frozen, we never train it; the task is given in the prompt (in-context learning).
+T5: no, all trainable. gpt-oss: all frozen, I never train it; the task is given in the prompt (in-context learning).
 
 **Q: What is self-attention, in one sentence?**
 Each token builds its new representation as a weighted average of all other tokens, where the weights say how relevant each other token is. So "singers" in the question can look directly at the column `singer` in the schema, wherever it is.
@@ -43,7 +43,7 @@ Fine-tuning changes the model's weights using labelled examples (T5). Prompting 
 One line: the question, then `|`, the database name, then each table with its columns, then the foreign keys. Example on report page 3.
 
 **Q: What was the `<` problem?**
-T5's vocabulary has no `<` symbol, so "age < 30" became "age <unk> 30" and the model could never write "less than". 320 training queries had this. We added `<` and `<=` as new tokens before training.
+T5's vocabulary has no `<` symbol, so "age < 30" became "age <unk> 30" and the model could never write "less than". 320 training queries had this. I added `<` and `<=` as new tokens before training.
 
 **Q: What tokenizer does T5 use?**
 SentencePiece sub-words, 32,000 pieces. Rare names are split into known pieces (`concert_singer` → `concert _ s inger`), so there are no unknown words, unlike the LSTM's word vocabulary.
@@ -68,10 +68,10 @@ Beam search keeps the 8 best partial queries. (1) Before decoding, make a list o
 Run the candidate queries in order and keep the first one that runs and returns rows. For the LLM, if its query fails, send it the error message and ask it to fix it, at most twice.
 
 **Q: What is new compared with PICARD?**
-PICARD needs a full SQL parser that checks every partial query. Ours only checks completed words against the schema and then uses SQLite itself to judge whole queries. Simpler, works with any model and any SQLite database.
+PICARD needs a full SQL parser that checks every partial query. Mine only checks completed words against the schema and then uses SQLite itself to judge whole queries. Simpler, works with any model and any SQLite database.
 
 **Q: Does it need retraining?**
-No. It only changes how we pick among the model's candidates.
+No. It only changes how I pick among the model's candidates.
 
 **Q: How do you know it really helps?**
 On the held-out test set (2,147 questions, run once): +9.0 points EX (53.4% → 62.4%), 95% confidence interval [7.3, 10.9] that never touches zero, McNemar p < 10^-50. It fixed 196 questions and broke 3. Dev showed the same (+10.3). EM also rose by 7.1, so the SQL is genuinely better, not just luckier.
@@ -80,7 +80,7 @@ On the held-out test set (2,147 questions, run once): +9.0 points EX (53.4% → 
 8 beams; check every step; EXPLAIN on finished queries; rerank timeout 5 seconds; 2 retries for the LLM.
 
 **Q: Could A block a correct query?**
-We tested it on the gold queries themselves: it rejected 0 of 1,034 dev and 1 of 7,000 training queries, and that one uses a table that doesn't exist.
+I tested it on the gold queries themselves: it rejected 0 of 1,034 dev and 1 of 7,000 training queries, and that one uses a table that doesn't exist.
 
 **Q: What can't it fix?**
 Queries that run but answer the wrong question, e.g. the right syntax with the wrong column. Running a query can't tell you it's the wrong meaning.
@@ -93,7 +93,7 @@ gpt-oss almost never writes invalid SQL (8 of 1,034), so there is almost nothing
 ## Metrics and results
 
 **Q: Why execution accuracy?**
-It checks the answer, not the wording. Any correct query counts. Weakness: a wrong query can give the right answer by coincidence (our pets_1 "cat aged 3" example).
+It checks the answer, not the wording. Any correct query counts. Weakness: a wrong query can give the right answer by coincidence (my pets_1 "cat aged 3" example).
 
 **Q: Why does gpt-oss have 79% EX but only 20% EM?**
 It writes correct SQL in its own style, with aliases like `AS total_singers` or `LEFT JOIN`. Exact match compares structure with Spider's gold query, so it marks those wrong. That's a limitation of exact match, not of the model.
@@ -102,7 +102,7 @@ It writes correct SQL in its own style, with aliases like `AS total_singers` or 
 Two queries can share most words and give different answers, or share few and give the same answer. Text overlap doesn't measure correctness.
 
 **Q: How did you choose the T5 checkpoint?**
-After every epoch we measured dev execution accuracy and kept the best (epoch 14). Dev loss was lowest at epoch 2, but that model still wrote broken SQL, so loss was a bad guide.
+After every epoch I measured dev execution accuracy and kept the best (epoch 14). Dev loss was lowest at epoch 2, but that model still wrote broken SQL, so loss was a bad guide.
 
 **Q: Isn't choosing on dev cheating?**
 It makes dev scores slightly optimistic, which is why the final claims use the test set, run once at the end.
@@ -113,21 +113,21 @@ Joins: 25.6% → 39.7% on multi-table questions versus 68.2% → 73.5% on single
 ---
 
 **Q: Explain the training-curve figure.**
-Left: dev execution accuracy after each epoch; it climbs fast, then levels off around 48–51%, best at epoch 14. Right: training loss keeps falling, but dev loss is lowest at epoch 2 and then rises. Rising dev loss means the model is becoming over-confident on the tokens it gets wrong, yet it still gets more whole queries right. That's why we chose the checkpoint by accuracy, not loss.
+Left: dev execution accuracy after each epoch; it climbs fast, then levels off around 48–51%, best at epoch 14. Right: training loss keeps falling, but dev loss is lowest at epoch 2 and then rises. Rising dev loss means the model is becoming over-confident on the tokens it gets wrong, yet it still gets more whole queries right. That's why I chose the checkpoint by accuracy, not loss.
 
 **Q: What does the outcome-by-difficulty table show?**
-Each test question is correct, ran-but-wrong, or invalid. A + B halves the invalid ones (662 → 328). Of the 334 it rescues, 193 become correct and 141 run but give the wrong answer. So our method fixes "doesn't run" errors; what's left is mostly "wrong meaning".
+Each test question is correct, ran-but-wrong, or invalid. A + B halves the invalid ones (662 → 328). Of the 334 it rescues, 193 become correct and 141 run but give the wrong answer. So my method fixes "doesn't run" errors; what's left is mostly "wrong meaning".
 
 ---
 
 ## Challenges (have three ready; report §e has all twelve)
 
-Tell each as: what happened, how we noticed, what we did, what changed.
+Tell each as: what happened, how I noticed, what I did, what changed.
 
-1. **WikiSQL scoring bug (Part 2).** Gold queries used column names the database didn't have, so SQLite read them as text constants and 6,007 of 8,415 returned nothing. Empty predictions were being counted correct. We noticed by checking that gold answers are real, fixed it with a view that renames the columns, and recomputed every WikiSQL score.
-2. **The LSTM memorised.** Training loss went to 0.04 but dev loss rose and 72% of dev queries didn't run. That's why we moved to a pre-trained transformer: 7.2% → 53.4% on test.
+1. **WikiSQL scoring bug (Part 2).** Gold queries used column names the database didn't have, so SQLite read them as text constants and 6,007 of 8,415 returned nothing. Empty predictions were being counted correct. I noticed by checking that gold answers are real, fixed it with a view that renames the columns, and recomputed every WikiSQL score.
+2. **The LSTM memorised.** Training loss went to 0.04 but dev loss rose and 72% of dev queries didn't run. That's why I moved to a pre-trained transformer: 7.2% → 53.4% on test.
 3. **Loss vs accuracy.** Dev loss said epoch 2 was best, but that model wrote broken SQL. Choosing by dev accuracy instead (epoch 14) took greedy dev accuracy from 41.6% to 53.8%, same training run.
-4. **The `<` token.** T5 couldn't write "less than"; 320 training queries affected. We added the token.
-5. **Inventing columns.** 275 of T5's 317 invalid dev queries were "no such column". That's the problem our novelty solves: invalid test queries 662 → 328.
+4. **The `<` token.** T5 couldn't write "less than"; 320 training queries affected. I added the token.
+5. **Inventing columns.** 275 of T5's 317 invalid dev queries were "no such column". That's the problem my novelty solves: invalid test queries 662 → 328.
 6. **Test-run crash.** One test database had a foreign key with no column named; the job crashed after 515 questions. Fixed, added a test, reran only that half.
 7. **Honest limit:** 24% of training schemas are longer than T5's 512-token input, so the end gets cut off. Not solved; schema ranking would fix it.

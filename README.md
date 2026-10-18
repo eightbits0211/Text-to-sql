@@ -11,7 +11,7 @@ multi-table relational databases ([Spider](https://yale-lily.github.io/spider)).
 
 ## 1. System Architecture & Baselines
 
-We implement and evaluate two classical baseline architectures in Part 2:
+Part 2 implements and evaluates two classical baseline architectures:
 
 1. **Deterministic Rule-Based Template Parser (`TemplateBaseline`):**
    - Matches question tokens to schema tables/columns, detects literals, comparison, aggregation and ordering cues, and fills a single-table SQL template.
@@ -136,7 +136,7 @@ The final report is [`docs/part-3-report.pdf`](docs/part-3-report.pdf) (LaTeX so
 
 ## 3. Installation & Setup
 
-We use [`uv`](https://github.com/astral-sh/uv) for fast, deterministic dependency management.
+The project uses [`uv`](https://github.com/astral-sh/uv) for fast, deterministic dependency management.
 
 ```bash
 # Clone the repository

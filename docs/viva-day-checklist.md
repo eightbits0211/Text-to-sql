@@ -1,7 +1,7 @@
 # Viva Day Checklist (Part 3)
 
 ## The day before
-- [ ] `squeue -u csisnlp_20` is empty; cancel anything of ours (one GPU job per user, see challenge 10)
+- [ ] `squeue -u csisnlp_20` is empty; cancel any of my jobs (one GPU job per user, see challenge 10)
 - [ ] `uv run pytest` passes on the laptop
 - [ ] `uv run text-to-sql-demo --demo --model all` runs (about 25 s) and gpt answers show (no "NOT PRECOMPUTED")
 - [ ] `LOCAL=1 scripts/viva_train_demo.sh` runs offline (about 3 min): turn Wi-Fi off and try it

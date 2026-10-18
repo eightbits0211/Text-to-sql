@@ -4,7 +4,7 @@ subtitle: "Natural Language to SQL: From Rules and LSTMs to Fine-Tuned Transform
 author:
   - "Name: Roshini Kotte | ID Number: 2024A7PS0048H"
 abstract: |
-  We translate English questions into SQLite queries on Spider, a benchmark whose test databases are never seen in training. Four generations of methods are compared under one evaluation: a rule-based template parser and a pointer-generator LSTM (classical), a fine-tuned T5-base transformer, and gpt-oss-20b, an instruction-tuned large language model used without training. Our contribution is a two-part decoding method for T5 that targets its main error, naming tables and columns that do not exist: (A) schema-constrained beam search, which discards candidates that use unknown identifiers and checks finished candidates with SQLite, and (B) execution-guided reranking, which keeps the first candidate that runs. On Spider dev, A + B raises T5-base from 54.1% to 64.4% execution accuracy (+10.3 points, 95% CI [7.5, 13.3]) and cuts invalid SQL from 31% to 13%, without retraining. On the held-out Spider test set (2,147 questions, run once) it raises T5-base from 53.4% to 62.4% (+9.0 points, 95% CI [7.3, 10.9]), fixing 196 questions and breaking 3. gpt-oss-20b, given three solved examples and no training, reaches 79.3% execution accuracy on test but only 36.8% exact match, which shows that exact match penalises correct SQL written in a different style.
+  This work translates English questions into SQLite queries on Spider, a benchmark whose test databases are never seen in training. Four generations of methods are compared under one evaluation: a rule-based template parser and a pointer-generator LSTM (classical), a fine-tuned T5-base transformer, and gpt-oss-20b, an instruction-tuned large language model used without training. The novel contribution is a two-part decoding method for T5 that targets its main error, naming tables and columns that do not exist: (A) schema-constrained beam search, which discards candidates that use unknown identifiers and checks finished candidates with SQLite, and (B) execution-guided reranking, which keeps the first candidate that runs. On Spider dev, A + B raises T5-base from 54.1% to 64.4% execution accuracy (+10.3 points, 95% CI [7.5, 13.3]) and cuts invalid SQL from 31% to 13%, without retraining. On the held-out Spider test set (2,147 questions, run once) it raises T5-base from 53.4% to 62.4% (+9.0 points, 95% CI [7.3, 10.9]), fixing 196 questions and breaking 3. gpt-oss-20b, given three solved examples and no training, reaches 79.3% execution accuracy on test but only 36.8% exact match, which shows that exact match penalises correct SQL written in a different style.
 
 ---
 
@@ -21,7 +21,7 @@ Most structured data in companies, hospitals and universities lives in relationa
 4. **Executability.** A single wrong column name makes SQLite reject the whole query, so an almost-correct query still scores zero.
 
 ## Formulation
-Given a question $Q$ and a database schema $S$ (tables, columns and foreign keys), produce the SQL query $Y$ that answers $Q$. All our neural models generate $Y$ one token at a time, choosing at each step a likely next token given the question, the schema and the tokens written so far:
+Given a question $Q$ and a database schema $S$ (tables, columns and foreign keys), produce the SQL query $Y$ that answers $Q$. All the neural models here generate $Y$ one token at a time, choosing at each step a likely next token given the question, the schema and the tokens written so far:
 $$\hat{Y}=\arg\max_Y \prod_{t=1}^{n} P(y_t\mid y_{<t},Q,S).$$
 
 
@@ -29,11 +29,11 @@ $$\hat{Y}=\arg\max_Y \prod_{t=1}^{n} P(y_t\mid y_{<t},Q,S).$$
 
 **Rule-based systems.** PRECISE (Popescu et al., 2003) maps question words to database elements with hand-written rules and is very precise on questions it accepts, but fails on anything outside its patterns. Grammar-based parsers (Zettlemoyer and Collins, 2005; Wong and Mooney, 2007) need a hand-built lexicon for every new domain.
 
-**Neural sequence-to-sequence models.** LSTM encoder–decoders (Hochreiter and Schmidhuber, 1997; Sutskever et al., 2014) with attention (Bahdanau et al., 2015) treat Text-to-SQL as translation. Pointer networks (Vinyals et al., 2015; See et al., 2017) let the decoder copy table names and values from the input. On WikiSQL, Seq2SQL (Zhong et al., 2017) and SQLNet (Xu et al., 2017) fill SQL sketches. On Spider these models reach only 4–12% exact match (Yu et al., 2018), mostly because they cannot link question words to unseen schemas. Our Part 2 baselines belong here.
+**Neural sequence-to-sequence models.** LSTM encoder–decoders (Hochreiter and Schmidhuber, 1997; Sutskever et al., 2014) with attention (Bahdanau et al., 2015) treat Text-to-SQL as translation. Pointer networks (Vinyals et al., 2015; See et al., 2017) let the decoder copy table names and values from the input. On WikiSQL, Seq2SQL (Zhong et al., 2017) and SQLNet (Xu et al., 2017) fill SQL sketches. On Spider these models reach only 4–12% exact match (Yu et al., 2018), mostly because they cannot link question words to unseen schemas. The Part 2 baselines of this project belong here.
 
-**Pre-trained transformers.** The transformer (Vaswani et al., 2017) replaces recurrence with self-attention. T5 (Raffel et al., 2020) is a transformer encoder–decoder pre-trained on a large web corpus; fine-tuned on Spider with the schema written into the input, it became a strong and simple baseline (Shaw et al., 2021). Relation-aware encoders such as RAT-SQL (Wang et al., 2020) model links between question words and schema items. PICARD (Scholak et al., 2021) showed that *constraining decoding*, rejecting invalid partial SQL during beam search, adds several points to T5, and RESDSQL (Li et al., 2023) ranks schema items before decoding. Our novelty follows PICARD's idea in a lighter form.
+**Pre-trained transformers.** The transformer (Vaswani et al., 2017) replaces recurrence with self-attention. T5 (Raffel et al., 2020) is a transformer encoder–decoder pre-trained on a large web corpus; fine-tuned on Spider with the schema written into the input, it became a strong and simple baseline (Shaw et al., 2021). Relation-aware encoders such as RAT-SQL (Wang et al., 2020) model links between question words and schema items. PICARD (Scholak et al., 2021) showed that *constraining decoding*, rejecting invalid partial SQL during beam search, adds several points to T5, and RESDSQL (Li et al., 2023) ranks schema items before decoding. The novelty in this work follows PICARD's idea in a lighter form.
 
-**Large language models (LLMs).** Instruction-tuned LLMs write SQL from a prompt with no task-specific training. DIN-SQL (Pourreza and Rafiei, 2023) and DAIL-SQL (Gao et al., 2024) prompt GPT-4 with the schema written as `CREATE TABLE` statements and a few solved examples, reaching about 85% execution accuracy on Spider. Feeding execution errors back to the model ("self-debugging"; Chen et al., 2024) is a common addition. We use the open-weight gpt-oss-20b (OpenAI, 2025) since hosted APIs were not available to us.
+**Large language models (LLMs).** Instruction-tuned LLMs write SQL from a prompt with no task-specific training. DIN-SQL (Pourreza and Rafiei, 2023) and DAIL-SQL (Gao et al., 2024) prompt GPT-4 with the schema written as `CREATE TABLE` statements and a few solved examples, reaching about 85% execution accuracy on Spider. Feeding execution errors back to the model ("self-debugging"; Chen et al., 2024) is a common addition. I use the open-weight gpt-oss-20b (OpenAI, 2025) since hosted APIs were not available to me.
 
 **Why it matters.** Natural-language access to databases is one of the most practical applications of NLP, and Spider's unseen-database split tests exactly the generalisation that real users need.
 
@@ -68,7 +68,7 @@ What is the average, minimum, and maximum age of all singers from France? | conc
 
 **Tokenisation.** T5 uses a SentencePiece sub-word vocabulary (32,000 pieces), so a rare name is split into known pieces instead of becoming an unknown word: `singers` → `▁singer` `s`, `concert_singer` → `▁concert` `_` `s` `inger`. No lower-casing, stemming or stop-word removal is applied, because table names, values and SQL keywords must be reproduced exactly.
 
-**Fixing the vocabulary.** T5's vocabulary has no `<` character. With the original tokenizer, `WHERE age < 30` becomes `... ▁age ▁ <unk> ▁30`, so the model could never write "less than". This affected **320 of 7,000 training** and **42 of 1,034 dev** gold queries. We added `<` and `<=` as new tokens (and enlarged T5's embedding table to match) before fine-tuning; afterwards no gold query contains an unknown token and the same SQL becomes `... ▁age < ▁30`.
+**Fixing the vocabulary.** T5's vocabulary has no `<` character. With the original tokenizer, `WHERE age < 30` becomes `... ▁age ▁ <unk> ▁30`, so the model could never write "less than". This affected **320 of 7,000 training** and **42 of 1,034 dev** gold queries. I added `<` and `<=` as new tokens (and enlarged T5's embedding table to match) before fine-tuning; afterwards no gold query contains an unknown token and the same SQL becomes `... ▁age < ▁30`.
 
 | Spider split | Questions | Input tokens (mean / max) | Inputs over 512 tokens | SQL tokens (mean / max) |
 |---|---:|---:|---:|---:|
@@ -114,7 +114,7 @@ Spider is English-only and skewed towards college, business and entertainment sc
 
 **Architecture.** T5-base (Raffel et al., 2020) is a transformer encoder–decoder with 220 million parameters. The encoder (12 layers) reads the whole input; the decoder (12 layers) writes the SQL token by token. Each layer uses **self-attention**: every token computes a weighted average over all other tokens, with weights based on how relevant they are, so the word "singers" can directly attend to the column `singer` anywhere in the schema. This replaces the LSTM's step-by-step recurrence, which had to carry information through every position. The decoder also attends to the encoder's output, like the LSTM's attention. Each layer has 12 attention heads and a feed-forward block; the model dimension is 768. Positions are encoded as relative distances.
 
-**How its weights are learned.** Unlike the LSTM, T5 does not start from random weights. Google pre-trained it on a large English web corpus (C4) by hiding random spans of text and training it to fill them in, so it already understands English and some code. We start from that checkpoint and **fine-tune**: we show it (question + schema → gold SQL) pairs and update **all** its weights by backpropagation to make the gold SQL more probable, using the same cross-entropy loss as the LSTM. Only the embeddings of the two new tokens (`<`, `<=`) start from scratch. Because fine-tuning adjusts knowledge the model already has, T5 learns far more from Spider's 7,000 examples than the LSTM could.
+**How its weights are learned.** Unlike the LSTM, T5 does not start from random weights. Google pre-trained it on a large English web corpus (C4) by hiding random spans of text and training it to fill them in, so it already understands English and some code. I start from that checkpoint and **fine-tune**: I show it (question + schema → gold SQL) pairs and update **all** its weights by backpropagation to make the gold SQL more probable, using the same cross-entropy loss as the LSTM. Only the embeddings of the two new tokens (`<`, `<=`) start from scratch. Because fine-tuning adjusts knowledge the model already has, T5 learns far more from Spider's 7,000 examples than the LSTM could.
 
 **Why T5.** It is the standard pre-trained baseline for Spider, takes the schema as plain text, needs no task-specific architecture, and fits in half a GPU for training.
 
@@ -130,7 +130,7 @@ Spider is English-only and skewed towards college, business and entertainment sc
 
 ## Modern model 2: gpt-oss-20b (instruction-tuned LLM)
 
-gpt-oss-20b (OpenAI, 2025) is an open-weight transformer **decoder** (24 layers, 21 billion parameters). It is a mixture-of-experts model: each layer has 32 expert feed-forward blocks and uses only 4 per token, so about 3.6 billion parameters are active for each token. It was pre-trained on large text and code corpora and then trained to follow instructions and reason before answering. **We do not train it**: all its weights stay frozen and the task is given entirely in the prompt (in-context learning).
+gpt-oss-20b (OpenAI, 2025) is an open-weight transformer **decoder** (24 layers, 21 billion parameters). It is a mixture-of-experts model: each layer has 32 expert feed-forward blocks and uses only 4 per token, so about 3.6 billion parameters are active for each token. It was pre-trained on large text and code corpora and then trained to follow instructions and reason before answering. **It is not trained**: all its weights stay frozen and the task is given entirely in the prompt (in-context learning).
 
 | Setting | Value |
 |---|---|
@@ -140,9 +140,9 @@ gpt-oss-20b (OpenAI, 2025) is an open-weight transformer **decoder** (24 layers,
 | Error feedback (B) | Up to 2 retries with the SQLite error message |
 | Precision | bfloat16 (about 42 GB); the faster 4-bit kernels could not be compiled on the HPC |
 
-**Why gpt-oss-20b.** It represents the current generation (instruction-tuned LLMs, as allowed by the course brief), its weights are public so results are reproducible, and it fits on our HPC GPU.
+**Why gpt-oss-20b.** It represents the current generation (instruction-tuned LLMs, as allowed by the course brief), its weights are public so results are reproducible, and it fits on the available HPC GPU.
 
-## Our contribution: schema-constrained decoding (A) and execution-guided reranking (B)
+## Novel contribution: schema-constrained decoding (A) and execution-guided reranking (B)
 
 **Motivation.** With T5 as with the LSTM, the main error is **schema linking**: on Spider dev, 317 of T5's 1,034 queries (31%) do not run, and 275 of those fail with "no such column". Beam search already produces several candidate queries per question, and a lower-ranked candidate is often correct. A and B choose a better candidate. Neither needs retraining; both work on the trained T5.
 
@@ -158,7 +158,7 @@ gpt-oss-20b (OpenAI, 2025) is an open-weight transformer **decoder** (24 layers,
 
 *Example (concert_singer).* For "List singer names and number of concerts for each singer", plain T5 writes `... FROM concert AS T1 JOIN singer AS T2 ON T1.singer_id = T2.singer_id ...`, which fails because `concert` has no `singer_id`. With A + B the chosen candidate joins `singer_in_concert` and is correct.
 
-**What is new.** PICARD constrains T5 with a full incremental SQL parser. Ours needs no parser: it checks completed words against the schema, then relies on SQLite itself (`EXPLAIN`, then execution) to judge whole queries. It is simple, works with any seq2seq model and any SQLite database, and directly targets the schema-linking errors found in our error analysis.
+**What is new.** PICARD constrains T5 with a full incremental SQL parser. This method needs no parser: it checks completed words against the schema, then relies on SQLite itself (`EXPLAIN`, then execution) to judge whole queries. It is simple, works with any seq2seq model and any SQLite database, and directly targets the schema-linking errors found in the error analysis.
 
 | Hyperparameter | Value |
 |---|---|
@@ -183,10 +183,10 @@ All systems answer the same questions and are scored by the same evaluator. Ever
 - **Exact-set match (EM).** Compare each clause of the predicted and gold query (`SELECT`, `WHERE`, `GROUP BY`, ...) as sets, ignoring values. *Limitation:* a correct query written differently (an alias, a `LEFT JOIN`, a subquery instead of a join) counts as wrong.
 - **Invalid-SQL rate.** Share of predictions that fail to run, split by SQLite error type. It shows directly whether the model respects the schema.
 
-BLEU-style text-overlap metrics are not used: two queries can share most tokens yet return different answers. EX and EM come from the official Spider evaluator. For significance we report a 95% confidence interval that resamples whole databases (questions on the same database are correlated) and McNemar's test on paired per-question outcomes.
+BLEU-style text-overlap metrics are not used: two queries can share most tokens yet return different answers. EX and EM come from the official Spider evaluator. For significance I report a 95% confidence interval that resamples whole databases (questions on the same database are correlated) and McNemar's test on paired per-question outcomes.
 
 ## Baselines
-Classical: template parser and pointer-generator LSTM. Modern: T5-base with beam search; gpt-oss-20b zero-shot and few-shot. Ours: T5-base + A, + B and + A + B, and gpt-oss-20b + B (error feedback).
+Classical: template parser and pointer-generator LSTM. Modern: T5-base with beam search; gpt-oss-20b zero-shot and few-shot. Proposed: T5-base + A, + B and + A + B, and gpt-oss-20b + B (error feedback).
 
 ## Evaluation, Results and Discussion
 
@@ -197,14 +197,14 @@ Classical: template parser and pointer-generator LSTM. Modern: T5-base with beam
 | Template parser | Rules | 9.9% | 5.9% | 9.5% | 6.7% |
 | Pointer-generator LSTM | Classical neural | 8.1% | 5.0% | 7.2% | 5.5% |
 | T5-base, beam | Fine-tuned transformer | 54.1% | 52.1% | 53.4% | 49.6% |
-| **T5-base + A + B (ours)** | Fine-tuned + novelty | **64.4%** | **59.5%** | **62.4%** | **56.7%** |
+| **T5-base + A + B (proposed)** | Fine-tuned + novelty | **64.4%** | **59.5%** | **62.4%** | **56.7%** |
 | gpt-oss-20b, 0-shot | LLM, no training | 78.6% | 20.1% | — | — |
 | gpt-oss-20b, 0-shot + B | LLM + error feedback | 78.7% | 20.1% | — | — |
 | gpt-oss-20b, 3-shot | LLM, no training | 81.2% | 32.5% | 79.3% | 36.8% |
 | gpt-oss-20b, 3-shot + B | LLM + error feedback | 81.5% | 32.6% | 79.7% | 36.8% |
 
 
-The table shows how the field has moved. Rules and LSTMs answer fewer than one question in ten; fine-tuning a pre-trained transformer answers over half; our decoding raises that to about two thirds; an instruction-tuned LLM answers about four in five with no task-specific training. (On WikiSQL, Part 2 found the LSTM far stronger than the template, 17.2% vs 2.7% EX on dev, since single-table questions suit it.)
+The table shows how the field has moved. Rules and LSTMs answer fewer than one question in ten; fine-tuning a pre-trained transformer answers over half; the proposed decoding raises that to about two thirds; an instruction-tuned LLM answers about four in five with no task-specific training. (On WikiSQL, Part 2 found the LSTM far stronger than the template, 17.2% vs 2.7% EX on dev, since single-table questions suit it.)
 
 **Ablation of A and B (T5-base, 8 beams, official evaluator).**
 
@@ -237,7 +237,7 @@ A + B helps most on medium, hard and extra-hard questions (+8 to +14 points), wh
 
 **gpt-oss-20b: examples and error feedback.** Three solved examples in the prompt raise EX from 78.6% to 81.2% and EM from 20.1% to 32.5%: the examples show the model Spider's SQL style, which it then imitates, confirming that its low EM is about style rather than correctness. Since 3-shot was best on dev, it is the setting run on test. The LLM writes almost no invalid SQL (8 of 1,034), so feeding errors back fixes little: invalid SQL drops to 0 but EX rises only 0.1 points. Option B is valuable for models that make schema errors, like T5, not for one that rarely does.
 
-**Training dynamics (T5-base).** Training loss falls steadily, but dev loss is lowest at epoch 2 and then rises, while dev accuracy keeps improving until about epoch 14. The model grows more confident on wrong tokens (raising loss) while getting more queries right, so we select the checkpoint by accuracy, not loss.
+**Training dynamics (T5-base).** Training loss falls steadily, but dev loss is lowest at epoch 2 and then rises, while dev accuracy keeps improving until about epoch 14. The model grows more confident on wrong tokens (raising loss) while getting more queries right, so I select the checkpoint by accuracy, not loss.
 
 ![T5-base training (HPC job 398846). Left: greedy dev execution accuracy per epoch. Right: training and dev cross-entropy loss.](t5_training_curve.png){ width=95% }
 
@@ -283,22 +283,22 @@ A + B halves the invalid queries (662 → 328). Of the 334 queries it rescues, 1
 
 ## Challenges
 
-We list the main problems met at each stage of the project (Parts 2 and 3), how each was detected, what we did, and the measured effect.
+Below are the main problems I met at each stage of the project (Parts 2 and 3), how each was detected, what I did, and the measured effect.
 
 **Data and evaluation harness**
 
-1. **A silent scoring bug on WikiSQL (Part 2).** *Found:* a sanity check that gold queries return real answers. The official WikiSQL database stores columns as `col0 … colN`, but our gold SQL used the header names; SQLite read those as string constants, so 6,007 of 8,415 dev gold queries returned nothing and any empty prediction scored as correct. *Fix:* a per-question view that exposes each column under its header name, plus a regression test. *Effect:* 7,767 gold queries now return real answers; all earlier WikiSQL scores were discarded and recomputed.
-2. **Errors in the benchmark itself.** *Found:* running our schema constraint over every gold query. One Spider training query refers to a table that does not exist in its database, and gold SQL mixes quoting and capitalisation styles. *Fix:* we report on execution-based metrics, which are insensitive to these styles, and document the annotation error rather than silently dropping it.
+1. **A silent scoring bug on WikiSQL (Part 2).** *Found:* a sanity check that gold queries return real answers. The official WikiSQL database stores columns as `col0 … colN`, but my loader wrote gold SQL with the header names; SQLite read those as string constants, so 6,007 of 8,415 dev gold queries returned nothing and any empty prediction scored as correct. *Fix:* a per-question view that exposes each column under its header name, plus a regression test. *Effect:* 7,767 gold queries now return real answers; all earlier WikiSQL scores were discarded and recomputed.
+2. **Errors in the benchmark itself.** *Found:* running the schema constraint over every gold query. One Spider training query refers to a table that does not exist in its database, and gold SQL mixes quoting and capitalisation styles. *Fix:* I report execution-based metrics, which are insensitive to these styles, and document the annotation error rather than silently dropping it.
 
 **Preprocessing**
 
 3. **A character the model could not write.** *Found:* tokenising the gold SQL. T5's vocabulary has no `<`, so `age < 30` became `age <unk> 30`; 320 of 7,000 training and 42 of 1,034 dev queries were affected. *Fix:* added `<` and `<=` as new tokens and enlarged the embedding table before fine-tuning. *Effect:* no gold query contains an unknown token.
-4. **Schemas too long for the model (partly unsolved).** *Found:* token statistics. 24% of training inputs exceed T5's 512-token limit and lose their last tables. *Status:* we kept truncation; schema ranking before decoding (as in RESDSQL) is the proper fix and is left as future work.
+4. **Schemas too long for the model (partly unsolved).** *Found:* token statistics. 24% of training inputs exceed T5's 512-token limit and lose their last tables. *Status:* I kept truncation; schema ranking before decoding (as in RESDSQL) is the proper fix and is left as future work.
 
 **Modelling**
 
 5. **The LSTM memorised instead of generalising (Part 2).** *Found:* training loss reached 0.04 while dev loss rose after epoch 3 and 72% of dev queries were invalid; the copy mechanism switched to copying at the right time but put only 0.17 probability on the correct schema name. *Fix:* moved to a pre-trained transformer, which brings language knowledge learned from far more text. *Effect:* 7.2% → 53.4% test execution accuracy.
-6. **The fine-tuned model still invented column names.** *Found:* error analysis of T5: 317 of 1,034 dev queries did not run, 275 with "no such column". *Fix:* our novelty, schema-constrained decoding (A) plus execution-guided reranking (B), after first checking that the constraint never rejects a correct query (0 of 1,034 dev gold queries). *Effect:* invalid test queries 662 → 328; test accuracy 53.4% → 62.4%.
+6. **The fine-tuned model still invented column names.** *Found:* error analysis of T5: 317 of 1,034 dev queries did not run, 275 with "no such column". *Fix:* the novel contribution, schema-constrained decoding (A) plus execution-guided reranking (B), after first checking that the constraint never rejects a correct query (0 of 1,034 dev gold queries). *Effect:* invalid test queries 662 → 328; test accuracy 53.4% → 62.4%.
 
 **Training and model selection**
 
@@ -312,7 +312,7 @@ We list the main problems met at each stage of the project (Parts 2 and 3), how 
 **Compute and engineering**
 
 10. **Running a 20-billion-parameter model on a shared GPU.** *Found:* failed jobs. The faster 4-bit kernels needed C headers missing on the cluster; few-shot prompts then ran out of memory when other users shared the card; and the cluster allows one GPU job per user for at most two hours. *Fix:* loaded the model in 16-bit precision, used batch size 1 with a memory-allocator setting, and split runs into halves that fit the time limit. *Effect:* all LLM runs completed on dev and test.
-11. **A crash part-way through the test run.** *Found:* the job stopped after 515 questions: one test database declares a foreign key without naming the target column, which our prompt builder did not expect. *Fix:* handled the case, added a regression test, checked prompts for all 40 test databases, and reran only the failed half.
+11. **A crash part-way through the test run.** *Found:* the job stopped after 515 questions: one test database declares a foreign key without naming the target column, which my prompt builder did not expect. *Fix:* handled the case, added a regression test, checked prompts for all 40 test databases, and reran only the failed half.
 
 **Demonstration**
 
@@ -321,9 +321,9 @@ We list the main problems met at each stage of the project (Parts 2 and 3), how 
 
 # Conclusion
 
-On the held-out Spider test set, with one evaluator, execution accuracy rises from 9.5% (rules) and 7.2% (LSTM), to 53.4% by fine-tuning a pre-trained T5-base, 62.4% with our decoding, and 79.3% with a 20-billion-parameter LLM given three examples and no training. This tracks the field's shift from hand-written rules, to models trained from scratch, to pre-trained models adapted with little or no task data.
+On the held-out Spider test set, with one evaluator, execution accuracy rises from 9.5% (rules) and 7.2% (LSTM), to 53.4% by fine-tuning a pre-trained T5-base, 62.4% with the proposed decoding, and 79.3% with a 20-billion-parameter LLM given three examples and no training. This tracks the field's shift from hand-written rules, to models trained from scratch, to pre-trained models adapted with little or no task data.
 
-Our contribution, schema-constrained beam search plus execution-guided reranking, adds 9.0 points to T5-base on the held-out Spider test set (10.3 on dev) without retraining by fixing its dominant error: references to tables and columns that do not exist. It is simple, works with any seq2seq model and any SQLite database, and helps most on join queries. It cannot fix queries that run but answer the wrong question, and it adds little to an LLM that rarely writes invalid SQL. Exact match proved unsuitable for judging LLM output, so execution accuracy should be the primary metric. Natural next steps are schema ranking before decoding and checking whether a query's result actually answers the question.
+The novel contribution, schema-constrained beam search plus execution-guided reranking, adds 9.0 points to T5-base on the held-out Spider test set (10.3 on dev) without retraining by fixing its dominant error: references to tables and columns that do not exist. It is simple, works with any seq2seq model and any SQLite database, and helps most on join queries. It cannot fix queries that run but answer the wrong question, and it adds little to an LLM that rarely writes invalid SQL. Exact match proved unsuitable for judging LLM output, so execution accuracy should be the primary metric. Natural next steps are schema ranking before decoding and checking whether a query's result actually answers the question.
 
 
 # References {-}

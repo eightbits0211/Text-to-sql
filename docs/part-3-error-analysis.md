@@ -71,7 +71,7 @@ schema linking is the main failure. A + B removes 55% of them.
 - **EX can overstate:** a query can return the right rows by coincidence.
   "EM-confirmed EX" (both correct) is the conservative bound: T5 + A + B 56.6%.
 - **Strict vs official EX:** strict EX (column labels and row order must match)
-  cuts gpt-oss from 72.4% to 45.5% on our harness; official semantics ignore labels.
+  cuts gpt-oss from 72.4% to 45.5% on the project's harness; official semantics ignore labels.
 
 ## Qualitative examples
 
