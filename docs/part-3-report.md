@@ -199,9 +199,9 @@ Classical: template parser and pointer-generator LSTM. Modern: T5-base with beam
 | Pointer-generator LSTM | Classical neural | 8.1% | 5.0% | 7.2% | 5.5% |
 | T5-base, beam | Fine-tuned transformer | 54.1% | 52.1% | 53.4% | 49.6% |
 | **T5-base + A + B (ours)** | Fine-tuned + novelty | **64.4%** | **59.5%** | **62.4%** | **56.7%** |
-| gpt-oss-20b, 0-shot | LLM, no training | 78.6% | 20.1% | [TEST] | [TEST] |
+| gpt-oss-20b, 0-shot | LLM, no training | 78.6% | 20.1% | — | — |
 | gpt-oss-20b, 0-shot + B | LLM + error feedback | 78.7% | 20.1% | — | — |
-| gpt-oss-20b, 3-shot | LLM, no training | [PENDING] | [PENDING] | — | — |
+| gpt-oss-20b, 3-shot | LLM, no training | 81.2% | 32.5% | [TEST] | [TEST] |
 
 
 The table shows how the field has moved. Rules and LSTMs answer fewer than one question in ten; fine-tuning a pre-trained transformer answers over half; our decoding raises that to about two thirds; an instruction-tuned LLM answers about four in five with no task-specific training. (On WikiSQL, Part 2 found the LSTM far stronger than the template, 17.2% vs 2.7% EX on dev, since single-table questions suit it.)
@@ -234,7 +234,7 @@ A + B helps most on medium, hard and extra-hard questions (+8 to +14 points), wh
 
 **By query structure (dev EX, our harness, strict).** T5 + A + B improves multi-table questions from 25.6% to 39.7% (+14.1) and single-table ones from 68.2% to 73.5% (+5.3). Join queries name more tables and columns, so they have more chances to name a wrong one, and more to gain from the constraint.
 
-**gpt-oss-20b and error feedback.** The LLM writes almost no invalid SQL (8 of 1,034), so feeding errors back fixes little: invalid SQL drops to 0 but EX rises only 0.1 points. Option B is valuable for models that make schema errors, like T5, not for one that rarely does.
+**gpt-oss-20b: examples and error feedback.** Three solved examples in the prompt raise EX from 78.6% to 81.2% and EM from 20.1% to 32.5%: the examples show the model Spider's SQL style, which it then imitates, confirming that its low EM is about style rather than correctness. Since 3-shot was best on dev, it is the setting run on test. The LLM writes almost no invalid SQL (8 of 1,034), so feeding errors back fixes little: invalid SQL drops to 0 but EX rises only 0.1 points. Option B is valuable for models that make schema errors, like T5, not for one that rarely does.
 
 **Training dynamics (T5-base).** Dev execution accuracy rose from 27% after epoch 1 to about 48–51% from epoch 8 onwards, peaking at epoch 14 (51.3% greedy). Dev *loss* was lowest at epoch 2 and rose afterwards, even though accuracy kept improving, which is why we select checkpoints by accuracy.
 
